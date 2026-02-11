@@ -1,0 +1,2730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <meta name="theme-color" content="#000000">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Try Alabobai - Live Demo | No Signup Required</title>
+  <link rel="icon" type="image/png" href="/images/logo.png">
+  <meta name="description" content="Experience Alabobai instantly. No signup required. Watch AI complete real tasks in seconds.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    /* ============================================================================
+       ALABOBAI - Interactive Demo Design System
+       ============================================================================ */
+
+    :root {
+      /* Metallic Rose Gold Palette */
+      --rose-gold: #d9a07a;
+      --rose-gold-light: #ecd4c0;
+      --rose-gold-bright: #f0e0d0;
+      --rose-gold-dark: #b8845c;
+      --rose-gold-deep: #8b6442;
+      --copper: #c9956c;
+      --bronze: #a67c52;
+
+      /* Glow Effects */
+      --glow-rose: rgba(217, 160, 122, 0.6);
+      --glow-rose-intense: rgba(217, 160, 122, 0.9);
+      --glow-soft: rgba(217, 160, 122, 0.3);
+
+      /* Backgrounds */
+      --bg-void: #000000;
+      --bg-dark: #0a0808;
+      --bg-card: rgba(12, 10, 8, 0.95);
+      --bg-panel: rgba(18, 14, 12, 0.9);
+      --bg-input: rgba(25, 20, 18, 0.8);
+
+      /* Borders */
+      --border-outer: rgba(217, 160, 122, 0.5);
+      --border-mid: rgba(217, 160, 122, 0.3);
+      --border-inner: rgba(217, 160, 122, 0.15);
+      --border-subtle: rgba(217, 160, 122, 0.08);
+
+      /* Text - Apple Design Principles */
+      --text-bright: #ffffff;
+      --text-primary: rgba(255, 255, 255, 0.95);
+      --text-secondary: rgba(255, 255, 255, 0.6);
+      --text-muted: rgba(255, 255, 255, 0.4);
+
+      /* Status */
+      --status-active: #7dd3a0;
+      --status-glow: rgba(125, 211, 160, 0.5);
+      --status-warning: #f5a623;
+      --status-error: #ff6b6b;
+
+      /* Fonts */
+      --font-display: 'Inter', -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+
+      /* Animation */
+      --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+      --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: var(--font-display);
+      background: var(--bg-void);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+      font-size: 16px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* ============================================================================
+       TYPOGRAPHY SYSTEM - Apple Design Principles
+       ============================================================================ */
+
+    h1, .h1 {
+      font-family: var(--font-display);
+      font-size: clamp(48px, 6vw, 64px);
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      color: var(--text-bright);
+    }
+
+    h2, .h2 {
+      font-family: var(--font-display);
+      font-size: clamp(32px, 4vw, 40px);
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      line-height: 1.2;
+      color: var(--text-bright);
+    }
+
+    h3, .h3 {
+      font-family: var(--font-display);
+      font-size: clamp(24px, 3vw, 28px);
+      font-weight: 500;
+      letter-spacing: 0;
+      line-height: 1.3;
+      color: var(--text-bright);
+    }
+
+    p, .body-text {
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 400;
+      line-height: 1.6;
+      color: var(--text-primary);
+    }
+
+    .body-large {
+      font-size: 18px;
+      line-height: 1.7;
+    }
+
+    .caption, .small-text {
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 400;
+      line-height: 1.5;
+      color: var(--text-secondary);
+    }
+
+    .label {
+      font-family: var(--font-display);
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+      color: var(--text-muted);
+    }
+
+    code, .code, .mono {
+      font-family: var(--font-mono);
+      font-size: 14px;
+      font-weight: 400;
+      line-height: 1.6;
+    }
+
+    .accent-text {
+      color: var(--rose-gold);
+    }
+
+    .success-text {
+      color: #4ade80;
+    }
+
+    /* ============================================================================
+       MORPHIC PANEL SYSTEM
+       ============================================================================ */
+
+    .morphic-panel {
+      background: var(--bg-card);
+      border-radius: 16px;
+      position: relative;
+      overflow: visible;
+    }
+
+    .morphic-panel::before {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, var(--rose-gold) 0%, var(--rose-gold-dark) 25%, transparent 50%, var(--rose-gold-deep) 75%, var(--rose-gold) 100%);
+      z-index: -1;
+      opacity: 0.8;
+    }
+
+    .morphic-panel::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 16px;
+      border: 1px solid var(--border-mid);
+      pointer-events: none;
+    }
+
+    .morphic-inner {
+      position: absolute;
+      inset: 3px;
+      border-radius: 13px;
+      border: 1px solid var(--border-inner);
+      pointer-events: none;
+    }
+
+    /* ============================================================================
+       CHROME METALLIC BUTTON
+       ============================================================================ */
+
+    .chrome-btn {
+      position: relative;
+      padding: 14px 32px;
+      background: linear-gradient(180deg, var(--rose-gold-bright) 0%, var(--rose-gold-light) 20%, var(--rose-gold) 50%, var(--rose-gold-dark) 80%, var(--bronze) 100%);
+      border: none;
+      border-radius: 12px;
+      color: #1a1410;
+      font-family: var(--font-display);
+      font-size: 15px;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+      cursor: pointer;
+      transition: all 0.3s var(--ease-smooth);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.4), inset 0 2px 0 rgba(255,255,255,0.3), inset 0 -2px 0 rgba(0,0,0,0.2);
+      overflow: hidden;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .chrome-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 50%;
+      background: linear-gradient(180deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 100%);
+      border-radius: 12px 12px 0 0;
+    }
+
+    .chrome-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px var(--glow-rose), inset 0 2px 0 rgba(255,255,255,0.4);
+    }
+
+    .chrome-btn:active {
+      transform: translateY(0);
+    }
+
+    .chrome-btn-secondary {
+      background: var(--bg-input);
+      border: 2px solid var(--border-mid);
+      color: var(--text-primary);
+      box-shadow: none;
+      text-shadow: none;
+    }
+
+    .chrome-btn-secondary::before {
+      display: none;
+    }
+
+    .chrome-btn-secondary:hover {
+      border-color: var(--rose-gold);
+      box-shadow: 0 0 30px var(--glow-soft);
+    }
+
+    /* ============================================================================
+       DEMO LAYOUT
+       ============================================================================ */
+
+    .demo-app {
+      min-height: 100vh;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    /* ============================================================================
+       DEMO HEADER
+       ============================================================================ */
+
+    .demo-header {
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .demo-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: rgba(217, 160, 122, 0.15);
+      border: 1px solid var(--rose-gold);
+      border-radius: 50px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--rose-gold-light);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      animation: badgePulse 2s ease-in-out infinite;
+    }
+
+    @keyframes badgePulse {
+      0%, 100% { box-shadow: 0 0 10px var(--glow-soft); }
+      50% { box-shadow: 0 0 25px var(--glow-rose); }
+    }
+
+    /* Logo Styles */
+    .logo {
+      height: 40px;
+      width: auto;
+      filter: drop-shadow(0 0 10px var(--glow-rose));
+      transition: all 0.3s var(--ease-smooth);
+    }
+
+    .logo:hover {
+      transform: scale(1.05);
+      filter: drop-shadow(0 0 20px var(--glow-rose-intense));
+    }
+
+    .logo-link {
+      display: flex;
+      align-items: center;
+    }
+
+    @keyframes logoPulse {
+      0%, 100% { filter: drop-shadow(0 0 10px var(--glow-rose)); }
+      50% { filter: drop-shadow(0 0 20px var(--glow-rose-intense)); }
+    }
+
+    .logo-pulse {
+      animation: logoPulse 3s ease-in-out infinite;
+    }
+
+    .brand-text {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand-title {
+      font-size: 26px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: var(--text-bright);
+    }
+
+    .brand-title strong {
+      font-weight: 600;
+      color: var(--rose-gold);
+    }
+
+    .brand-subtitle {
+      font-size: 12px;
+      font-weight: 400;
+      letter-spacing: 0.01em;
+      color: var(--text-muted);
+    }
+
+    .header-actions {
+      margin-left: auto;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: rgba(125, 211, 160, 0.08);
+      border: 1px solid rgba(125, 211, 160, 0.3);
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      color: var(--status-active);
+      text-transform: uppercase;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--status-active);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--status-glow);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(1.2); }
+    }
+
+    /* ============================================================================
+       SCENARIO TABS
+       ============================================================================ */
+
+    .scenario-tabs {
+      padding: 12px 20px;
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border-mid) transparent;
+    }
+
+    .scenario-tabs::-webkit-scrollbar {
+      height: 4px;
+    }
+
+    .scenario-tabs::-webkit-scrollbar-thumb {
+      background: var(--border-mid);
+      border-radius: 2px;
+    }
+
+    .scenario-tab {
+      padding: 10px 20px;
+      background: var(--bg-input);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.3s var(--ease-smooth);
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .scenario-tab:hover {
+      border-color: var(--border-mid);
+      color: var(--text-primary);
+    }
+
+    .scenario-tab.active {
+      background: linear-gradient(135deg, var(--rose-gold) 0%, var(--rose-gold-dark) 100%);
+      border-color: transparent;
+      color: #1a1410;
+      box-shadow: 0 0 20px var(--glow-soft);
+    }
+
+    .scenario-tab svg {
+      width: 14px;
+      height: 14px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+    }
+
+    /* ============================================================================
+       COMMAND INPUT SECTION
+       ============================================================================ */
+
+    .command-section {
+      padding: 20px 24px;
+    }
+
+    .command-wrapper {
+      display: flex;
+      gap: 14px;
+      align-items: stretch;
+    }
+
+    .command-input-container {
+      flex: 1;
+      position: relative;
+    }
+
+    .command-input {
+      width: 100%;
+      padding: 18px 22px;
+      background: var(--bg-input);
+      border: 2px solid var(--border-mid);
+      border-radius: 12px;
+      color: var(--text-bright);
+      font-family: var(--font-display);
+      font-size: 15px;
+      outline: none;
+      transition: all 0.3s var(--ease-smooth);
+    }
+
+    .command-input::placeholder {
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    .command-input:focus {
+      border-color: var(--rose-gold);
+      box-shadow: 0 0 30px var(--glow-soft), inset 0 0 20px rgba(217, 160, 122, 0.05);
+    }
+
+    .command-input.typing {
+      border-color: var(--status-active);
+      box-shadow: 0 0 30px var(--status-glow);
+    }
+
+    /* ============================================================================
+       PROGRESS INDICATOR
+       ============================================================================ */
+
+    .progress-section {
+      padding: 0 24px 16px;
+    }
+
+    .progress-timeline {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .progress-step {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      opacity: 0.4;
+      transition: all 0.5s var(--ease-smooth);
+    }
+
+    .progress-step.active {
+      opacity: 1;
+    }
+
+    .progress-step.completed {
+      opacity: 0.8;
+    }
+
+    .progress-step.completed .step-indicator {
+      background: var(--status-active);
+      border-color: var(--status-active);
+    }
+
+    .step-indicator {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 2px solid var(--border-mid);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+      background: var(--bg-input);
+      transition: all 0.5s var(--ease-smooth);
+    }
+
+    .progress-step.active .step-indicator {
+      border-color: var(--rose-gold);
+      color: var(--rose-gold);
+      box-shadow: 0 0 15px var(--glow-rose);
+      animation: stepPulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes stepPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
+    .step-label {
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--text-muted);
+      text-align: center;
+      letter-spacing: 0.01em;
+    }
+
+    .progress-step.active .step-label {
+      color: var(--rose-gold);
+    }
+
+    .progress-step.completed .step-label {
+      color: #4ade80;
+    }
+
+    .progress-line {
+      flex: 0.5;
+      height: 2px;
+      background: var(--border-subtle);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .progress-line.filled {
+      background: var(--status-active);
+    }
+
+    .progress-line.active::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent, var(--rose-gold), transparent);
+      animation: lineProgress 1.5s ease-in-out infinite;
+    }
+
+    @keyframes lineProgress {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    /* ============================================================================
+       MAIN PANELS GRID
+       ============================================================================ */
+
+    .panels-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      flex: 1;
+      min-height: 450px;
+    }
+
+    .panel {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .panel-icon {
+      width: 26px;
+      height: 26px;
+      background: var(--bg-input);
+      border: 1px solid var(--border-mid);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .panel-icon svg {
+      width: 14px;
+      height: 14px;
+      stroke: var(--rose-gold);
+      fill: none;
+      stroke-width: 1.5;
+    }
+
+    .panel-title {
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 0;
+      color: var(--text-bright);
+    }
+
+    .panel-badge {
+      margin-left: auto;
+      padding: 4px 10px;
+      background: var(--bg-input);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: 400;
+      color: var(--text-muted);
+      letter-spacing: 0.01em;
+      text-transform: uppercase;
+    }
+
+    .panel-content {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+    }
+
+    /* ============================================================================
+       NEURAL STREAM (Left Panel)
+       ============================================================================ */
+
+    .neural-stream {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      line-height: 1.7;
+      color: var(--text-muted);
+    }
+
+    .stream-block {
+      margin-bottom: 16px;
+      padding: 12px;
+      background: var(--bg-input);
+      border-radius: 8px;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .stream-label {
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .stream-label::before {
+      content: '';
+      width: 4px;
+      height: 4px;
+      background: var(--rose-gold);
+      border-radius: 50%;
+    }
+
+    .code-line {
+      margin: 4px 0;
+      opacity: 0;
+      transform: translateY(5px);
+      animation: codeFadeIn 0.3s ease forwards;
+    }
+
+    @keyframes codeFadeIn {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .code-keyword {
+      color: var(--rose-gold);
+    }
+
+    .code-function {
+      color: var(--text-bright);
+    }
+
+    .code-string {
+      color: #4ade80;
+    }
+
+    .code-comment {
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    .code-number {
+      color: var(--rose-gold);
+    }
+
+    .thinking-indicator {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      background: rgba(217, 160, 122, 0.08);
+      border: 1px solid var(--border-mid);
+      border-radius: 8px;
+      margin-top: 12px;
+    }
+
+    .thinking-dots {
+      display: flex;
+      gap: 4px;
+    }
+
+    .thinking-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--rose-gold);
+      border-radius: 50%;
+      animation: thinkingBounce 1.4s ease-in-out infinite;
+    }
+
+    .thinking-dot:nth-child(2) { animation-delay: 0.2s; }
+    .thinking-dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes thinkingBounce {
+      0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+      30% { transform: translateY(-6px); opacity: 1; }
+    }
+
+    .thinking-text {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    /* ============================================================================
+       LIVE WORKSPACE (Right Panel)
+       ============================================================================ */
+
+    .workspace-container {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .workspace-tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 12px;
+    }
+
+    .workspace-tab {
+      padding: 6px 12px;
+      background: var(--bg-input);
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px 6px 0 0;
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.3s var(--ease-smooth);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .workspace-tab:hover {
+      color: var(--text-secondary);
+    }
+
+    .workspace-tab.active {
+      background: var(--bg-panel);
+      border-color: var(--rose-gold);
+      border-bottom-color: transparent;
+      color: var(--rose-gold);
+    }
+
+    .workspace-tab svg {
+      width: 12px;
+      height: 12px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.5;
+    }
+
+    .workspace-tab .live-dot {
+      width: 5px;
+      height: 5px;
+      background: #ff4444;
+      border-radius: 50%;
+      animation: livePulse 1s ease-in-out infinite;
+    }
+
+    @keyframes livePulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* Browser Frame */
+    .browser-frame {
+      flex: 1;
+      background: #0c0a08;
+      border: 1px solid var(--border-mid);
+      border-radius: 10px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .browser-toolbar {
+      height: 28px;
+      background: linear-gradient(180deg, #2a2420 0%, #1e1a16 100%);
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+      gap: 6px;
+    }
+
+    .browser-dots {
+      display: flex;
+      gap: 5px;
+    }
+
+    .browser-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+    }
+
+    .browser-dot.red { background: #ff5f57; }
+    .browser-dot.yellow { background: #ffbd2e; }
+    .browser-dot.green { background: #28ca42; }
+
+    .browser-url {
+      flex: 1;
+      height: 18px;
+      background: var(--bg-input);
+      border-radius: 4px;
+      margin: 0 6px;
+      display: flex;
+      align-items: center;
+      padding: 0 8px;
+      font-size: 10px;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    .browser-url svg {
+      width: 9px;
+      height: 9px;
+      stroke: var(--status-active);
+      fill: none;
+      margin-right: 5px;
+    }
+
+    .browser-content {
+      flex: 1;
+      position: relative;
+      padding: 12px;
+      background: #1a1714;
+      overflow: hidden;
+    }
+
+    /* Document Preview */
+    .document-preview {
+      background: #ffffff;
+      border-radius: 4px;
+      padding: 16px;
+      height: 100%;
+      overflow-y: auto;
+      font-family: var(--font-display);
+      color: #1a1410;
+      font-size: 11px;
+      line-height: 1.7;
+    }
+
+    .doc-header {
+      text-align: center;
+      border-bottom: 2px solid #d9a07a;
+      padding-bottom: 12px;
+      margin-bottom: 12px;
+    }
+
+    .doc-header h1 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #1a1410;
+      margin-bottom: 4px;
+    }
+
+    .doc-header p {
+      font-size: 9px;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .doc-section {
+      margin-bottom: 12px;
+    }
+
+    .doc-section h2 {
+      font-size: 11px;
+      font-weight: 700;
+      color: #1a1410;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .doc-section h2::before {
+      content: '';
+      width: 3px;
+      height: 12px;
+      background: #d9a07a;
+      border-radius: 2px;
+    }
+
+    .doc-section p {
+      color: #333;
+    }
+
+    .doc-typing-cursor {
+      display: inline-block;
+      width: 2px;
+      height: 12px;
+      background: #d9a07a;
+      animation: cursorBlink 0.8s ease-in-out infinite;
+      vertical-align: middle;
+      margin-left: 2px;
+    }
+
+    @keyframes cursorBlink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    /* Agent Cursor */
+    .agent-cursor {
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      pointer-events: none;
+      z-index: 100;
+      transition: all 0.3s var(--ease-smooth);
+    }
+
+    .agent-cursor svg {
+      width: 18px;
+      height: 18px;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+    }
+
+    /* ============================================================================
+       DEPARTMENTS BAR
+       ============================================================================ */
+
+    .departments-bar {
+      padding: 14px 20px;
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      align-items: center;
+    }
+
+    .dept-label {
+      font-size: 9px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-right: 8px;
+      white-space: nowrap;
+    }
+
+    .dept-chip {
+      padding: 7px 14px;
+      background: var(--bg-input);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.3s var(--ease-smooth);
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .dept-chip:hover {
+      border-color: var(--border-mid);
+      color: var(--text-primary);
+    }
+
+    .dept-chip.active {
+      background: linear-gradient(135deg, var(--rose-gold) 0%, var(--rose-gold-dark) 100%);
+      border-color: transparent;
+      color: #1a1410;
+      box-shadow: 0 0 20px var(--glow-soft);
+    }
+
+    .dept-chip.locked {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .dept-chip .lock-icon {
+      width: 10px;
+      height: 10px;
+    }
+
+    /* ============================================================================
+       CONVERSION POINTS
+       ============================================================================ */
+
+    .conversion-bar {
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .savings-stat {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .savings-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--status-active);
+      text-shadow: 0 0 15px var(--status-glow);
+    }
+
+    .savings-label {
+      font-size: 10px;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+    }
+
+    .savings-comparison {
+      font-size: 11px;
+      color: var(--text-secondary);
+      padding: 10px 16px;
+      background: rgba(125, 211, 160, 0.08);
+      border: 1px solid rgba(125, 211, 160, 0.2);
+      border-radius: 8px;
+    }
+
+    .savings-comparison strong {
+      color: var(--status-active);
+    }
+
+    .conversion-cta {
+      margin-left: auto;
+    }
+
+    /* ============================================================================
+       FLOATING CTA
+       ============================================================================ */
+
+    .floating-cta {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 1000;
+      animation: floatIn 0.5s ease-out;
+    }
+
+    @keyframes floatIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .floating-cta-btn {
+      padding: 14px 28px;
+      background: linear-gradient(135deg, var(--rose-gold) 0%, var(--rose-gold-dark) 100%);
+      border: none;
+      border-radius: 50px;
+      color: #1a1410;
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 8px 32px var(--glow-rose), 0 4px 16px rgba(0,0,0,0.3);
+      transition: all 0.3s var(--ease-smooth);
+      text-decoration: none;
+    }
+
+    .floating-cta-btn:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 12px 40px var(--glow-rose-intense), 0 6px 20px rgba(0,0,0,0.4);
+    }
+
+    .floating-cta-btn svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+    }
+
+    /* ============================================================================
+       UPGRADE MODAL
+       ============================================================================ */
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(10px);
+      z-index: 2000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      animation: modalFadeIn 0.3s ease;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    @keyframes modalFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .upgrade-modal {
+      max-width: 500px;
+      width: 100%;
+      padding: 32px;
+      animation: modalSlideUp 0.4s var(--ease-bounce);
+    }
+
+    @keyframes modalSlideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .modal-icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 20px;
+      background: linear-gradient(135deg, var(--rose-gold) 0%, var(--rose-gold-dark) 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 30px var(--glow-rose);
+    }
+
+    .modal-icon svg {
+      width: 32px;
+      height: 32px;
+      stroke: #1a1410;
+      fill: none;
+      stroke-width: 2;
+    }
+
+    .modal-title {
+      text-align: center;
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text-bright);
+      margin-bottom: 12px;
+    }
+
+    .modal-subtitle {
+      text-align: center;
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+
+    .modal-features {
+      margin-bottom: 24px;
+    }
+
+    .modal-feature {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .modal-feature:last-child {
+      border-bottom: none;
+    }
+
+    .modal-feature svg {
+      width: 18px;
+      height: 18px;
+      stroke: var(--status-active);
+      fill: none;
+      stroke-width: 2;
+      flex-shrink: 0;
+    }
+
+    .modal-feature span {
+      font-size: 13px;
+      color: var(--text-primary);
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    .modal-actions .chrome-btn {
+      flex: 1;
+      justify-content: center;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 32px;
+      height: 32px;
+      background: var(--bg-input);
+      border: 1px solid var(--border-mid);
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s var(--ease-smooth);
+    }
+
+    .modal-close:hover {
+      background: var(--bg-panel);
+      border-color: var(--rose-gold);
+    }
+
+    .modal-close svg {
+      width: 16px;
+      height: 16px;
+      stroke: var(--text-secondary);
+      fill: none;
+      stroke-width: 2;
+    }
+
+    /* ============================================================================
+       VIDEO CONTROLS
+       ============================================================================ */
+
+    .demo-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: var(--bg-input);
+      border-radius: 10px;
+      border: 1px solid var(--border-subtle);
+      margin-top: 12px;
+    }
+
+    .control-btn {
+      width: 36px;
+      height: 36px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border-mid);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s var(--ease-smooth);
+    }
+
+    .control-btn:hover {
+      border-color: var(--rose-gold);
+      background: var(--bg-card);
+    }
+
+    .control-btn svg {
+      width: 16px;
+      height: 16px;
+      stroke: var(--text-secondary);
+      fill: none;
+      stroke-width: 2;
+    }
+
+    .control-btn:hover svg {
+      stroke: var(--rose-gold-light);
+    }
+
+    .control-btn.playing {
+      background: var(--rose-gold);
+      border-color: var(--rose-gold);
+    }
+
+    .control-btn.playing svg {
+      stroke: #1a1410;
+    }
+
+    .demo-timeline {
+      flex: 1;
+      height: 6px;
+      background: var(--bg-panel);
+      border-radius: 3px;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .timeline-fill {
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      background: linear-gradient(90deg, var(--rose-gold-dark), var(--rose-gold));
+      border-radius: 3px;
+      width: 0%;
+      transition: width 0.3s linear;
+    }
+
+    .time-display {
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+      min-width: 80px;
+      text-align: right;
+    }
+
+    /* ============================================================================
+       RESPONSIVE
+       ============================================================================ */
+
+    @media (max-width: 1024px) {
+      .panels-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .panel {
+        min-height: 350px;
+      }
+
+      .header-actions {
+        display: none;
+      }
+
+      .conversion-bar {
+        flex-direction: column;
+        align-items: stretch;
+        text-align: center;
+      }
+
+      .conversion-cta {
+        margin-left: 0;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .demo-app {
+        padding: 12px;
+        gap: 12px;
+      }
+
+      .demo-header {
+        padding: 12px 16px;
+        flex-wrap: wrap;
+      }
+
+      .brand-title {
+        font-size: 20px;
+      }
+
+      .command-wrapper {
+        flex-direction: column;
+      }
+
+      .progress-timeline {
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .progress-line {
+        display: none;
+      }
+
+      .progress-step {
+        flex: 0 0 auto;
+        flex-direction: row;
+        gap: 8px;
+      }
+
+      .floating-cta {
+        bottom: 16px;
+        right: 16px;
+        left: 16px;
+      }
+
+      .floating-cta-btn {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-app">
+    <!-- Demo Header -->
+    <div class="morphic-panel demo-header">
+      <div class="morphic-inner"></div>
+
+      <div class="demo-badge">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="5 3 19 12 5 21 5 3"/>
+        </svg>
+        Live Demo - No Signup Required
+      </div>
+
+      <a href="/" class="logo-link">
+        <img src="/images/logo.png" alt="Alabobai" class="logo logo-pulse">
+      </a>
+
+      <div class="brand-text">
+        <div class="brand-title"><strong>Alabobai</strong></div>
+        <div class="brand-subtitle">Interactive Demo</div>
+      </div>
+
+      <div class="header-actions">
+        <div class="status-badge">
+          <div class="status-dot"></div>
+          Demo Active
+        </div>
+        <a href="../auth/signup.html" class="chrome-btn">Start Free Trial</a>
+      </div>
+    </div>
+
+    <!-- Scenario Tabs -->
+    <div class="morphic-panel scenario-tabs" id="scenarioTabs">
+      <div class="morphic-inner"></div>
+
+      <button class="scenario-tab active" data-scenario="pitch">
+        <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        SaaS Pitch Deck
+      </button>
+      <button class="scenario-tab" data-scenario="legal">
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Draft an NDA
+      </button>
+      <button class="scenario-tab" data-scenario="finance">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        5-Year Projections
+      </button>
+      <button class="scenario-tab" data-scenario="marketing">
+        <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        Product Launch
+      </button>
+      <button class="scenario-tab" data-scenario="development">
+        <svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        REST API
+      </button>
+    </div>
+
+    <!-- Command Input -->
+    <div class="morphic-panel command-section">
+      <div class="morphic-inner"></div>
+      <div class="command-wrapper">
+        <div class="command-input-container">
+          <input type="text" class="command-input" id="commandInput" placeholder="Try your own command..." readonly>
+        </div>
+        <button class="chrome-btn" id="executeBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="5 3 19 12 5 21 5 3"/>
+          </svg>
+          Execute
+        </button>
+        <button class="chrome-btn chrome-btn-secondary" id="restartBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="1 4 1 10 7 10"/>
+            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+          </svg>
+          Restart
+        </button>
+      </div>
+    </div>
+
+    <!-- Progress Indicator -->
+    <div class="progress-section">
+      <div class="progress-timeline" id="progressTimeline">
+        <div class="progress-step" data-step="1">
+          <div class="step-indicator">1</div>
+          <div class="step-label">Analyzing Request</div>
+        </div>
+        <div class="progress-line"></div>
+        <div class="progress-step" data-step="2">
+          <div class="step-indicator">2</div>
+          <div class="step-label">Processing Data</div>
+        </div>
+        <div class="progress-line"></div>
+        <div class="progress-step" data-step="3">
+          <div class="step-indicator">3</div>
+          <div class="step-label">Generating Document</div>
+        </div>
+        <div class="progress-line"></div>
+        <div class="progress-step" data-step="4">
+          <div class="step-indicator">4</div>
+          <div class="step-label">Formatting Output</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Panels -->
+    <div class="panels-grid">
+      <!-- Neural Stream Panel -->
+      <div class="morphic-panel panel">
+        <div class="morphic-inner"></div>
+        <div class="panel-header">
+          <div class="panel-icon">
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M12 6v6l4 2"/>
+            </svg>
+          </div>
+          <span class="panel-title">Neural Stream</span>
+          <span class="panel-badge">Processing</span>
+        </div>
+        <div class="panel-content">
+          <div class="neural-stream" id="neuralStream">
+            <!-- Code will be injected here -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Workspace Panel -->
+      <div class="morphic-panel panel">
+        <div class="morphic-inner"></div>
+        <div class="panel-header">
+          <div class="panel-icon">
+            <svg viewBox="0 0 24 24">
+              <rect x="2" y="3" width="20" height="14" rx="2"/>
+              <line x1="8" y1="21" x2="16" y2="21"/>
+              <line x1="12" y1="17" x2="12" y2="21"/>
+            </svg>
+          </div>
+          <span class="panel-title">Live Workspace</span>
+          <div style="margin-left: auto; display: flex; align-items: center; gap: 6px;">
+            <div class="live-dot" style="width: 6px; height: 6px; background: #ff4444; border-radius: 50%; animation: livePulse 1s ease-in-out infinite;"></div>
+            <span style="font-size: 9px; color: #ff6666; text-transform: uppercase; letter-spacing: 1px;">Live</span>
+          </div>
+        </div>
+        <div class="panel-content">
+          <div class="workspace-container">
+            <div class="workspace-tabs">
+              <button class="workspace-tab active">
+                <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
+                Document
+                <div class="live-dot"></div>
+              </button>
+              <button class="workspace-tab">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
+                Browser
+              </button>
+              <button class="workspace-tab">
+                <svg viewBox="0 0 24 24"><polyline points="4 17 10 11 4 5"/></svg>
+                Terminal
+              </button>
+            </div>
+
+            <div class="browser-frame">
+              <div class="browser-toolbar">
+                <div class="browser-dots">
+                  <div class="browser-dot red"></div>
+                  <div class="browser-dot yellow"></div>
+                  <div class="browser-dot green"></div>
+                </div>
+                <div class="browser-url">
+                  <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                  <span id="browserUrlText">docs.alabobai.com/output</span>
+                </div>
+              </div>
+              <div class="browser-content">
+                <div class="document-preview" id="documentPreview">
+                  <!-- Document content will be injected here -->
+                </div>
+                <div class="agent-cursor" id="agentCursor" style="top: 30%; left: 20%;">
+                  <svg viewBox="0 0 24 24" fill="#d9a07a" stroke="#1a1410" stroke-width="1">
+                    <path d="M5.5 3.21V20.8c0 .45.54.67.85.35l4.86-4.86a.5.5 0 0 1 .35-.15h6.87c.48 0 .72-.58.38-.92L6.35 2.88a.5.5 0 0 0-.85.33z"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <div class="demo-controls">
+              <button class="control-btn playing" id="playPauseBtn">
+                <svg viewBox="0 0 24 24" id="pauseIcon"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                <svg viewBox="0 0 24 24" id="playIcon" style="display: none;"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              </button>
+              <div class="demo-timeline">
+                <div class="timeline-fill" id="timelineFill"></div>
+              </div>
+              <div class="time-display" id="timeDisplay">00:00 / 00:47</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Departments Bar -->
+    <div class="morphic-panel departments-bar">
+      <div class="morphic-inner"></div>
+      <span class="dept-label">Departments:</span>
+      <button class="dept-chip active" data-dept="executive">Executive</button>
+      <button class="dept-chip" data-dept="legal">Legal</button>
+      <button class="dept-chip" data-dept="finance">Finance</button>
+      <button class="dept-chip locked" data-dept="funding">
+        Funding
+        <svg class="lock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="11" width="18" height="11" rx="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+      </button>
+      <button class="dept-chip locked" data-dept="credit">
+        Credit
+        <svg class="lock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="11" width="18" height="11" rx="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+      </button>
+      <button class="dept-chip" data-dept="marketing">Marketing</button>
+      <button class="dept-chip locked" data-dept="brand">
+        Brand
+        <svg class="lock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="11" width="18" height="11" rx="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+      </button>
+      <button class="dept-chip" data-dept="sales">Sales</button>
+      <button class="dept-chip" data-dept="development">Development</button>
+      <button class="dept-chip locked" data-dept="hr">
+        HR
+        <svg class="lock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="11" width="18" height="11" rx="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+      </button>
+      <button class="dept-chip locked" data-dept="operations">
+        Operations
+        <svg class="lock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="11" width="18" height="11" rx="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+      </button>
+      <button class="dept-chip locked" data-dept="support">
+        Support
+        <svg class="lock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="11" width="18" height="11" rx="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Conversion Bar -->
+    <div class="morphic-panel conversion-bar" id="conversionBar">
+      <div class="morphic-inner"></div>
+
+      <div class="savings-stat">
+        <div class="savings-value" id="timeSaved">47 seconds</div>
+        <div class="savings-label">Time to complete</div>
+      </div>
+
+      <div class="savings-comparison">
+        <strong>Lawyers charge $400/hr</strong> for this work. You just watched it done in under a minute.
+      </div>
+
+      <div class="conversion-cta">
+        <a href="../auth/signup.html" class="chrome-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+          Sign Up to Save This Document
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating CTA -->
+  <div class="floating-cta" id="floatingCta" style="display: none;">
+    <a href="../auth/signup.html" class="floating-cta-btn">
+      <svg viewBox="0 0 24 24">
+        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+      </svg>
+      Unlock All 12 Departments
+    </a>
+  </div>
+
+  <!-- Upgrade Modal -->
+  <div class="modal-overlay" id="upgradeModal">
+    <div class="morphic-panel upgrade-modal">
+      <div class="morphic-inner"></div>
+      <button class="modal-close" id="modalClose">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+
+      <div class="modal-icon">
+        <svg viewBox="0 0 24 24">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+        </svg>
+      </div>
+
+      <h2 class="modal-title">Unlock Unlimited Access</h2>
+      <p class="modal-subtitle">You've experienced the power of Alabobai. Ready to unlock everything?</p>
+
+      <div class="modal-features">
+        <div class="modal-feature">
+          <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          <span>All 12 AI Departments</span>
+        </div>
+        <div class="modal-feature">
+          <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          <span>Unlimited commands per month</span>
+        </div>
+        <div class="modal-feature">
+          <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          <span>Save and export all documents</span>
+        </div>
+        <div class="modal-feature">
+          <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          <span>Priority processing queue</span>
+        </div>
+        <div class="modal-feature">
+          <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          <span>24/7 enterprise support</span>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <a href="../auth/signup.html" class="chrome-btn">Start Free Trial</a>
+        <button class="chrome-btn chrome-btn-secondary" id="continueDemoBtn">Continue Demo</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ============================================================================
+    // DEMO SCENARIOS DATA
+    // ============================================================================
+
+    const scenarios = {
+      pitch: {
+        command: "Create a pitch deck for a SaaS startup",
+        department: "Executive",
+        totalTime: 47,
+        steps: [
+          { label: "Analyzing Request", duration: 5000 },
+          { label: "Researching Market Data", duration: 8000 },
+          { label: "Generating Slides", duration: 20000 },
+          { label: "Formatting Output", duration: 14000 }
+        ],
+        neuralCode: [
+          { type: 'comment', text: '// Initializing pitch deck generator...' },
+          { type: 'keyword', text: 'import' },
+          { type: 'normal', text: ' { PitchDeckEngine } ' },
+          { type: 'keyword', text: 'from' },
+          { type: 'string', text: ' "@alabobai/executive"' },
+          { type: 'newline' },
+          { type: 'newline' },
+          { type: 'keyword', text: 'const' },
+          { type: 'normal', text: ' config = {' },
+          { type: 'newline' },
+          { type: 'normal', text: '  industry: ' },
+          { type: 'string', text: '"SaaS"' },
+          { type: 'normal', text: ',' },
+          { type: 'newline' },
+          { type: 'normal', text: '  audience: ' },
+          { type: 'string', text: '"investors"' },
+          { type: 'normal', text: ',' },
+          { type: 'newline' },
+          { type: 'normal', text: '  slides: ' },
+          { type: 'number', text: '12' },
+          { type: 'newline' },
+          { type: 'normal', text: '}' },
+          { type: 'newline' },
+          { type: 'newline' },
+          { type: 'comment', text: '// Generating market analysis...' },
+          { type: 'newline' },
+          { type: 'function', text: 'analyzeMarket' },
+          { type: 'normal', text: '({' },
+          { type: 'newline' },
+          { type: 'normal', text: '  tam: ' },
+          { type: 'string', text: '"$50B"' },
+          { type: 'normal', text: ',' },
+          { type: 'newline' },
+          { type: 'normal', text: '  growthRate: ' },
+          { type: 'number', text: '23.5' },
+          { type: 'normal', text: '%,' },
+          { type: 'newline' },
+          { type: 'normal', text: '  competitors: ' },
+          { type: 'number', text: '15' },
+          { type: 'newline' },
+          { type: 'normal', text: '})' },
+          { type: 'newline' },
+          { type: 'newline' },
+          { type: 'comment', text: '// Building slide deck structure...' },
+          { type: 'newline' },
+          { type: 'function', text: 'generateSlides' },
+          { type: 'normal', text: '([' },
+          { type: 'newline' },
+          { type: 'string', text: '  "Title"' },
+          { type: 'normal', text: ', ' },
+          { type: 'string', text: '"Problem"' },
+          { type: 'normal', text: ', ' },
+          { type: 'string', text: '"Solution"' },
+          { type: 'normal', text: ',' },
+          { type: 'newline' },
+          { type: 'string', text: '  "Market"' },
+          { type: 'normal', text: ', ' },
+          { type: 'string', text: '"Business Model"' },
+          { type: 'normal', text: ', ' },
+          { type: 'string', text: '"Traction"' },
+          { type: 'normal', text: ',' },
+          { type: 'newline' },
+          { type: 'string', text: '  "Team"' },
+          { type: 'normal', text: ', ' },
+          { type: 'string', text: '"Financials"' },
+          { type: 'normal', text: ', ' },
+          { type: 'string', text: '"Ask"' },
+          { type: 'newline' },
+          { type: 'normal', text: '])' }
+        ],
+        document: {
+          title: "SaaS Startup Pitch Deck",
+          subtitle: "Series A Funding Presentation",
+          sections: [
+            {
+              title: "Executive Summary",
+              content: "Our AI-powered platform revolutionizes business operations by automating 85% of repetitive tasks. Current MRR of $250K with 150% YoY growth. Seeking $5M Series A to scale go-to-market."
+            },
+            {
+              title: "The Problem",
+              content: "Enterprises waste 40% of employee time on manual, repetitive tasks. This costs the average company $2.3M annually in lost productivity and leads to 67% employee burnout rates."
+            },
+            {
+              title: "Our Solution",
+              content: "12 specialized AI agents. One subscription. Unlimited output. Enterprise-grade security. Your data stays yours."
+            },
+            {
+              title: "Market Opportunity",
+              content: "TAM: $50B global enterprise automation market. Growing at 23.5% CAGR. Only 12% of enterprises have adopted AI automation - massive greenfield opportunity."
+            },
+            {
+              title: "Business Model",
+              content: "SaaS subscription model. Starter: $99/mo, Professional: $299/mo, Enterprise: Custom. 92% gross margins. LTV:CAC ratio of 4.2x. Net revenue retention of 135%."
+            },
+            {
+              title: "The Ask",
+              content: "$5M Series A at $25M pre-money valuation. Use of funds: 60% Sales & Marketing expansion, 25% Product development, 15% Operations. 18-month runway to Series B metrics."
+            }
+          ]
+        }
+      },
+      legal: {
+        command: "Draft a Non-Disclosure Agreement",
+        department: "Legal",
+        totalTime: 38,
+        steps: [
+          { label: "Parsing Requirements", duration: 4000 },
+          { label: "Loading Templates", duration: 6000 },
+          { label: "Generating Clauses", duration: 18000 },
+          { label: "Legal Review", duration: 10000 }
+        ],
+        neuralCode: [
+          { type: 'comment', text: '// Initializing legal document generator...' },
+          { type: 'keyword', text: 'import' },
+          { type: 'normal', text: ' { NDAGenerator } ' },
+          { type: 'keyword', text: 'from' },
+          { type: 'string', text: ' "@alabobai/legal"' },
+          { type: 'newline' },
+          { type: 'newline' },
+          { type: 'keyword', text: 'const' },
+          { type: 'normal', text: ' nda = ' },
+          { type: 'keyword', text: 'new' },
+          { type: 'function', text: ' NDAGenerator' },
+          { type: 'normal', text: '({' },
+          { type: 'newline' },
+          { type: 'normal', text: '  type: ' },
+          { type: 'string', text: '"mutual"' },
+          { type: 'normal', text: ',' },
+          { type: 'newline' },
+          { type: 'normal', text: '  jurisdiction: ' },
+          { type: 'string', text: '"Delaware"' },
+          { type: 'normal', text: ',' },
+          { type: 'newline' },
+          { type: 'normal', text: '  duration: ' },
+          { type: 'number', text: '24' },
+          { type: 'normal', text: ' // months' },
+          { type: 'newline' },
+          { type: 'normal', text: '})' },
+          { type: 'newline' },
+          { type: 'newline' },
+          { type: 'comment', text: '// Generating standard clauses...' },
+          { type: 'newline' },
+          { type: 'normal', text: 'nda.' },
+          { type: 'function', text: 'addClauses' },
+          { type: 'normal', text: '([' },
+          { type: 'newline' },
+          { type: 'string', text: '  "definitions"' },
+          { type: 'normal', text: ',' },
+          { type: 'newline' },
+          { type: 'string', text: '  "confidentialInfo"' },
+          { type: 'normal', text: ',' },
+          { type: 'newline' },
+          { type: 'string', text: '  "obligations"' },
+          { type: 'normal', text: ',' },
+          { type: 'newline' },
+          { type: 'string', text: '  "exclusions"' },
+          { type: 'normal', text: ',' },
+          { type: 'newline' },
+          { type: 'string', text: '  "termAndTermination"' },
+          { type: 'newline' },
+          { type: 'normal', text: '])' }
+        ],
+        document: {
+          title: "Mutual Non-Disclosure Agreement",
+          subtitle: "Confidential Information Protection",
+          sections: [
+            {
+              title: "1. Definitions",
+              content: '"Confidential Information" means any non-public information disclosed by either party, whether orally, in writing, or by inspection of tangible objects, including but not limited to: trade secrets, business plans, customer lists, financial data, and technical specifications.'
+            },
+            {
+              title: "2. Obligations",
+              content: "The Receiving Party shall: (a) maintain confidentiality using reasonable care; (b) not disclose to third parties without prior written consent; (c) limit access to employees with need-to-know; (d) promptly notify of any unauthorized disclosure."
+            },
+            {
+              title: "3. Exclusions",
+              content: "This Agreement does not apply to information that: (a) was publicly available; (b) was rightfully received from a third party; (c) was independently developed; (d) is required to be disclosed by law."
+            },
+            {
+              title: "4. Term",
+              content: "This Agreement shall remain in effect for twenty-four (24) months from the Effective Date. Confidentiality obligations shall survive termination for an additional period of three (3) years."
+            },
+            {
+              title: "5. Governing Law",
+              content: "This Agreement shall be governed by and construed in accordance with the laws of the State of Delaware, without regard to its conflict of law principles."
+            }
+          ]
+        }
+      },
+      finance: {
+        command: "Create 5-year financial projections",
+        department: "Finance",
+        totalTime: 52,
+        steps: [
+          { label: "Gathering Data", duration: 6000 },
+          { label: "Building Models", duration: 15000 },
+          { label: "Running Scenarios", duration: 20000 },
+          { label: "Generating Report", duration: 11000 }
+        ],
+        neuralCode: [
+          { type: 'comment', text: '// Initializing financial modeling engine...' },
+          { type: 'keyword', text: 'import' },
+          { type: 'normal', text: ' { FinancialModel } ' },
+          { type: 'keyword', text: 'from' },
+          { type: 'string', text: ' "@alabobai/finance"' },
+          { type: 'newline' },
+          { type: 'newline' },
+          { type: 'keyword', text: 'const' },
+          { type: 'normal', text: ' projections = ' },
+          { type: 'keyword', text: 'new' },
+          { type: 'function', text: ' FinancialModel' },
+          { type: 'normal', text: '({' },
+          { type: 'newline' },
+          { type: 'normal', text: '  horizon: ' },
+          { type: 'number', text: '5' },
+          { type: 'normal', text: ', // years' },
+          { type: 'newline' },
+          { type: 'normal', text: '  currency: ' },
+          { type: 'string', text: '"USD"' },
+          { type: 'normal', text: ',' },
+          { type: 'newline' },
+          { type: 'normal', text: '  granularity: ' },
+          { type: 'string', text: '"monthly"' },
+          { type: 'newline' },
+          { type: 'normal', text: '})' },
+          { type: 'newline' },
+          { type: 'newline' },
+          { type: 'comment', text: '// Setting growth assumptions...' },
+          { type: 'newline' },
+          { type: 'normal', text: 'projections.' },
+          { type: 'function', text: 'setAssumptions' },
+          { type: 'normal', text: '({' },
+          { type: 'newline' },
+          { type: 'normal', text: '  revenueGrowth: ' },
+          { type: 'number', text: '150' },
+          { type: 'normal', text: '%,' },
+          { type: 'newline' },
+          { type: 'normal', text: '  grossMargin: ' },
+          { type: 'number', text: '85' },
+          { type: 'normal', text: '%,' },
+          { type: 'newline' },
+          { type: 'normal', text: '  churnRate: ' },
+          { type: 'number', text: '2.5' },
+          { type: 'normal', text: '%' },
+          { type: 'newline' },
+          { type: 'normal', text: '})' }
+        ],
+        document: {
+          title: "5-Year Financial Projections",
+          subtitle: "FY2024 - FY2028 Forecast Model",
+          sections: [
+            {
+              title: "Revenue Projections",
+              content: "Year 1: $3.0M | Year 2: $7.5M | Year 3: $18.8M | Year 4: $42.0M | Year 5: $94.5M. Compound Annual Growth Rate (CAGR): 135%. Revenue mix: 70% subscriptions, 20% enterprise licenses, 10% professional services."
+            },
+            {
+              title: "Cost Structure",
+              content: "Gross Margin: 85% (improving to 88% by Year 5). Operating Expenses: R&D 25%, S&M 40%, G&A 15%. Path to profitability in Year 4 with 8% EBITDA margin, scaling to 22% by Year 5."
+            },
+            {
+              title: "Key Metrics",
+              content: "Customer Acquisition Cost (CAC): $2,400 declining to $1,800. Lifetime Value (LTV): $12,000 growing to $18,500. LTV:CAC Ratio: 5.0x to 10.3x. Net Revenue Retention: 135%."
+            },
+            {
+              title: "Cash Flow Analysis",
+              content: "Initial burn: $150K/month. Break-even: Month 36. Peak cash requirement: $8.5M. Cash position EOY5: $45M+ with positive operating cash flow of $2.1M/month."
+            },
+            {
+              title: "Sensitivity Analysis",
+              content: "Base case assumes 150% YoY growth. Bear case (100% growth): Still profitable by Year 5. Bull case (200% growth): $150M revenue by Year 5. Key risk factors: churn rate, CAC efficiency."
+            }
+          ]
+        }
+      },
+      marketing: {
+        command: "Write a product launch campaign",
+        department: "Marketing",
+        totalTime: 41,
+        steps: [
+          { label: "Market Research", duration: 8000 },
+          { label: "Strategy Development", duration: 12000 },
+          { label: "Content Creation", duration: 15000 },
+          { label: "Campaign Assembly", duration: 6000 }
+        ],
+        neuralCode: [
+          { type: 'comment', text: '// Initializing campaign generator...' },
+          { type: 'keyword', text: 'import' },
+          { type: 'normal', text: ' { CampaignEngine } ' },
+          { type: 'keyword', text: 'from' },
+          { type: 'string', text: ' "@alabobai/marketing"' },
+          { type: 'newline' },
+          { type: 'newline' },
+          { type: 'keyword', text: 'const' },
+          { type: 'normal', text: ' campaign = ' },
+          { type: 'keyword', text: 'new' },
+          { type: 'function', text: ' CampaignEngine' },
+          { type: 'normal', text: '({' },
+          { type: 'newline' },
+          { type: 'normal', text: '  type: ' },
+          { type: 'string', text: '"productLaunch"' },
+          { type: 'normal', text: ',' },
+          { type: 'newline' },
+          { type: 'normal', text: '  audience: ' },
+          { type: 'string', text: '"B2B enterprise"' },
+          { type: 'normal', text: ',' },
+          { type: 'newline' },
+          { type: 'normal', text: '  channels: [' },
+          { type: 'string', text: '"email"' },
+          { type: 'normal', text: ', ' },
+          { type: 'string', text: '"social"' },
+          { type: 'normal', text: ', ' },
+          { type: 'string', text: '"PR"' },
+          { type: 'normal', text: ']' },
+          { type: 'newline' },
+          { type: 'normal', text: '})' },
+          { type: 'newline' },
+          { type: 'newline' },
+          { type: 'comment', text: '// Generating campaign assets...' },
+          { type: 'newline' },
+          { type: 'normal', text: 'campaign.' },
+          { type: 'function', text: 'createAssets' },
+          { type: 'normal', text: '({' },
+          { type: 'newline' },
+          { type: 'normal', text: '  emails: ' },
+          { type: 'number', text: '6' },
+          { type: 'normal', text: ',' },
+          { type: 'newline' },
+          { type: 'normal', text: '  socialPosts: ' },
+          { type: 'number', text: '20' },
+          { type: 'normal', text: ',' },
+          { type: 'newline' },
+          { type: 'normal', text: '  pressRelease: ' },
+          { type: 'keyword', text: 'true' },
+          { type: 'newline' },
+          { type: 'normal', text: '})' }
+        ],
+        document: {
+          title: "Product Launch Campaign",
+          subtitle: "Alabobai Go-To-Market Strategy",
+          sections: [
+            {
+              title: "Campaign Overview",
+              content: "90-day launch campaign targeting enterprise decision-makers. Theme: 'The AI Company That Works.' Goal: 5,000 qualified leads, 500 demos, 100 enterprise trials. Budget: $150K across digital, events, and PR."
+            },
+            {
+              title: "Phase 1: Teaser (Weeks 1-2)",
+              content: "Mystery campaign: 'Something is coming that will change how you work.' Countdown timer on landing page. Exclusive early access waitlist. Target: 2,000 email signups. Influencer partnerships with tech leaders."
+            },
+            {
+              title: "Phase 2: Launch (Weeks 3-4)",
+              content: "Full product reveal. Press release to 150+ publications. Product Hunt launch (target: top 3). LinkedIn campaign targeting C-suite. Live demo webinar series. Launch discount: 25% off annual plans."
+            },
+            {
+              title: "Phase 3: Sustain (Weeks 5-12)",
+              content: "Customer success stories and case studies. ROI calculator tool. Industry-specific content series. Partner channel activation. Retargeting campaigns. Weekly product tips newsletter."
+            },
+            {
+              title: "Key Messages",
+              content: "1. 'Execute, Don't Advise' - AI that completes tasks, not just suggests. 2. '12 Departments, Zero Hiring' - Full business support without headcount. 3. '47 Seconds vs. 4 Hours' - Speed of AI vs. traditional methods."
+            }
+          ]
+        }
+      },
+      development: {
+        command: "Build a REST API for user management",
+        department: "Development",
+        totalTime: 55,
+        steps: [
+          { label: "Designing Schema", duration: 8000 },
+          { label: "Generating Code", duration: 25000 },
+          { label: "Writing Tests", duration: 15000 },
+          { label: "Documentation", duration: 7000 }
+        ],
+        neuralCode: [
+          { type: 'comment', text: '// Initializing API generator...' },
+          { type: 'keyword', text: 'import' },
+          { type: 'normal', text: ' { APIGenerator } ' },
+          { type: 'keyword', text: 'from' },
+          { type: 'string', text: ' "@alabobai/development"' },
+          { type: 'newline' },
+          { type: 'newline' },
+          { type: 'keyword', text: 'const' },
+          { type: 'normal', text: ' api = ' },
+          { type: 'keyword', text: 'new' },
+          { type: 'function', text: ' APIGenerator' },
+          { type: 'normal', text: '({' },
+          { type: 'newline' },
+          { type: 'normal', text: '  framework: ' },
+          { type: 'string', text: '"Express"' },
+          { type: 'normal', text: ',' },
+          { type: 'newline' },
+          { type: 'normal', text: '  database: ' },
+          { type: 'string', text: '"PostgreSQL"' },
+          { type: 'normal', text: ',' },
+          { type: 'newline' },
+          { type: 'normal', text: '  auth: ' },
+          { type: 'string', text: '"JWT"' },
+          { type: 'newline' },
+          { type: 'normal', text: '})' },
+          { type: 'newline' },
+          { type: 'newline' },
+          { type: 'comment', text: '// Defining user schema...' },
+          { type: 'newline' },
+          { type: 'normal', text: 'api.' },
+          { type: 'function', text: 'defineModel' },
+          { type: 'normal', text: '(' },
+          { type: 'string', text: '"User"' },
+          { type: 'normal', text: ', {' },
+          { type: 'newline' },
+          { type: 'normal', text: '  id: ' },
+          { type: 'string', text: '"uuid"' },
+          { type: 'normal', text: ',' },
+          { type: 'newline' },
+          { type: 'normal', text: '  email: ' },
+          { type: 'string', text: '"string"' },
+          { type: 'normal', text: ',' },
+          { type: 'newline' },
+          { type: 'normal', text: '  password: ' },
+          { type: 'string', text: '"hash"' },
+          { type: 'normal', text: ',' },
+          { type: 'newline' },
+          { type: 'normal', text: '  role: ' },
+          { type: 'string', text: '"enum"' },
+          { type: 'newline' },
+          { type: 'normal', text: '})' },
+          { type: 'newline' },
+          { type: 'newline' },
+          { type: 'comment', text: '// Generating CRUD endpoints...' },
+          { type: 'newline' },
+          { type: 'normal', text: 'api.' },
+          { type: 'function', text: 'generateEndpoints' },
+          { type: 'normal', text: '([' },
+          { type: 'newline' },
+          { type: 'string', text: '  "GET /users"' },
+          { type: 'normal', text: ',' },
+          { type: 'newline' },
+          { type: 'string', text: '  "POST /users"' },
+          { type: 'normal', text: ',' },
+          { type: 'newline' },
+          { type: 'string', text: '  "PUT /users/:id"' },
+          { type: 'normal', text: ',' },
+          { type: 'newline' },
+          { type: 'string', text: '  "DELETE /users/:id"' },
+          { type: 'newline' },
+          { type: 'normal', text: '])' }
+        ],
+        document: {
+          title: "User Management REST API",
+          subtitle: "API Documentation v1.0",
+          sections: [
+            {
+              title: "Authentication",
+              content: "All endpoints require JWT Bearer token. POST /auth/login to obtain token. Token expires in 24 hours. Refresh tokens available at POST /auth/refresh. Rate limit: 1000 requests/minute."
+            },
+            {
+              title: "GET /api/users",
+              content: "Returns paginated list of users. Query params: page (default: 1), limit (default: 20), sort (field:asc|desc), filter (field:value). Response includes total count and pagination metadata."
+            },
+            {
+              title: "POST /api/users",
+              content: "Creates new user. Required fields: email, password. Optional: name, role, avatar. Password auto-hashed with bcrypt. Returns created user object (password excluded). Triggers welcome email."
+            },
+            {
+              title: "PUT /api/users/:id",
+              content: "Updates existing user. Partial updates supported. Admin role required for role changes. Password change requires current_password verification. Returns updated user object."
+            },
+            {
+              title: "DELETE /api/users/:id",
+              content: "Soft deletes user (sets deleted_at timestamp). Admin role required. Cascades to related records. Returns 204 No Content on success. User data retained for 30 days before hard delete."
+            },
+            {
+              title: "Error Handling",
+              content: "Standard HTTP status codes. 400: Validation error. 401: Unauthorized. 403: Forbidden. 404: Not found. 429: Rate limited. 500: Server error. All errors return JSON with code and message."
+            }
+          ]
+        }
+      }
+    };
+
+    // ============================================================================
+    // DEMO STATE
+    // ============================================================================
+
+    let currentScenario = 'pitch';
+    let isPlaying = true;
+    let isPaused = false;
+    let currentStep = 0;
+    let elapsedTime = 0;
+    let demoInterval = null;
+    let typingTimeout = null;
+    let codeIndex = 0;
+    let documentCharIndex = 0;
+    let hasShownFloatingCta = false;
+
+    // ============================================================================
+    // DOM ELEMENTS
+    // ============================================================================
+
+    const commandInput = document.getElementById('commandInput');
+    const neuralStream = document.getElementById('neuralStream');
+    const documentPreview = document.getElementById('documentPreview');
+    const progressTimeline = document.getElementById('progressTimeline');
+    const timelineFill = document.getElementById('timelineFill');
+    const timeDisplay = document.getElementById('timeDisplay');
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    const pauseIcon = document.getElementById('pauseIcon');
+    const playIcon = document.getElementById('playIcon');
+    const floatingCta = document.getElementById('floatingCta');
+    const upgradeModal = document.getElementById('upgradeModal');
+    const agentCursor = document.getElementById('agentCursor');
+    const conversionBar = document.getElementById('conversionBar');
+
+    // ============================================================================
+    // INITIALIZE DEMO
+    // ============================================================================
+
+    function initDemo() {
+      const scenario = scenarios[currentScenario];
+
+      // Set command input
+      commandInput.value = scenario.command;
+      commandInput.classList.add('typing');
+
+      // Reset state
+      currentStep = 0;
+      elapsedTime = 0;
+      codeIndex = 0;
+      documentCharIndex = 0;
+
+      // Clear displays
+      neuralStream.innerHTML = '';
+      documentPreview.innerHTML = '';
+      timelineFill.style.width = '0%';
+
+      // Reset progress steps
+      document.querySelectorAll('.progress-step').forEach((step, index) => {
+        step.classList.remove('active', 'completed');
+        const labels = scenario.steps.map(s => s.label);
+        step.querySelector('.step-label').textContent = labels[index] || `Step ${index + 1}`;
+      });
+
+      // Update time display
+      updateTimeDisplay();
+
+      // Update conversion bar
+      document.getElementById('timeSaved').textContent = `${scenario.totalTime} seconds`;
+
+      // Start demo after brief delay
+      setTimeout(() => {
+        commandInput.classList.remove('typing');
+        startDemo();
+      }, 1500);
+    }
+
+    function startDemo() {
+      if (demoInterval) clearInterval(demoInterval);
+
+      const scenario = scenarios[currentScenario];
+      isPlaying = true;
+      updatePlayPauseButton();
+
+      // Start progress tracking
+      demoInterval = setInterval(() => {
+        if (!isPaused) {
+          elapsedTime += 100;
+          updateProgress();
+          updateTimeDisplay();
+
+          if (elapsedTime >= scenario.totalTime * 1000) {
+            clearInterval(demoInterval);
+            completeDemo();
+          }
+        }
+      }, 100);
+
+      // Start neural stream
+      streamNeuralCode();
+
+      // Start document generation
+      setTimeout(() => {
+        generateDocument();
+      }, scenario.steps[0].duration);
+
+      // Animate cursor
+      animateCursor();
+    }
+
+    function updateProgress() {
+      const scenario = scenarios[currentScenario];
+      const totalTime = scenario.totalTime * 1000;
+      const progress = (elapsedTime / totalTime) * 100;
+
+      timelineFill.style.width = `${progress}%`;
+
+      // Update steps
+      let accumulatedTime = 0;
+      scenario.steps.forEach((step, index) => {
+        const stepElement = document.querySelector(`.progress-step[data-step="${index + 1}"]`);
+        const lineElement = stepElement?.nextElementSibling;
+
+        if (elapsedTime >= accumulatedTime && elapsedTime < accumulatedTime + step.duration) {
+          stepElement?.classList.add('active');
+          stepElement?.classList.remove('completed');
+          if (lineElement?.classList.contains('progress-line')) {
+            lineElement.classList.add('active');
+            lineElement.classList.remove('filled');
+          }
+        } else if (elapsedTime >= accumulatedTime + step.duration) {
+          stepElement?.classList.remove('active');
+          stepElement?.classList.add('completed');
+          if (lineElement?.classList.contains('progress-line')) {
+            lineElement.classList.remove('active');
+            lineElement.classList.add('filled');
+          }
+        }
+
+        accumulatedTime += step.duration;
+      });
+    }
+
+    function updateTimeDisplay() {
+      const scenario = scenarios[currentScenario];
+      const current = Math.floor(elapsedTime / 1000);
+      const total = scenario.totalTime;
+
+      const currentMins = Math.floor(current / 60);
+      const currentSecs = current % 60;
+      const totalMins = Math.floor(total / 60);
+      const totalSecs = total % 60;
+
+      timeDisplay.textContent = `${String(currentMins).padStart(2, '0')}:${String(currentSecs).padStart(2, '0')} / ${String(totalMins).padStart(2, '0')}:${String(totalSecs).padStart(2, '0')}`;
+    }
+
+    function streamNeuralCode() {
+      const scenario = scenarios[currentScenario];
+      const code = scenario.neuralCode;
+
+      if (codeIndex >= code.length || isPaused) {
+        if (codeIndex < code.length) {
+          setTimeout(streamNeuralCode, 100);
+        }
+        return;
+      }
+
+      const token = code[codeIndex];
+      let html = '';
+
+      if (token.type === 'newline') {
+        html = '<br>';
+      } else if (token.type === 'comment') {
+        html = `<span class="code-comment">${token.text}</span>`;
+      } else if (token.type === 'keyword') {
+        html = `<span class="code-keyword">${token.text}</span>`;
+      } else if (token.type === 'function') {
+        html = `<span class="code-function">${token.text}</span>`;
+      } else if (token.type === 'string') {
+        html = `<span class="code-string">${token.text}</span>`;
+      } else if (token.type === 'number') {
+        html = `<span class="code-number">${token.text}</span>`;
+      } else {
+        html = token.text;
+      }
+
+      neuralStream.innerHTML += html;
+      codeIndex++;
+
+      const delay = token.type === 'newline' ? 150 : Math.random() * 50 + 30;
+      setTimeout(streamNeuralCode, delay);
+    }
+
+    function generateDocument() {
+      const scenario = scenarios[currentScenario];
+      const doc = scenario.document;
+
+      // Create document structure
+      let fullHtml = `
+        <div class="doc-header">
+          <h1>${doc.title}</h1>
+          <p>${doc.subtitle}</p>
+        </div>
+      `;
+
+      doc.sections.forEach(section => {
+        fullHtml += `
+          <div class="doc-section">
+            <h2>${section.title}</h2>
+            <p></p>
+          </div>
+        `;
+      });
+
+      documentPreview.innerHTML = fullHtml;
+
+      // Type out content character by character
+      typeDocumentContent(0, 0);
+    }
+
+    function typeDocumentContent(sectionIndex, charIndex) {
+      const scenario = scenarios[currentScenario];
+      const sections = scenario.document.sections;
+
+      if (isPaused) {
+        setTimeout(() => typeDocumentContent(sectionIndex, charIndex), 100);
+        return;
+      }
+
+      if (sectionIndex >= sections.length) return;
+
+      const sectionElements = documentPreview.querySelectorAll('.doc-section p');
+      const currentSection = sectionElements[sectionIndex];
+      const content = sections[sectionIndex].content;
+
+      if (charIndex <= content.length) {
+        currentSection.innerHTML = content.substring(0, charIndex) + '<span class="doc-typing-cursor"></span>';
+
+        const delay = Math.random() * 15 + 5;
+        typingTimeout = setTimeout(() => typeDocumentContent(sectionIndex, charIndex + 1), delay);
+      } else {
+        currentSection.innerHTML = content;
+        setTimeout(() => typeDocumentContent(sectionIndex + 1, 0), 300);
+      }
+    }
+
+    function animateCursor() {
+      if (!isPlaying) return;
+
+      const positions = [
+        { top: '20%', left: '15%' },
+        { top: '35%', left: '60%' },
+        { top: '50%', left: '25%' },
+        { top: '65%', left: '70%' },
+        { top: '40%', left: '40%' },
+        { top: '75%', left: '30%' }
+      ];
+
+      let posIndex = 0;
+
+      const moveCursor = () => {
+        if (!isPlaying || isPaused) {
+          setTimeout(moveCursor, 500);
+          return;
+        }
+
+        const pos = positions[posIndex % positions.length];
+        agentCursor.style.top = pos.top;
+        agentCursor.style.left = pos.left;
+        posIndex++;
+
+        setTimeout(moveCursor, 2000);
+      };
+
+      moveCursor();
+    }
+
+    function completeDemo() {
+      isPlaying = false;
+      updatePlayPauseButton();
+
+      // Show floating CTA after completion
+      if (!hasShownFloatingCta) {
+        setTimeout(() => {
+          floatingCta.style.display = 'block';
+          hasShownFloatingCta = true;
+        }, 1000);
+      }
+
+      // Add thinking indicator at end
+      const thinkingHtml = `
+        <div class="thinking-indicator">
+          <div class="thinking-dots">
+            <div class="thinking-dot"></div>
+            <div class="thinking-dot"></div>
+            <div class="thinking-dot"></div>
+          </div>
+          <span class="thinking-text">Document complete. Ready for export.</span>
+        </div>
+      `;
+      neuralStream.innerHTML += thinkingHtml;
+    }
+
+    function updatePlayPauseButton() {
+      if (isPlaying && !isPaused) {
+        playPauseBtn.classList.add('playing');
+        pauseIcon.style.display = 'block';
+        playIcon.style.display = 'none';
+      } else {
+        playPauseBtn.classList.remove('playing');
+        pauseIcon.style.display = 'none';
+        playIcon.style.display = 'block';
+      }
+    }
+
+    // ============================================================================
+    // EVENT LISTENERS
+    // ============================================================================
+
+    // Scenario tabs
+    document.querySelectorAll('.scenario-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.scenario-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+
+        currentScenario = tab.dataset.scenario;
+
+        // Clear existing demo
+        if (demoInterval) clearInterval(demoInterval);
+        if (typingTimeout) clearTimeout(typingTimeout);
+
+        initDemo();
+      });
+    });
+
+    // Play/Pause
+    playPauseBtn.addEventListener('click', () => {
+      if (elapsedTime >= scenarios[currentScenario].totalTime * 1000) {
+        // Restart if completed
+        initDemo();
+      } else {
+        isPaused = !isPaused;
+        updatePlayPauseButton();
+      }
+    });
+
+    // Restart button
+    document.getElementById('restartBtn').addEventListener('click', () => {
+      if (demoInterval) clearInterval(demoInterval);
+      if (typingTimeout) clearTimeout(typingTimeout);
+      initDemo();
+    });
+
+    // Command input - show upgrade modal when user tries to type
+    commandInput.addEventListener('focus', () => {
+      commandInput.blur();
+      showUpgradeModal();
+    });
+
+    commandInput.addEventListener('click', () => {
+      showUpgradeModal();
+    });
+
+    // Execute button - show upgrade modal
+    document.getElementById('executeBtn').addEventListener('click', () => {
+      showUpgradeModal();
+    });
+
+    // Department chips
+    document.querySelectorAll('.dept-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        if (chip.classList.contains('locked')) {
+          showUpgradeModal();
+          return;
+        }
+
+        document.querySelectorAll('.dept-chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+      });
+    });
+
+    // Workspace tabs
+    document.querySelectorAll('.workspace-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.workspace-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+      });
+    });
+
+    // Modal controls
+    function showUpgradeModal() {
+      upgradeModal.classList.add('active');
+    }
+
+    function hideUpgradeModal() {
+      upgradeModal.classList.remove('active');
+    }
+
+    document.getElementById('modalClose').addEventListener('click', hideUpgradeModal);
+    document.getElementById('continueDemoBtn').addEventListener('click', hideUpgradeModal);
+
+    upgradeModal.addEventListener('click', (e) => {
+      if (e.target === upgradeModal) {
+        hideUpgradeModal();
+      }
+    });
+
+    // Show floating CTA on scroll
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 300 && !hasShownFloatingCta) {
+        floatingCta.style.display = 'block';
+        hasShownFloatingCta = true;
+      }
+    });
+
+    // ============================================================================
+    // INITIALIZE ON LOAD
+    // ============================================================================
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // Start with pitch deck scenario
+      setTimeout(initDemo, 500);
+    });
+  </script>
+</body>
+</html>

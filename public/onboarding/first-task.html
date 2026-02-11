@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your First Task - Alabobai Onboarding</title>
+  <meta name="description" content="Try your first AI task with guided example prompts.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Dynamic Background Styles -->
+  <link rel="stylesheet" href="../css/background.css">
+
+  <style>
+    /* ============================================================================
+       ULTRA AGENT V4.0 - Onboarding Design System
+       ============================================================================ */
+
+    :root {
+      /* Metallic Rose Gold Palette */
+      --rose-gold: #d9a07a;
+      --rose-gold-light: #ecd4c0;
+      --rose-gold-bright: #f0e0d0;
+      --rose-gold-dark: #b8845c;
+      --rose-gold-deep: #8b6442;
+      --copper: #c9956c;
+      --bronze: #a67c52;
+
+      /* Glow Effects */
+      --glow-rose: rgba(217, 160, 122, 0.6);
+      --glow-rose-intense: rgba(217, 160, 122, 0.9);
+      --glow-soft: rgba(217, 160, 122, 0.3);
+
+      /* Backgrounds */
+      --bg-void: #000000;
+      --bg-dark: #0a0808;
+      --bg-card: rgba(12, 10, 8, 0.95);
+      --bg-panel: rgba(18, 14, 12, 0.9);
+      --bg-input: rgba(25, 20, 18, 0.8);
+
+      /* Borders */
+      --border-outer: rgba(217, 160, 122, 0.5);
+      --border-mid: rgba(217, 160, 122, 0.3);
+      --border-inner: rgba(217, 160, 122, 0.15);
+      --border-subtle: rgba(217, 160, 122, 0.08);
+
+      /* Text */
+      --text-bright: #f5ebe0;
+      --text-primary: #e8d5c4;
+      --text-secondary: #a89080;
+      --text-muted: #6b5a4a;
+
+      /* Status */
+      --status-active: #7dd3a0;
+      --status-glow: rgba(125, 211, 160, 0.5);
+
+      /* Fonts */
+      --font-display: 'Inter', -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+
+      /* Animation */
+      --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+      --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-display);
+      background: var(--bg-void);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ============================================================================
+       MORPHIC PANEL SYSTEM
+       ============================================================================ */
+
+    .morphic-panel {
+      background: var(--bg-card);
+      border-radius: 16px;
+      position: relative;
+    }
+
+    .morphic-panel::before {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, var(--rose-gold) 0%, var(--rose-gold-dark) 25%, transparent 50%, var(--rose-gold-deep) 75%, var(--rose-gold) 100%);
+      z-index: -1;
+      opacity: 0.7;
+    }
+
+    .morphic-panel::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 16px;
+      border: 1px solid var(--border-mid);
+      pointer-events: none;
+    }
+
+    /* ============================================================================
+       CHROME BUTTONS
+       ============================================================================ */
+
+    .chrome-btn {
+      position: relative;
+      padding: 16px 40px;
+      background: linear-gradient(180deg, var(--rose-gold-bright) 0%, var(--rose-gold-light) 20%, var(--rose-gold) 50%, var(--rose-gold-dark) 80%, var(--bronze) 100%);
+      border: none;
+      border-radius: 12px;
+      color: #1a1410;
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      transition: all 0.3s var(--ease-smooth);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.4), inset 0 2px 0 rgba(255,255,255,0.3), inset 0 -2px 0 rgba(0,0,0,0.2);
+      text-shadow: 0 1px 0 rgba(255,255,255,0.3);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .chrome-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 50%;
+      background: linear-gradient(180deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 100%);
+      border-radius: 12px 12px 0 0;
+      pointer-events: none;
+    }
+
+    .chrome-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 30px var(--glow-rose), inset 0 2px 0 rgba(255,255,255,0.4);
+    }
+
+    .chrome-btn-secondary {
+      background: var(--bg-input);
+      border: 2px solid var(--border-mid);
+      color: var(--text-primary);
+      box-shadow: none;
+      text-shadow: none;
+    }
+
+    .chrome-btn-secondary::before {
+      display: none;
+    }
+
+    .chrome-btn-secondary:hover {
+      border-color: var(--rose-gold);
+      box-shadow: 0 0 30px var(--glow-soft);
+      transform: translateY(-2px);
+    }
+
+    .chrome-btn svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+    }
+
+    /* ============================================================================
+       ONBOARDING LAYOUT
+       ============================================================================ */
+
+    .onboarding-container {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 24px;
+    }
+
+    /* ============================================================================
+       STEP INDICATOR
+       ============================================================================ */
+
+    .step-indicator {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 48px;
+    }
+
+    .step {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .step-number {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: var(--font-mono);
+      transition: all 0.3s var(--ease-smooth);
+    }
+
+    .step-number.active {
+      background: linear-gradient(135deg, var(--rose-gold), var(--rose-gold-dark));
+      color: #1a1410;
+      box-shadow: 0 0 20px var(--glow-rose);
+    }
+
+    .step-number.completed {
+      background: var(--status-active);
+      color: #1a1410;
+      box-shadow: 0 0 15px var(--status-glow);
+    }
+
+    .step-number.inactive {
+      background: var(--bg-input);
+      border: 1px solid var(--border-mid);
+      color: var(--text-muted);
+    }
+
+    .step-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      display: none;
+    }
+
+    @media (min-width: 600px) {
+      .step-label {
+        display: block;
+      }
+    }
+
+    .step.active .step-label {
+      color: var(--rose-gold-light);
+    }
+
+    .step-connector {
+      width: 40px;
+      height: 2px;
+      background: var(--border-mid);
+    }
+
+    .step-connector.completed {
+      background: var(--status-active);
+    }
+
+    .step-connector.active::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 50%;
+      background: linear-gradient(90deg, var(--rose-gold), transparent);
+      animation: progressPulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes progressPulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* ============================================================================
+       MAIN CARD
+       ============================================================================ */
+
+    .onboarding-card {
+      width: 100%;
+      max-width: 800px;
+      padding: 48px;
+      animation: cardEnter 0.6s var(--ease-smooth);
+    }
+
+    @keyframes cardEnter {
+      from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.98);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    /* ============================================================================
+       HEADER
+       ============================================================================ */
+
+    .card-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .card-title {
+      font-size: clamp(24px, 4vw, 32px);
+      font-weight: 300;
+      color: var(--text-bright);
+      margin-bottom: 8px;
+      text-shadow: 0 0 40px var(--glow-soft);
+    }
+
+    .card-title strong {
+      font-weight: 700;
+      color: var(--rose-gold-light);
+      text-shadow: 0 0 30px var(--glow-rose);
+    }
+
+    .card-subtitle {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    /* ============================================================================
+       COMMAND INPUT
+       ============================================================================ */
+
+    .command-section {
+      margin-bottom: 32px;
+    }
+
+    .command-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--rose-gold-light);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .command-label svg {
+      width: 16px;
+      height: 16px;
+      stroke: var(--rose-gold);
+      fill: none;
+    }
+
+    .command-wrapper {
+      display: flex;
+      gap: 12px;
+    }
+
+    .command-input {
+      flex: 1;
+      padding: 16px 20px;
+      background: var(--bg-input);
+      border: 2px solid var(--border-mid);
+      border-radius: 12px;
+      color: var(--text-bright);
+      font-family: var(--font-display);
+      font-size: 15px;
+      outline: none;
+      transition: all 0.3s var(--ease-smooth);
+    }
+
+    .command-input::placeholder {
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    .command-input:focus {
+      border-color: var(--rose-gold);
+      box-shadow: 0 0 30px var(--glow-soft);
+    }
+
+    .execute-btn {
+      padding: 16px 28px;
+      background: linear-gradient(180deg, var(--rose-gold-bright), var(--rose-gold), var(--rose-gold-dark));
+      border: none;
+      border-radius: 12px;
+      color: #1a1410;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.3s var(--ease-smooth);
+      box-shadow: inset 0 2px 0 rgba(255,255,255,0.3);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .execute-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px var(--glow-rose), inset 0 2px 0 rgba(255,255,255,0.3);
+    }
+
+    .execute-btn svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+    }
+
+    /* ============================================================================
+       EXAMPLE PROMPTS
+       ============================================================================ */
+
+    .prompts-section {
+      margin-bottom: 40px;
+    }
+
+    .prompts-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .prompts-label svg {
+      width: 14px;
+      height: 14px;
+      stroke: var(--text-muted);
+      fill: none;
+    }
+
+    .dept-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .dept-tab {
+      padding: 8px 16px;
+      background: var(--bg-input);
+      border: 1px solid var(--border-subtle);
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.3s var(--ease-smooth);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .dept-tab:hover {
+      border-color: var(--border-mid);
+      color: var(--text-primary);
+    }
+
+    .dept-tab.active {
+      background: linear-gradient(135deg, var(--rose-gold), var(--rose-gold-dark));
+      border-color: transparent;
+      color: #1a1410;
+      box-shadow: 0 0 15px var(--glow-soft);
+    }
+
+    .dept-tab .icon {
+      font-weight: 700;
+    }
+
+    .prompts-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .prompt-card {
+      padding: 16px 20px;
+      background: var(--bg-input);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s var(--ease-smooth);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .prompt-card:hover {
+      /* STATIC - No transform, only border/glow effect */
+      border-color: rgba(217, 160, 122, 0.4);
+      background: rgba(217, 160, 122, 0.05);
+      box-shadow: 0 0 30px rgba(217, 160, 122, 0.15);
+    }
+
+    .prompt-card.selected {
+      border-color: var(--rose-gold);
+      background: rgba(217, 160, 122, 0.1);
+      box-shadow: 0 0 20px var(--glow-soft);
+    }
+
+    .prompt-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border-mid);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .prompt-icon svg {
+      width: 18px;
+      height: 18px;
+      stroke: var(--rose-gold);
+      fill: none;
+      stroke-width: 1.5;
+    }
+
+    .prompt-content {
+      flex: 1;
+    }
+
+    .prompt-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-bright);
+      margin-bottom: 2px;
+    }
+
+    .prompt-text {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    .prompt-arrow {
+      width: 20px;
+      height: 20px;
+      color: var(--text-muted);
+      transition: all 0.3s;
+    }
+
+    .prompt-card:hover .prompt-arrow {
+      /* Arrow color change on hover, no transform */
+      color: var(--rose-gold);
+    }
+
+    /* ============================================================================
+       ACTION BUTTONS
+       ============================================================================ */
+
+    .action-buttons {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .skip-link {
+      display: block;
+      text-align: center;
+      margin-top: 24px;
+      font-size: 13px;
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+
+    .skip-link:hover {
+      color: var(--rose-gold);
+    }
+
+    /* ============================================================================
+       BACKGROUND EFFECTS
+       ============================================================================ */
+
+    .bg-gradient {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .bg-gradient::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(ellipse at 30% 30%, rgba(217, 160, 122, 0.08) 0%, transparent 50%),
+                  radial-gradient(ellipse at 70% 70%, rgba(217, 160, 122, 0.05) 0%, transparent 40%);
+      animation: bgFloat 20s ease-in-out infinite;
+    }
+
+    @keyframes bgFloat {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      50% { transform: translate(-5%, 5%) rotate(5deg); }
+    }
+
+    /* ============================================================================
+       RESPONSIVE
+       ============================================================================ */
+
+    @media (max-width: 600px) {
+      .onboarding-card {
+        padding: 32px 20px;
+      }
+
+      .command-wrapper {
+        flex-direction: column;
+      }
+
+      .execute-btn {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .step-connector {
+        width: 24px;
+      }
+
+      .action-buttons {
+        flex-direction: column;
+      }
+
+      .chrome-btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-gradient"></div>
+
+  <div class="onboarding-container">
+    <!-- Step Indicator -->
+    <div class="step-indicator">
+      <div class="step">
+        <div class="step-number completed">1</div>
+        <span class="step-label">Welcome</span>
+      </div>
+      <div class="step-connector completed"></div>
+      <div class="step">
+        <div class="step-number completed">2</div>
+        <span class="step-label">Departments</span>
+      </div>
+      <div class="step-connector completed"></div>
+      <div class="step active">
+        <div class="step-number active">3</div>
+        <span class="step-label">First Task</span>
+      </div>
+      <div class="step-connector active"></div>
+      <div class="step">
+        <div class="step-number inactive">4</div>
+        <span class="step-label">Complete</span>
+      </div>
+    </div>
+
+    <!-- Main Card -->
+    <div class="morphic-panel onboarding-card">
+      <div class="card-header">
+        <h1 class="card-title">Try Your <strong>First Task</strong></h1>
+        <p class="card-subtitle">Enter a command or click an example below to see your AI team in action.</p>
+      </div>
+
+      <!-- Command Input -->
+      <div class="command-section">
+        <div class="command-label">
+          <svg viewBox="0 0 24 24"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+          Enter Command
+        </div>
+        <div class="command-wrapper">
+          <input type="text" class="command-input" id="commandInput" placeholder="What would you like your AI team to do?">
+          <button class="execute-btn" id="executeBtn">
+            Execute
+            <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Example Prompts -->
+      <div class="prompts-section">
+        <div class="prompts-label">
+          <svg viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+          Or try an example prompt
+        </div>
+
+        <div class="dept-tabs" id="deptTabs">
+          <button class="dept-tab active" data-dept="marketing"><span class="icon">M</span> Marketing</button>
+          <button class="dept-tab" data-dept="legal"><span class="icon">L</span> Legal</button>
+          <button class="dept-tab" data-dept="finance"><span class="icon">F</span> Finance</button>
+          <button class="dept-tab" data-dept="development"><span class="icon">D</span> Development</button>
+          <button class="dept-tab" data-dept="sales"><span class="icon">S</span> Sales</button>
+          <button class="dept-tab" data-dept="hr"><span class="icon">H</span> HR</button>
+        </div>
+
+        <div class="prompts-grid" id="promptsGrid">
+          <!-- Marketing prompts (default) -->
+          <div class="prompt-card" data-prompt="Create a complete social media campaign for launching a new product including post copy, hashtags, and posting schedule for 2 weeks.">
+            <div class="prompt-icon">
+              <svg viewBox="0 0 24 24"><path d="M17 2H7a5 5 0 0 0-5 5v10a5 5 0 0 0 5 5h10a5 5 0 0 0 5-5V7a5 5 0 0 0-5-5z"/><circle cx="12" cy="12" r="3"/><circle cx="17.5" cy="6.5" r="1.5"/></svg>
+            </div>
+            <div class="prompt-content">
+              <div class="prompt-title">Social Media Campaign</div>
+              <div class="prompt-text">Create a 2-week product launch campaign...</div>
+            </div>
+            <svg class="prompt-arrow" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </div>
+
+          <div class="prompt-card" data-prompt="Write a 5-email nurture sequence for leads who downloaded our free guide, moving them toward booking a demo call.">
+            <div class="prompt-icon">
+              <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            </div>
+            <div class="prompt-content">
+              <div class="prompt-title">Email Nurture Sequence</div>
+              <div class="prompt-text">5-email sequence to convert leads to demos...</div>
+            </div>
+            <svg class="prompt-arrow" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </div>
+
+          <div class="prompt-card" data-prompt="Research and analyze our top 3 competitors, including their pricing, positioning, strengths and weaknesses. Recommend differentiation strategies.">
+            <div class="prompt-icon">
+              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </div>
+            <div class="prompt-content">
+              <div class="prompt-title">Competitor Analysis</div>
+              <div class="prompt-text">Deep dive on top 3 competitors with strategy...</div>
+            </div>
+            <svg class="prompt-arrow" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="action-buttons">
+        <a href="departments.html" class="chrome-btn chrome-btn-secondary">
+          <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          Back
+        </a>
+        <a href="complete.html" class="chrome-btn" id="continueBtn">
+          Continue
+          <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+      </div>
+
+      <a href="/app" class="skip-link">Skip to app</a>
+    </div>
+  </div>
+
+  <script>
+    // Example prompts by department
+    const prompts = {
+      marketing: [
+        {
+          title: 'Social Media Campaign',
+          text: 'Create a 2-week product launch campaign...',
+          full: 'Create a complete social media campaign for launching a new product including post copy, hashtags, and posting schedule for 2 weeks.',
+          icon: '<svg viewBox="0 0 24 24"><path d="M17 2H7a5 5 0 0 0-5 5v10a5 5 0 0 0 5 5h10a5 5 0 0 0 5-5V7a5 5 0 0 0-5-5z"/><circle cx="12" cy="12" r="3"/><circle cx="17.5" cy="6.5" r="1.5"/></svg>'
+        },
+        {
+          title: 'Email Nurture Sequence',
+          text: '5-email sequence to convert leads to demos...',
+          full: 'Write a 5-email nurture sequence for leads who downloaded our free guide, moving them toward booking a demo call.',
+          icon: '<svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>'
+        },
+        {
+          title: 'Competitor Analysis',
+          text: 'Deep dive on top 3 competitors with strategy...',
+          full: 'Research and analyze our top 3 competitors, including their pricing, positioning, strengths and weaknesses. Recommend differentiation strategies.',
+          icon: '<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>'
+        }
+      ],
+      legal: [
+        {
+          title: 'NDA Agreement',
+          text: 'Draft a mutual NDA for business discussions...',
+          full: 'Draft a comprehensive mutual NDA agreement for preliminary business discussions with a potential partner or investor.',
+          icon: '<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>'
+        },
+        {
+          title: 'Terms of Service',
+          text: 'Create ToS for a SaaS application...',
+          full: 'Create comprehensive Terms of Service for a B2B SaaS application that handles customer data.',
+          icon: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>'
+        },
+        {
+          title: 'LLC Operating Agreement',
+          text: 'Draft operating agreement for 2 members...',
+          full: 'Draft an LLC operating agreement for a Delaware company with 2 founding members, including profit distribution, voting rights, and exit procedures.',
+          icon: '<svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>'
+        }
+      ],
+      finance: [
+        {
+          title: '5-Year Financial Projection',
+          text: 'Create detailed P&L and cash flow projections...',
+          full: 'Create a detailed 5-year financial projection including P&L, cash flow, and balance sheet for a seed-stage SaaS startup.',
+          icon: '<svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>'
+        },
+        {
+          title: 'Monthly Budget Template',
+          text: 'Build a comprehensive budget spreadsheet...',
+          full: 'Build a comprehensive monthly budget template with expense categories, variance tracking, and automated calculations.',
+          icon: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/><path d="M15 3v18"/></svg>'
+        },
+        {
+          title: 'Unit Economics Analysis',
+          text: 'Calculate CAC, LTV, and profitability metrics...',
+          full: 'Analyze unit economics for a subscription business including CAC, LTV, payback period, and recommendations for improvement.',
+          icon: '<svg viewBox="0 0 24 24"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>'
+        }
+      ],
+      development: [
+        {
+          title: 'REST API Design',
+          text: 'Design a complete REST API with documentation...',
+          full: 'Design a complete REST API for a user management system including endpoints, request/response schemas, and authentication.',
+          icon: '<svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>'
+        },
+        {
+          title: 'Database Schema',
+          text: 'Create an optimized database schema...',
+          full: 'Create a normalized database schema for an e-commerce platform including products, orders, customers, and inventory management.',
+          icon: '<svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>'
+        },
+        {
+          title: 'React Component Library',
+          text: 'Build reusable UI components...',
+          full: 'Create a set of reusable React components including Button, Modal, Form Input, and Card with TypeScript and styling.',
+          icon: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>'
+        }
+      ],
+      sales: [
+        {
+          title: 'Sales Script',
+          text: 'Write a discovery call script...',
+          full: 'Write a complete sales discovery call script including opening, qualification questions, objection handling, and close.',
+          icon: '<svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.574 2.81.7A2 2 0 0 1 22 16.92z"/></svg>'
+        },
+        {
+          title: 'Proposal Template',
+          text: 'Create a winning proposal structure...',
+          full: 'Create a professional proposal template for enterprise software deals including executive summary, solution overview, pricing, and ROI analysis.',
+          icon: '<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>'
+        },
+        {
+          title: 'Follow-up Sequence',
+          text: 'Design a multi-touch follow-up cadence...',
+          full: 'Design a 14-day follow-up sequence for prospects who attended a demo but did not respond, including email and LinkedIn touches.',
+          icon: '<svg viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>'
+        }
+      ],
+      hr: [
+        {
+          title: 'Job Description',
+          text: 'Write a compelling job posting...',
+          full: 'Write a compelling job description for a Senior Software Engineer including responsibilities, requirements, and company culture.',
+          icon: '<svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'
+        },
+        {
+          title: 'Employee Handbook',
+          text: 'Create policies and procedures...',
+          full: 'Create an employee handbook section covering PTO policy, remote work guidelines, and expense reimbursement procedures.',
+          icon: '<svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>'
+        },
+        {
+          title: 'Performance Review',
+          text: 'Design a fair review process...',
+          full: 'Design a quarterly performance review template including self-assessment, manager feedback, goal setting, and development planning.',
+          icon: '<svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>'
+        }
+      ]
+    };
+
+    // DOM elements
+    const deptTabs = document.querySelectorAll('.dept-tab');
+    const promptsGrid = document.getElementById('promptsGrid');
+    const commandInput = document.getElementById('commandInput');
+    const executeBtn = document.getElementById('executeBtn');
+
+    // Render prompts for a department
+    function renderPrompts(dept) {
+      const deptPrompts = prompts[dept] || prompts.marketing;
+      promptsGrid.innerHTML = deptPrompts.map(p => `
+        <div class="prompt-card" data-prompt="${p.full}">
+          <div class="prompt-icon">${p.icon}</div>
+          <div class="prompt-content">
+            <div class="prompt-title">${p.title}</div>
+            <div class="prompt-text">${p.text}</div>
+          </div>
+          <svg class="prompt-arrow" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </div>
+      `).join('');
+
+      // Reattach click handlers
+      document.querySelectorAll('.prompt-card').forEach(card => {
+        card.addEventListener('click', () => {
+          commandInput.value = card.dataset.prompt;
+          commandInput.focus();
+
+          // Visual feedback
+          document.querySelectorAll('.prompt-card').forEach(c => c.classList.remove('selected'));
+          card.classList.add('selected');
+        });
+      });
+    }
+
+    // Tab switching
+    deptTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        deptTabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        renderPrompts(tab.dataset.dept);
+      });
+    });
+
+    // Execute button
+    executeBtn.addEventListener('click', () => {
+      const command = commandInput.value.trim();
+      if (command) {
+        localStorage.setItem('firstCommand', command);
+        window.location.href = 'complete.html';
+      }
+    });
+
+    // Enter key
+    commandInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        executeBtn.click();
+      }
+    });
+
+    // Initial render
+    renderPrompts('marketing');
+
+    // Page transitions
+    document.querySelectorAll('a:not([target="_blank"])').forEach(link => {
+      link.addEventListener('click', function(e) {
+        if (this.href.includes('#')) return;
+        e.preventDefault();
+        const href = this.href;
+        document.body.style.opacity = '0';
+        document.body.style.transform = 'translateY(-20px)';
+        document.body.style.transition = 'all 0.3s ease';
+        setTimeout(() => {
+          window.location.href = href;
+        }, 300);
+      });
+    });
+
+    // Entrance animation
+    document.body.style.opacity = '0';
+    document.body.style.transform = 'translateY(20px)';
+    requestAnimationFrame(() => {
+      document.body.style.transition = 'all 0.5s ease';
+      document.body.style.opacity = '1';
+      document.body.style.transform = 'translateY(0)';
+    });
+  </script>
+
+  <!-- Dynamic Background Effects -->
+  <script src="../js/background.js"></script>
+</body>
+</html>

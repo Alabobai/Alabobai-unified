@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Terms of Service - Alabobai</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Dynamic Background Styles -->
+  <link rel="stylesheet" href="../css/background.css">
+  <!-- Morphic Glass Component System -->
+  <link rel="stylesheet" href="../css/morphic-glass.css">
+  <!-- Ultra Animation System -->
+  <link rel="stylesheet" href="../css/animations.css">
+
+  <style>
+    :root {
+      --rose-gold: #d9a07a;
+      --rose-gold-light: #e8c4a8;
+      --rose-gold-dark: #b8845c;
+      --copper: #b87333;
+      --rose-gold-glow: rgba(217, 160, 122, 0.6);
+      --rose-gold-subtle: rgba(217, 160, 122, 0.1);
+      --rose-gold-border: rgba(217, 160, 122, 0.3);
+      --bg-primary: #0a0a0a;
+      --bg-secondary: #0f0f0f;
+      --bg-card: rgba(15, 15, 15, 0.85);
+      --bg-glass: rgba(20, 20, 20, 0.7);
+      --text-primary: #ffffff;
+      --text-secondary: #a0a0a0;
+      --text-muted: #606060;
+      --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+      line-height: 1.7;
+    }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--rose-gold-border); border-radius: 3px; }
+
+    /* Navigation */
+    .nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: 16px 32px;
+      background: rgba(10, 10, 10, 0.9);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--rose-gold-border);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--text-primary);
+    }
+
+    .nav-brand img {
+      width: 40px;
+      height: 40px;
+      object-fit: contain;
+      filter: drop-shadow(0 0 10px var(--rose-gold-glow));
+    }
+
+    .nav-brand span {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--rose-gold);
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .nav-links a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: var(--transition);
+    }
+
+    .nav-links a:hover {
+      color: var(--rose-gold);
+    }
+
+    .nav-links a.active {
+      color: var(--rose-gold);
+    }
+
+    /* Main Content */
+    .legal-container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 120px 32px 80px;
+    }
+
+    .legal-header {
+      text-align: center;
+      margin-bottom: 60px;
+    }
+
+    .legal-header h1 {
+      font-size: 48px;
+      font-weight: 700;
+      color: var(--rose-gold-light);
+      text-shadow: 0 0 30px var(--rose-gold-glow);
+      margin-bottom: 16px;
+      letter-spacing: -0.02em;
+    }
+
+    .legal-header .last-updated {
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    /* Content Card */
+    .legal-content {
+      background: var(--bg-card);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 20px;
+      padding: 48px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .legal-content::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 20px;
+      padding: 1px;
+      background: linear-gradient(135deg, var(--rose-gold) 0%, transparent 50%, var(--rose-gold-dark) 100%);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+    }
+
+    .section {
+      margin-bottom: 40px;
+    }
+
+    .section:last-child {
+      margin-bottom: 0;
+    }
+
+    .section h2 {
+      font-size: 24px;
+      font-weight: 600;
+      color: var(--rose-gold);
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--rose-gold-border);
+    }
+
+    .section h3 {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 24px 0 12px;
+    }
+
+    .section p {
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+      font-size: 15px;
+    }
+
+    .section ul, .section ol {
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+      padding-left: 24px;
+      font-size: 15px;
+    }
+
+    .section li {
+      margin-bottom: 8px;
+    }
+
+    .section a {
+      color: var(--rose-gold);
+      text-decoration: none;
+      transition: var(--transition);
+    }
+
+    .section a:hover {
+      color: var(--rose-gold-light);
+      text-decoration: underline;
+    }
+
+    .highlight-box {
+      background: rgba(217, 160, 122, 0.08);
+      border: 1px solid var(--rose-gold-border);
+      border-radius: 12px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+
+    .highlight-box p {
+      margin-bottom: 0;
+      color: var(--text-primary);
+    }
+
+    /* Footer */
+    .legal-footer {
+      text-align: center;
+      margin-top: 60px;
+      padding-top: 40px;
+      border-top: 1px solid var(--rose-gold-border);
+    }
+
+    .legal-footer p {
+      color: var(--text-muted);
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 32px;
+      flex-wrap: wrap;
+    }
+
+    .footer-links a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 14px;
+      transition: var(--transition);
+    }
+
+    .footer-links a:hover {
+      color: var(--rose-gold);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .legal-container {
+        padding: 100px 20px 60px;
+      }
+
+      .legal-header h1 {
+        font-size: 32px;
+      }
+
+      .legal-content {
+        padding: 32px 24px;
+      }
+
+      .nav {
+        padding: 12px 20px;
+      }
+
+      .nav-links {
+        gap: 16px;
+      }
+
+      .nav-links a {
+        font-size: 13px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="nav">
+    <a href="../index.html" class="nav-brand">
+      <img src="../logo.png" alt="Alabobai">
+      <span>Alabobai</span>
+    </a>
+    <div class="nav-links">
+      <a href="../index.html">Home</a>
+      <a href="terms.html" class="active">Terms</a>
+      <a href="privacy.html">Privacy</a>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="legal-container">
+    <header class="legal-header">
+      <h1>Terms of Service</h1>
+      <p class="last-updated">Last Updated: February 5, 2026</p>
+    </header>
+
+    <div class="legal-content">
+      <!-- Section 1: Acceptance of Terms -->
+      <div class="section">
+        <h2>1. Acceptance of Terms</h2>
+        <p>Welcome to Alabobai. By accessing or using our AI platform and services ("Services"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, you may not access or use the Services.</p>
+        <p>These Terms constitute a legally binding agreement between you and Alabobai ("Company," "we," "us," or "our"). Please read them carefully before using our Services.</p>
+        <div class="highlight-box">
+          <p><strong>Important:</strong> By creating an account or using our Services, you acknowledge that you have read, understood, and agree to be bound by these Terms and our Privacy Policy.</p>
+        </div>
+      </div>
+
+      <!-- Section 2: Service Description -->
+      <div class="section">
+        <h2>2. Service Description</h2>
+        <p>Alabobai is an AI-powered operating system designed to enhance productivity for both business and personal use. Our platform provides:</p>
+        <ul>
+          <li>AI-powered task automation and workflow optimization</li>
+          <li>Intelligent assistants for various business departments including Marketing, Sales, HR, Finance, Legal, Operations, and IT</li>
+          <li>Personal productivity tools and AI companions</li>
+          <li>Integration capabilities with third-party services and applications</li>
+          <li>Data analytics and insights powered by artificial intelligence</li>
+          <li>Collaborative workspace features for teams</li>
+        </ul>
+        <p>We reserve the right to modify, suspend, or discontinue any part of our Services at any time, with or without notice. We will make reasonable efforts to notify users of significant changes that may affect their use of the Services.</p>
+      </div>
+
+      <!-- Section 3: User Accounts -->
+      <div class="section">
+        <h2>3. User Accounts</h2>
+        <h3>3.1 Account Creation</h3>
+        <p>To access certain features of our Services, you must create an account. When creating an account, you agree to:</p>
+        <ul>
+          <li>Provide accurate, current, and complete information</li>
+          <li>Maintain and promptly update your account information</li>
+          <li>Maintain the security of your account credentials</li>
+          <li>Accept responsibility for all activities under your account</li>
+          <li>Notify us immediately of any unauthorized use of your account</li>
+        </ul>
+
+        <h3>3.2 Account Requirements</h3>
+        <p>You must be at least 18 years old or the age of legal majority in your jurisdiction to create an account. By creating an account, you represent and warrant that you meet this requirement.</p>
+
+        <h3>3.3 Account Termination</h3>
+        <p>We reserve the right to suspend or terminate your account at any time for any reason, including but not limited to violation of these Terms. You may also terminate your account at any time by contacting us or using the account deletion feature in your settings.</p>
+      </div>
+
+      <!-- Section 4: Acceptable Use -->
+      <div class="section">
+        <h2>4. Acceptable Use</h2>
+        <p>You agree to use our Services only for lawful purposes and in accordance with these Terms. You agree NOT to:</p>
+        <ul>
+          <li>Use the Services in any way that violates applicable laws or regulations</li>
+          <li>Attempt to gain unauthorized access to any part of the Services or related systems</li>
+          <li>Use the Services to transmit harmful code, viruses, or malware</li>
+          <li>Engage in any activity that interferes with or disrupts the Services</li>
+          <li>Use automated systems (bots, scrapers, etc.) to access the Services without our express permission</li>
+          <li>Impersonate any person or entity or misrepresent your affiliation</li>
+          <li>Use the Services to generate, distribute, or promote illegal, harmful, or offensive content</li>
+          <li>Attempt to reverse engineer, decompile, or disassemble any part of the Services</li>
+          <li>Resell, redistribute, or sublicense the Services without our authorization</li>
+          <li>Use the Services in a manner that could damage, disable, or impair our infrastructure</li>
+        </ul>
+        <p>Violation of these acceptable use policies may result in immediate termination of your account and access to the Services.</p>
+      </div>
+
+      <!-- Section 5: Intellectual Property -->
+      <div class="section">
+        <h2>5. Intellectual Property</h2>
+        <h3>5.1 Our Intellectual Property</h3>
+        <p>The Services, including all content, features, and functionality (including but not limited to software, text, graphics, logos, icons, images, audio clips, and data compilations), are owned by Alabobai or our licensors and are protected by international copyright, trademark, patent, trade secret, and other intellectual property laws.</p>
+
+        <h3>5.2 Your Content</h3>
+        <p>You retain ownership of any content, data, or materials you submit, post, or display through the Services ("User Content"). By submitting User Content, you grant us a worldwide, non-exclusive, royalty-free license to use, process, and store such content solely for the purpose of providing and improving the Services.</p>
+
+        <h3>5.3 AI-Generated Content</h3>
+        <p>Content generated by our AI systems based on your inputs may be subject to certain usage restrictions. You are responsible for ensuring your use of AI-generated content complies with applicable laws and regulations. We do not claim ownership of AI-generated content created at your direction.</p>
+
+        <h3>5.4 Feedback</h3>
+        <p>If you provide us with feedback, suggestions, or ideas regarding the Services, you grant us the right to use such feedback without restriction or compensation to you.</p>
+      </div>
+
+      <!-- Section 6: Payment Terms -->
+      <div class="section">
+        <h2>6. Payment Terms</h2>
+        <h3>6.1 Pricing and Billing</h3>
+        <p>Certain features of our Services require payment. All pricing is displayed in US dollars unless otherwise specified. Payment processing is handled through our payment partner, LemonSqueezy.</p>
+
+        <h3>6.2 Subscription Plans</h3>
+        <p>Subscription plans are billed in advance on a recurring basis (monthly or annually, depending on your selection). Your subscription will automatically renew unless you cancel before the end of the current billing period.</p>
+
+        <h3>6.3 Payment Methods</h3>
+        <p>We accept major credit cards, debit cards, and other payment methods as indicated during checkout. You authorize us to charge your selected payment method for all fees associated with your account.</p>
+
+        <h3>6.4 Refunds</h3>
+        <p>Refund requests are handled on a case-by-case basis. Generally, we offer a 14-day money-back guarantee for new subscriptions. After this period, refunds may be granted at our sole discretion. To request a refund, please contact our support team.</p>
+
+        <h3>6.5 Price Changes</h3>
+        <p>We reserve the right to modify our pricing at any time. Any price changes will be communicated to you in advance and will take effect at the start of your next billing cycle.</p>
+
+        <h3>6.6 Taxes</h3>
+        <p>All fees are exclusive of applicable taxes, which will be added to your invoice as required by law.</p>
+      </div>
+
+      <!-- Section 7: Disclaimer of Warranties -->
+      <div class="section">
+        <h2>7. Disclaimer of Warranties</h2>
+        <div class="highlight-box">
+          <p>THE SERVICES ARE PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, AND NON-INFRINGEMENT.</p>
+        </div>
+        <p>We do not warrant that:</p>
+        <ul>
+          <li>The Services will be uninterrupted, timely, secure, or error-free</li>
+          <li>The results obtained from using the Services will be accurate or reliable</li>
+          <li>The quality of any products, services, information, or other material obtained through the Services will meet your expectations</li>
+          <li>Any errors in the Services will be corrected</li>
+        </ul>
+        <p>AI-generated outputs are provided for informational purposes only and should not be considered professional advice. You are solely responsible for evaluating and verifying any information provided by our AI systems.</p>
+      </div>
+
+      <!-- Section 8: Limitation of Liability -->
+      <div class="section">
+        <h2>8. Limitation of Liability</h2>
+        <div class="highlight-box">
+          <p>TO THE MAXIMUM EXTENT PERMITTED BY LAW, ALABOBAI AND ITS OFFICERS, DIRECTORS, EMPLOYEES, AGENTS, AND AFFILIATES SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, INCLUDING BUT NOT LIMITED TO LOSS OF PROFITS, DATA, USE, GOODWILL, OR OTHER INTANGIBLE LOSSES.</p>
+        </div>
+        <p>In no event shall our total liability to you for all claims arising from or related to the Services exceed the amount you paid to us during the twelve (12) months preceding the claim.</p>
+        <p>Some jurisdictions do not allow the exclusion or limitation of certain warranties or liabilities, so some of the above limitations may not apply to you. In such cases, our liability will be limited to the fullest extent permitted by applicable law.</p>
+      </div>
+
+      <!-- Section 9: Indemnification -->
+      <div class="section">
+        <h2>9. Indemnification</h2>
+        <p>You agree to indemnify, defend, and hold harmless Alabobai and its officers, directors, employees, agents, and affiliates from and against any and all claims, damages, obligations, losses, liabilities, costs, and expenses (including attorney's fees) arising from:</p>
+        <ul>
+          <li>Your use of the Services</li>
+          <li>Your violation of these Terms</li>
+          <li>Your violation of any third-party rights</li>
+          <li>Your User Content</li>
+          <li>Any activity conducted through your account</li>
+        </ul>
+      </div>
+
+      <!-- Section 10: Termination -->
+      <div class="section">
+        <h2>10. Termination</h2>
+        <h3>10.1 Termination by You</h3>
+        <p>You may terminate your account at any time by contacting our support team or using the account deletion feature. Upon termination, your right to use the Services will immediately cease.</p>
+
+        <h3>10.2 Termination by Us</h3>
+        <p>We may terminate or suspend your access to the Services immediately, without prior notice or liability, for any reason, including but not limited to:</p>
+        <ul>
+          <li>Breach of these Terms</li>
+          <li>Conduct that we determine to be harmful to other users or the Services</li>
+          <li>Suspected fraudulent, abusive, or illegal activity</li>
+          <li>Non-payment of fees</li>
+        </ul>
+
+        <h3>10.3 Effect of Termination</h3>
+        <p>Upon termination, all provisions of these Terms which by their nature should survive termination shall survive, including ownership provisions, warranty disclaimers, indemnity, and limitations of liability.</p>
+      </div>
+
+      <!-- Section 11: Governing Law -->
+      <div class="section">
+        <h2>11. Governing Law and Dispute Resolution</h2>
+        <h3>11.1 Governing Law</h3>
+        <p>These Terms shall be governed by and construed in accordance with the laws of the State of Delaware, United States, without regard to its conflict of law provisions.</p>
+
+        <h3>11.2 Dispute Resolution</h3>
+        <p>Any dispute arising from or relating to these Terms or the Services shall be resolved through binding arbitration in accordance with the rules of the American Arbitration Association. The arbitration shall take place in Delaware, and the language of arbitration shall be English.</p>
+
+        <h3>11.3 Class Action Waiver</h3>
+        <p>You agree that any dispute resolution proceedings will be conducted only on an individual basis and not in a class, consolidated, or representative action.</p>
+      </div>
+
+      <!-- Section 12: General Provisions -->
+      <div class="section">
+        <h2>12. General Provisions</h2>
+        <h3>12.1 Entire Agreement</h3>
+        <p>These Terms, together with our Privacy Policy, constitute the entire agreement between you and Alabobai regarding the Services and supersede all prior agreements and understandings.</p>
+
+        <h3>12.2 Severability</h3>
+        <p>If any provision of these Terms is found to be unenforceable, the remaining provisions will continue in full force and effect.</p>
+
+        <h3>12.3 Waiver</h3>
+        <p>Our failure to enforce any right or provision of these Terms shall not constitute a waiver of such right or provision.</p>
+
+        <h3>12.4 Assignment</h3>
+        <p>You may not assign or transfer these Terms without our prior written consent. We may assign our rights and obligations under these Terms without restriction.</p>
+
+        <h3>12.5 Modifications</h3>
+        <p>We reserve the right to modify these Terms at any time. We will provide notice of material changes by posting the updated Terms on our website and updating the "Last Updated" date. Your continued use of the Services after such modifications constitutes acceptance of the updated Terms.</p>
+      </div>
+
+      <!-- Section 13: Contact Information -->
+      <div class="section">
+        <h2>13. Contact Information</h2>
+        <p>If you have any questions about these Terms of Service, please contact us at:</p>
+        <ul>
+          <li>Email: <a href="mailto:legal@alabobai.com">legal@alabobai.com</a></li>
+          <li>Support: <a href="mailto:support@alabobai.com">support@alabobai.com</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="legal-footer">
+      <p>Copyright 2026 Alabobai. All rights reserved.</p>
+      <div class="footer-links">
+        <a href="../index.html">Home</a>
+        <a href="terms.html">Terms of Service</a>
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="mailto:support@alabobai.com">Contact Us</a>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>

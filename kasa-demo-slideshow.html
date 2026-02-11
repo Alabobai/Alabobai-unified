@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KASA VIP Booking Demo</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-family: system-ui, sans-serif;
+    }
+    .container {
+      position: relative;
+      width: 100%;
+      max-width: 1920px;
+    }
+    .slide {
+      display: none;
+      width: 100%;
+    }
+    .slide.active {
+      display: block;
+    }
+    .slide img {
+      width: 100%;
+      height: auto;
+    }
+    .controls {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+      z-index: 100;
+    }
+    .controls button {
+      padding: 10px 20px;
+      background: linear-gradient(135deg, #d4af37, #b8860b);
+      border: none;
+      border-radius: 8px;
+      color: #000;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .controls button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
+    }
+    .progress {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #d4af37, #f4d03f);
+      transition: width 0.3s;
+      z-index: 100;
+    }
+    .caption {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.8);
+      color: #d4af37;
+      padding: 10px 30px;
+      border-radius: 30px;
+      font-size: 14px;
+      border: 1px solid rgba(212, 175, 55, 0.3);
+    }
+    .title {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #d4af37;
+      font-size: 24px;
+      font-weight: 600;
+      text-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
+    }
+  </style>
+</head>
+<body>
+  <div class="progress" id="progress"></div>
+  <div class="title">KASA VIP Table Booking Demo</div>
+
+  <div class="container">
+    <div class="slide active" data-caption="Landing Page - Premium nightclub experience">
+      <img src="frame-001.png" alt="Landing Page">
+    </div>
+    <div class="slide" data-caption="VIP Concierge Chatbot - Welcome message">
+      <img src="frame-002.png" alt="Chatbot Welcome">
+    </div>
+    <div class="slide" data-caption="Booking Request - Select reservation date">
+      <img src="frame-003.png" alt="Date Selection">
+    </div>
+    <div class="slide" data-caption="Party Size - Selecting 5-8 guests">
+      <img src="frame-004.png" alt="Party Size">
+    </div>
+    <div class="slide" data-caption="VIP Table Options - $200 Gold VIP Table selected">
+      <img src="frame-005.png" alt="Table Options">
+    </div>
+    <div class="slide" data-caption="Guest Information - Enter full name">
+      <img src="frame-006.png" alt="Name Input">
+    </div>
+    <div class="slide" data-caption="Name Entered - Michael Johnson">
+      <img src="frame-007.png" alt="Name Filled">
+    </div>
+    <div class="slide" data-caption="Email Address - michael.johnson@email.com">
+      <img src="frame-008.png" alt="Email Input">
+    </div>
+    <div class="slide" data-caption="Phone Number - (503) 555-1234">
+      <img src="frame-009.png" alt="Phone Input">
+    </div>
+    <div class="slide" data-caption="Payment Form - Enter card details">
+      <img src="frame-010.png" alt="Payment Form">
+    </div>
+    <div class="slide" data-caption="Payment Details - Card ending 4242, $200 total">
+      <img src="frame-011.png" alt="Payment Filled">
+    </div>
+    <div class="slide" data-caption="Confirmation Receipt - Booking confirmed! Total: $200.00">
+      <img src="frame-012.png" alt="Confirmation">
+    </div>
+  </div>
+
+  <div class="caption" id="caption">Landing Page - Premium nightclub experience</div>
+
+  <div class="controls">
+    <button onclick="prevSlide()">Previous</button>
+    <button onclick="togglePlay()" id="playBtn">Pause</button>
+    <button onclick="nextSlide()">Next</button>
+  </div>
+
+  <script>
+    const slides = document.querySelectorAll('.slide');
+    const progress = document.getElementById('progress');
+    const caption = document.getElementById('caption');
+    const playBtn = document.getElementById('playBtn');
+    let currentSlide = 0;
+    let isPlaying = true;
+    let interval;
+
+    function showSlide(n) {
+      slides.forEach(s => s.classList.remove('active'));
+      currentSlide = (n + slides.length) % slides.length;
+      slides[currentSlide].classList.add('active');
+      progress.style.width = ((currentSlide + 1) / slides.length * 100) + '%';
+      caption.textContent = slides[currentSlide].dataset.caption;
+    }
+
+    function nextSlide() {
+      showSlide(currentSlide + 1);
+    }
+
+    function prevSlide() {
+      showSlide(currentSlide - 1);
+    }
+
+    function togglePlay() {
+      isPlaying = !isPlaying;
+      playBtn.textContent = isPlaying ? 'Pause' : 'Play';
+      if (isPlaying) {
+        startAutoPlay();
+      } else {
+        clearInterval(interval);
+      }
+    }
+
+    function startAutoPlay() {
+      clearInterval(interval);
+      interval = setInterval(nextSlide, 2500);
+    }
+
+    // Start auto-play
+    startAutoPlay();
+
+    // Keyboard controls
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') nextSlide();
+      if (e.key === 'ArrowLeft') prevSlide();
+      if (e.key === ' ') togglePlay();
+    });
+  </script>
+</body>
+</html>

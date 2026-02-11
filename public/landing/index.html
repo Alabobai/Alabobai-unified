@@ -1,0 +1,3206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <meta name="theme-color" content="#000000">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Alabobai | 12 AI Agents. One Subscription.</title>
+  <link rel="icon" type="image/png" href="/images/logo.png">
+  <meta name="description" content="12 specialized AI agents. One subscription. Unlimited output. Enterprise-grade security. Your data stays yours.">
+
+  <!-- Mobile Responsive Styles -->
+  <link rel="stylesheet" href="../css/mobile.css">
+  <!-- Ultra Animation System -->
+  <link rel="stylesheet" href="../css/animations.css">
+  <!-- Dynamic Background Styles -->
+  <link rel="stylesheet" href="../css/background.css">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    /* ============================================================================
+       ALABOBAI - Landing Page Brand Identity
+       ============================================================================ */
+
+    :root {
+      /* Metallic Rose Gold Palette */
+      --rose-gold: #d9a07a;
+      --rose-gold-light: #ecd4c0;
+      --rose-gold-bright: #f0e0d0;
+      --rose-gold-dark: #b8845c;
+      --rose-gold-deep: #8b6442;
+      --copper: #c9956c;
+      --bronze: #a67c52;
+
+      /* Glow Effects */
+      --glow-rose: rgba(217, 160, 122, 0.6);
+      --glow-rose-intense: rgba(217, 160, 122, 0.9);
+      --glow-soft: rgba(217, 160, 122, 0.3);
+
+      /* Backgrounds */
+      --bg-void: #000000;
+      --bg-dark: #0a0808;
+      --bg-card: rgba(12, 10, 8, 0.95);
+      --bg-panel: rgba(18, 14, 12, 0.9);
+      --bg-input: rgba(25, 20, 18, 0.8);
+
+      /* Borders */
+      --border-outer: rgba(217, 160, 122, 0.5);
+      --border-mid: rgba(217, 160, 122, 0.3);
+      --border-inner: rgba(217, 160, 122, 0.15);
+      --border-subtle: rgba(217, 160, 122, 0.08);
+
+      /* Text - Apple Design Principles */
+      --text-bright: #ffffff;
+      --text-primary: rgba(255, 255, 255, 0.95);
+      --text-secondary: rgba(255, 255, 255, 0.6);
+      --text-muted: rgba(255, 255, 255, 0.4);
+
+      /* Status */
+      --status-active: #7dd3a0;
+      --status-glow: rgba(125, 211, 160, 0.5);
+
+      /* Fonts */
+      --font-display: 'Inter', -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+
+      /* Animation */
+      --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-display);
+      background: var(--bg-void);
+      color: var(--text-primary);
+      line-height: 1.6;
+      overflow-x: hidden;
+      font-size: 16px;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* ============================================================================
+       TYPOGRAPHY SYSTEM - Apple Design Principles
+       ============================================================================ */
+
+    h1, .h1 {
+      font-family: var(--font-display);
+      font-size: clamp(48px, 6vw, 64px);
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      color: var(--text-bright);
+    }
+
+    h2, .h2 {
+      font-family: var(--font-display);
+      font-size: clamp(32px, 4vw, 40px);
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      line-height: 1.2;
+      color: var(--text-bright);
+    }
+
+    h3, .h3 {
+      font-family: var(--font-display);
+      font-size: clamp(24px, 3vw, 28px);
+      font-weight: 500;
+      letter-spacing: 0;
+      line-height: 1.3;
+      color: var(--text-bright);
+    }
+
+    p, .body-text {
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 400;
+      line-height: 1.6;
+      color: var(--text-primary);
+    }
+
+    .body-large {
+      font-size: 18px;
+      line-height: 1.7;
+    }
+
+    .caption, .small-text {
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 400;
+      line-height: 1.5;
+      color: var(--text-secondary);
+    }
+
+    .label {
+      font-family: var(--font-display);
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    code, .code, .mono {
+      font-family: var(--font-mono);
+      font-size: 14px;
+      font-weight: 400;
+      line-height: 1.6;
+    }
+
+    .accent-text {
+      color: var(--rose-gold);
+    }
+
+    .success-text {
+      color: #4ade80;
+    }
+
+    /* ============================================================================
+       MORPHIC PANEL SYSTEM - Apple Futuristic Glass Effect
+       ============================================================================ */
+
+    .morphic-panel {
+      background: rgba(12, 10, 8, 0.8);
+      border-radius: 16px;
+      position: relative;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(217, 160, 122, 0.15);
+      box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      transition: border-color 0.4s ease, box-shadow 0.4s ease;
+    }
+
+    .morphic-panel::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 16px;
+      background: linear-gradient(
+        135deg,
+        rgba(217, 160, 122, 0.05) 0%,
+        transparent 40%,
+        transparent 60%,
+        rgba(217, 160, 122, 0.03) 100%
+      );
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .morphic-panel::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 16px;
+      border: 1px solid rgba(217, 160, 122, 0.1);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .morphic-panel:hover {
+      border-color: rgba(217, 160, 122, 0.7);
+      background: rgba(217, 160, 122, 0.08);
+      box-shadow:
+        0 0 50px rgba(217, 160, 122, 0.5),
+        0 0 100px rgba(217, 160, 122, 0.25),
+        0 0 150px rgba(217, 160, 122, 0.1),
+        inset 0 0 40px rgba(217, 160, 122, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    }
+
+    /* ============================================================================
+       CHROME BUTTON
+       ============================================================================ */
+
+    .chrome-btn {
+      position: relative;
+      padding: 16px 40px;
+      background: linear-gradient(180deg, var(--rose-gold-bright) 0%, var(--rose-gold-light) 20%, var(--rose-gold) 50%, var(--rose-gold-dark) 80%, var(--bronze) 100%);
+      border: none;
+      border-radius: 12px;
+      color: #1a1410;
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+      cursor: pointer;
+      transition: all 0.3s var(--ease-smooth);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.4), inset 0 2px 0 rgba(255,255,255,0.3), inset 0 -2px 0 rgba(0,0,0,0.2);
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .chrome-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 50%;
+      background: linear-gradient(180deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 100%);
+      border-radius: 12px 12px 0 0;
+    }
+
+    .chrome-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 30px var(--glow-rose), inset 0 2px 0 rgba(255,255,255,0.4);
+    }
+
+    .chrome-btn-secondary {
+      background: var(--bg-input);
+      border: 2px solid var(--border-mid);
+      color: var(--text-primary);
+      box-shadow: none;
+      text-shadow: none;
+    }
+
+    .chrome-btn-secondary::before {
+      display: none;
+    }
+
+    .chrome-btn-secondary:hover {
+      border-color: var(--rose-gold);
+      box-shadow: 0 0 30px var(--glow-soft);
+    }
+
+    /* ============================================================================
+       NAVIGATION
+       ============================================================================ */
+
+    nav {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+      padding: 12px 24px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-mid);
+      border-radius: 50px;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+
+    nav::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 20%;
+      right: 20%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--rose-gold), transparent);
+    }
+
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Logo Image Styles */
+    .logo-img {
+      height: 36px;
+      width: auto;
+      filter: drop-shadow(0 0 8px var(--glow-rose));
+      transition: all 0.3s var(--ease-smooth);
+    }
+
+    .logo-img:hover {
+      transform: scale(1.05);
+      filter: drop-shadow(0 0 15px var(--glow-rose-intense));
+    }
+
+    .logo-img-small {
+      height: 28px;
+      width: auto;
+      filter: drop-shadow(0 0 6px var(--glow-rose));
+    }
+
+    /* Hero Logo Styles */
+    .hero-logo {
+      height: 120px;
+      width: auto;
+      margin: 0 auto 24px;
+      display: block;
+      filter: drop-shadow(0 0 25px var(--glow-rose));
+      transition: all 0.4s var(--ease-smooth);
+    }
+
+    .hero-logo:hover {
+      transform: scale(1.05);
+      filter: drop-shadow(0 0 40px var(--glow-rose-intense));
+    }
+
+    @keyframes heroLogoPulse {
+      0%, 100% { filter: drop-shadow(0 0 25px var(--glow-rose)); }
+      50% { filter: drop-shadow(0 0 45px var(--glow-rose-intense)); }
+    }
+
+    .hero-logo-pulse {
+      animation: heroLogoPulse 3s ease-in-out infinite;
+    }
+
+    .logo-text {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-bright);
+    }
+
+    .logo-text span {
+      color: var(--rose-gold);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 8px;
+    }
+
+    .nav-link {
+      padding: 8px 16px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 400;
+      border-radius: 8px;
+      transition: all 0.3s var(--ease-smooth);
+    }
+
+    .nav-link:hover {
+      color: var(--rose-gold);
+      background: var(--bg-input);
+    }
+
+    .nav-cta {
+      padding: 10px 20px;
+      background: linear-gradient(135deg, var(--rose-gold), var(--rose-gold-dark));
+      color: #1a1410;
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+      border-radius: 8px;
+      text-decoration: none;
+      box-shadow: 0 0 20px var(--glow-soft);
+      transition: all 0.3s var(--ease-smooth);
+    }
+
+    .nav-cta:hover {
+      box-shadow: 0 0 40px var(--glow-rose);
+      transform: scale(1.05);
+    }
+
+    /* ============================================================================
+       HERO SECTION
+       ============================================================================ */
+
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 120px 24px 80px;
+      text-align: center;
+    }
+
+    .hero-content {
+      max-width: 900px;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 20px;
+      background: rgba(125, 211, 160, 0.1);
+      border: 1px solid rgba(125, 211, 160, 0.3);
+      border-radius: 50px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--status-active);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 32px;
+    }
+
+    .hero-badge::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      background: var(--status-active);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--status-glow);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .hero-title {
+      font-size: clamp(48px, 8vw, 64px);
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      margin-bottom: 12px;
+      color: var(--text-bright);
+    }
+
+    .hero-title strong {
+      font-weight: 600;
+      color: var(--rose-gold);
+      text-shadow:
+        0 0 20px rgba(217, 160, 122, 0.6),
+        0 0 40px rgba(217, 160, 122, 0.3),
+        0 0 60px rgba(217, 160, 122, 0.15);
+    }
+
+    .hero-version {
+      font-size: 14px;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      color: var(--text-muted);
+      margin-bottom: 32px;
+    }
+
+    .hero-subtitle {
+      font-size: clamp(17px, 2.5vw, 20px);
+      color: var(--text-secondary);
+      max-width: 600px;
+      margin: 0 auto 48px;
+      line-height: 1.6;
+    }
+
+    .hero-ctas {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    /* ============================================================================
+       INTERFACE PREVIEW
+       ============================================================================ */
+
+    .preview-section {
+      padding: 80px 24px 120px;
+    }
+
+    .preview-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .preview-header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .section-title {
+      font-size: clamp(32px, 5vw, 40px);
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: var(--text-bright);
+      margin-bottom: 16px;
+    }
+
+    .section-title strong {
+      font-weight: 600;
+      color: var(--rose-gold);
+    }
+
+    .section-subtitle {
+      font-size: 17px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+    }
+
+    .interface-preview {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .preview-header-bar {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 20px;
+      background: var(--bg-panel);
+      border-radius: 12px;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .logo-img-preview {
+      height: 28px;
+      width: auto;
+      filter: drop-shadow(0 0 6px var(--glow-rose));
+      fill: none;
+      stroke-width: 1.5;
+      filter: drop-shadow(0 0 8px var(--glow-rose));
+    }
+
+    .preview-brand {
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: var(--text-bright);
+    }
+
+    .preview-brand strong {
+      font-weight: 600;
+      color: var(--rose-gold);
+    }
+
+    .preview-status {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: rgba(125, 211, 160, 0.1);
+      border: 1px solid rgba(125, 211, 160, 0.3);
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--status-active);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .preview-status::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      background: var(--status-active);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--status-glow);
+    }
+
+    .preview-command {
+      display: flex;
+      gap: 16px;
+      padding: 16px 20px;
+      background: var(--bg-panel);
+      border-radius: 12px;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .preview-input {
+      flex: 1;
+      padding: 14px 20px;
+      background: var(--bg-input);
+      border: 1px solid var(--border-mid);
+      border-radius: 10px;
+      color: var(--text-muted);
+      font-size: 14px;
+      font-style: italic;
+    }
+
+    .preview-execute {
+      padding: 14px 32px;
+      background: linear-gradient(180deg, var(--rose-gold-bright), var(--rose-gold), var(--rose-gold-dark));
+      border-radius: 10px;
+      font-weight: 700;
+      color: #1a1410;
+      font-size: 14px;
+      box-shadow: inset 0 2px 0 rgba(255,255,255,0.3);
+    }
+
+    .preview-panels {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .preview-panel {
+      padding: 20px;
+      background: var(--bg-panel);
+      border-radius: 12px;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .panel-icon {
+      width: 24px;
+      height: 24px;
+      background: var(--bg-input);
+      border: 1px solid var(--border-mid);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .panel-icon svg {
+      width: 14px;
+      height: 14px;
+      stroke: var(--rose-gold);
+      fill: none;
+    }
+
+    .panel-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-bright);
+    }
+
+    .neural-code {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.7;
+    }
+
+    .neural-code .keyword {
+      color: var(--rose-gold);
+    }
+
+    .neural-code .function {
+      color: var(--rose-gold-light);
+    }
+
+    .neural-code .comment {
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    .thinking-lines {
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border-subtle);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .thinking-line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .thinking-line::before {
+      content: '';
+      width: 5px;
+      height: 5px;
+      background: var(--rose-gold);
+      border-radius: 50%;
+      box-shadow: 0 0 6px var(--glow-rose);
+    }
+
+    .stats-bar {
+      display: flex;
+      gap: 24px;
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .stat {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .stat-label {
+      font-size: 9px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .stat-value {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--rose-gold-light);
+    }
+
+    /* ============================================================================
+       LIVE WORKSPACE PREVIEW
+       ============================================================================ */
+
+    .live-workspace-panel .panel-header {
+      display: flex;
+      align-items: center;
+    }
+
+    .recording-badge {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      background: rgba(255, 68, 68, 0.15);
+      border: 1px solid rgba(255, 68, 68, 0.4);
+      border-radius: 12px;
+      font-size: 9px;
+      font-weight: 700;
+      color: #ff6666;
+      letter-spacing: 0.1em;
+    }
+
+    .rec-dot {
+      width: 6px;
+      height: 6px;
+      background: #ff4444;
+      border-radius: 50%;
+      animation: recPulse 1s ease-in-out infinite;
+    }
+
+    @keyframes recPulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .mini-browser {
+      background: #0c0a08;
+      border: 1px solid var(--border-mid);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+
+    .mini-browser-toolbar {
+      height: 24px;
+      background: linear-gradient(180deg, #2a2420, #1e1a16);
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+      gap: 8px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .mini-dots {
+      display: flex;
+      gap: 4px;
+    }
+
+    .mini-dots span {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .dot-red { background: #ff5f57; }
+    .dot-yellow { background: #ffbd2e; }
+    .dot-green { background: #28ca42; }
+
+    .mini-url {
+      flex: 1;
+      height: 14px;
+      background: var(--bg-input);
+      border-radius: 3px;
+      font-size: 8px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      padding: 0 8px;
+      font-family: var(--font-mono);
+    }
+
+    .mini-browser-content {
+      height: 100px;
+      padding: 10px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .sim-header {
+      height: 12px;
+      width: 60%;
+      background: linear-gradient(90deg, var(--rose-gold-dark), transparent);
+      border-radius: 3px;
+      opacity: 0.5;
+    }
+
+    .sim-nav {
+      display: flex;
+      gap: 8px;
+    }
+
+    .sim-nav span {
+      width: 30px;
+      height: 6px;
+      background: var(--border-mid);
+      border-radius: 2px;
+      opacity: 0.4;
+    }
+
+    .sim-blocks {
+      display: flex;
+      gap: 8px;
+      flex: 1;
+    }
+
+    .sim-block {
+      flex: 1;
+      background: var(--bg-input);
+      border: 1px solid var(--border-subtle);
+      border-radius: 4px;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .sim-block .line {
+      height: 4px;
+      background: var(--border-mid);
+      border-radius: 2px;
+      opacity: 0.3;
+    }
+
+    .sim-block .line.short {
+      width: 60%;
+    }
+
+    .agent-cursor-mini {
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      animation: cursorMoveMini 6s ease-in-out infinite;
+    }
+
+    .agent-cursor-mini svg {
+      width: 16px;
+      height: 16px;
+      filter: drop-shadow(0 1px 3px rgba(0,0,0,0.5));
+    }
+
+    @keyframes cursorMoveMini {
+      0% { top: 35%; left: 25%; }
+      25% { top: 50%; left: 45%; }
+      50% { top: 60%; left: 70%; }
+      75% { top: 40%; left: 55%; }
+      100% { top: 35%; left: 25%; }
+    }
+
+    .mini-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      background: var(--bg-input);
+      border-radius: 6px;
+      margin-bottom: 10px;
+    }
+
+    .play-btn {
+      width: 24px;
+      height: 24px;
+      background: var(--rose-gold);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .play-btn svg {
+      width: 10px;
+      height: 10px;
+      stroke: #1a1410;
+    }
+
+    .timeline-bar {
+      flex: 1;
+      height: 4px;
+      background: var(--bg-panel);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .timeline-progress {
+      width: 35%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--rose-gold-dark), var(--rose-gold));
+      border-radius: 2px;
+      animation: timelineFill 8s linear infinite;
+    }
+
+    @keyframes timelineFill {
+      0% { width: 0%; }
+      100% { width: 100%; }
+    }
+
+    .time-label {
+      font-size: 9px;
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+    }
+
+    .activity-mini {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .activity-line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 10px;
+      color: var(--text-muted);
+      padding: 4px 0;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .act-time {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--text-muted);
+      opacity: 0.7;
+    }
+
+    .act-text strong {
+      color: var(--rose-gold-light);
+    }
+
+    /* ============================================================================
+       DEPARTMENTS
+       ============================================================================ */
+
+    .departments-section {
+      padding: 120px 24px;
+    }
+
+    .departments-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .dept-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      margin-top: 48px;
+    }
+
+    @media (max-width: 1100px) {
+      .dept-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 800px) {
+      .dept-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 500px) {
+      .dept-grid { grid-template-columns: 1fr; }
+    }
+
+    .dept-card {
+      padding: 28px;
+      /* Morphic Glass Effect - Apple Futuristic Design */
+      background: rgba(12, 10, 8, 0.8);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(217, 160, 122, 0.12);
+      border-radius: 16px;
+      position: relative;
+      overflow: hidden;
+      /* STATIC - No transform, no float, no levitation */
+      box-shadow:
+        0 4px 24px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+      /* Only border and shadow transitions for hover glow */
+      transition: border-color 0.4s ease, box-shadow 0.4s ease;
+    }
+
+    .dept-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        135deg,
+        rgba(217, 160, 122, 0.04) 0%,
+        transparent 40%,
+        transparent 60%,
+        rgba(217, 160, 122, 0.02) 100%
+      );
+      opacity: 1;
+      pointer-events: none;
+    }
+
+    /* Hover: DRAMATIC rose gold glow effect - Apple quality */
+    .dept-card:hover {
+      border-color: rgba(217, 160, 122, 0.8);
+      background: rgba(217, 160, 122, 0.12);
+      box-shadow:
+        0 0 60px rgba(217, 160, 122, 0.6),
+        0 0 120px rgba(217, 160, 122, 0.3),
+        0 0 180px rgba(217, 160, 122, 0.15),
+        inset 0 0 60px rgba(217, 160, 122, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    }
+
+    .dept-card:hover::before {
+      opacity: 1;
+      background: linear-gradient(
+        135deg,
+        rgba(217, 160, 122, 0.15) 0%,
+        rgba(217, 160, 122, 0.05) 40%,
+        rgba(217, 160, 122, 0.05) 60%,
+        rgba(217, 160, 122, 0.1) 100%
+      );
+    }
+
+    .dept-card:hover .dept-icon {
+      box-shadow: 0 0 50px rgba(217, 160, 122, 0.9), 0 0 100px rgba(217, 160, 122, 0.5);
+    }
+
+    .dept-card:hover .dept-name {
+      color: #ffffff;
+      text-shadow: 0 0 20px rgba(217, 160, 122, 0.5);
+    }
+
+    .dept-icon {
+      width: 52px;
+      height: 52px;
+      background: linear-gradient(135deg, var(--rose-gold-light), var(--rose-gold), var(--rose-gold-dark));
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 700;
+      color: #1a1410;
+      margin-bottom: 20px;
+      box-shadow: 0 0 20px var(--glow-soft), inset 0 2px 0 rgba(255,255,255,0.4);
+      transition: box-shadow 0.4s ease;
+    }
+
+    .dept-name {
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: var(--text-bright);
+      margin-bottom: 8px;
+    }
+
+    .dept-desc {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    /* ============================================================================
+       PRICING
+       ============================================================================ */
+
+    .pricing-section {
+      padding: 120px 24px;
+    }
+
+    .pricing-container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+      margin-top: 48px;
+    }
+
+    @media (max-width: 1200px) {
+      .pricing-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .pricing-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .pricing-card {
+      padding: 32px;
+      text-align: center;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      transition: border-color 0.4s ease, box-shadow 0.4s ease, background 0.4s ease;
+    }
+
+    .pricing-card:hover {
+      /* DRAMATIC rose gold glow - Apple quality */
+      border-color: rgba(217, 160, 122, 0.8);
+      background: rgba(217, 160, 122, 0.1);
+      box-shadow:
+        0 0 60px rgba(217, 160, 122, 0.6),
+        0 0 120px rgba(217, 160, 122, 0.3),
+        0 0 180px rgba(217, 160, 122, 0.15),
+        inset 0 0 40px rgba(217, 160, 122, 0.08);
+    }
+
+    .pricing-card.featured {
+      border: 2px solid var(--rose-gold);
+      box-shadow: 0 0 40px var(--glow-soft);
+    }
+
+    .pricing-card.featured::before {
+      content: 'MOST POPULAR';
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      right: auto;
+      bottom: auto;
+      inset: auto;
+      width: auto;
+      height: auto;
+      transform: translateX(-50%);
+      background: linear-gradient(135deg, var(--rose-gold), var(--rose-gold-dark));
+      color: #1a1410;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      padding: 6px 16px;
+      border-radius: 20px;
+      z-index: 10;
+    }
+
+    .pricing-tier-name {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text-bright);
+      margin-bottom: 8px;
+    }
+
+    .pricing-tier-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+
+    .pricing-badge {
+      display: inline-block;
+      padding: 8px 20px;
+      background: linear-gradient(135deg, var(--rose-gold), var(--rose-gold-dark));
+      color: #1a1410;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      border-radius: 50px;
+      margin-bottom: 24px;
+    }
+
+    .pricing-amount {
+      font-size: 48px;
+      font-weight: 600;
+      color: var(--text-bright);
+      line-height: 1;
+    }
+
+    .pricing-amount span {
+      font-size: 16px;
+      font-weight: 400;
+      color: var(--text-secondary);
+    }
+
+    .pricing-amount.custom {
+      font-size: 28px;
+      padding: 10px 0;
+    }
+
+    .pricing-period {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+    }
+
+    .pricing-features {
+      list-style: none;
+      text-align: left;
+      margin-bottom: 24px;
+      flex-grow: 1;
+    }
+
+    .pricing-features li {
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      line-height: 1.4;
+      color: var(--text-secondary);
+    }
+
+    .pricing-features li:last-child {
+      border-bottom: none;
+    }
+
+    .pricing-features li::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      min-width: 6px;
+      background: var(--status-active);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--status-glow);
+    }
+
+    .pricing-features li.inherited {
+      color: var(--text-muted);
+    }
+
+    .pricing-features li.inherited::before {
+      background: var(--text-muted);
+      box-shadow: none;
+    }
+
+    .pricing-cta {
+      width: 100%;
+      padding: 16px;
+      font-size: 14px;
+    }
+
+    .pricing-cta.secondary {
+      background: transparent;
+      border: 1px solid var(--rose-gold);
+      color: var(--rose-gold);
+    }
+
+    .pricing-cta.secondary:hover {
+      background: rgba(217, 160, 122, 0.1);
+    }
+
+    .pricing-guarantee {
+      margin-top: 16px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* ============================================================================
+       FOOTER
+       ============================================================================ */
+
+    footer {
+      padding: 48px 24px;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .footer-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 24px;
+    }
+
+    .footer-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 400;
+      transition: color 0.3s;
+    }
+
+    .footer-links a:hover {
+      color: var(--rose-gold);
+    }
+
+    .footer-copy {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    /* ============================================================================
+       DEMO VIDEO SECTION
+       ============================================================================ */
+
+    .demo-section {
+      padding: 120px 24px;
+    }
+
+    .demo-container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .demo-player {
+      padding: 32px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .demo-video-wrapper {
+      position: relative;
+      aspect-ratio: 16/9;
+      background: var(--bg-panel);
+      border-radius: 12px;
+      border: 1px solid var(--border-mid);
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.4s var(--ease-smooth);
+    }
+
+    .demo-video-wrapper:hover {
+      border-color: var(--rose-gold);
+      box-shadow: 0 0 60px var(--glow-soft);
+    }
+
+    .demo-video-wrapper:hover .demo-play-btn {
+      transform: translate(-50%, -50%) scale(1.1);
+      box-shadow: 0 0 80px var(--glow-rose-intense);
+    }
+
+    .demo-video-bg {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, var(--bg-panel) 0%, rgba(217, 160, 122, 0.05) 50%, var(--bg-panel) 100%);
+    }
+
+    .demo-video-bg::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, var(--glow-soft) 0%, transparent 70%);
+      transform: translate(-50%, -50%);
+      animation: demoPulse 4s ease-in-out infinite;
+    }
+
+    @keyframes demoPulse {
+      0%, 100% { opacity: 0.3; transform: translate(-50%, -50%) scale(1); }
+      50% { opacity: 0.6; transform: translate(-50%, -50%) scale(1.2); }
+    }
+
+    .demo-play-btn {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 100px;
+      height: 100px;
+      background: linear-gradient(180deg, var(--rose-gold-bright) 0%, var(--rose-gold) 50%, var(--rose-gold-dark) 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 40px var(--glow-rose), inset 0 2px 0 rgba(255,255,255,0.4);
+      transition: all 0.4s var(--ease-smooth);
+      z-index: 2;
+    }
+
+    .demo-play-btn svg {
+      width: 40px;
+      height: 40px;
+      fill: #1a1410;
+      margin-left: 6px;
+    }
+
+    .demo-video-label {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 24px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-mid);
+      border-radius: 50px;
+      z-index: 2;
+    }
+
+    .demo-video-label span {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-bright);
+    }
+
+    .demo-duration {
+      padding: 4px 10px;
+      background: var(--rose-gold);
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #1a1410;
+    }
+
+    /* ============================================================================
+       TESTIMONIALS SECTION
+       ============================================================================ */
+
+    .testimonials-section {
+      padding: 120px 24px;
+    }
+
+    .testimonials-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .testimonials-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+      margin-top: 48px;
+    }
+
+    .testimonial-card {
+      padding: 32px;
+      transition: all 0.4s var(--ease-smooth);
+      opacity: 0;
+      transform: translateY(30px);
+    }
+
+    .testimonial-card.animate-in {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .testimonial-card:hover {
+      /* STATIC - No vertical movement, rose gold glow effect */
+      border-color: rgba(217, 160, 122, 0.5);
+      box-shadow:
+        0 0 40px rgba(217, 160, 122, 0.4),
+        0 0 80px rgba(217, 160, 122, 0.2);
+    }
+
+    .testimonial-card:hover::before {
+      opacity: 1;
+    }
+
+    .testimonial-quote {
+      position: relative;
+      padding-left: 24px;
+      margin-bottom: 24px;
+    }
+
+    .testimonial-quote::before {
+      content: '"';
+      position: absolute;
+      top: -10px;
+      left: 0;
+      font-size: 48px;
+      font-weight: 800;
+      color: var(--rose-gold);
+      opacity: 0.5;
+      line-height: 1;
+    }
+
+    .testimonial-quote p {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.8;
+      font-style: italic;
+    }
+
+    .testimonial-author {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .testimonial-avatar {
+      width: 56px;
+      height: 56px;
+      background: linear-gradient(135deg, var(--rose-gold), var(--rose-gold-dark));
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 700;
+      color: #1a1410;
+      box-shadow: 0 0 20px var(--glow-soft);
+    }
+
+    .testimonial-info {
+      flex: 1;
+    }
+
+    .testimonial-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-bright);
+      margin-bottom: 2px;
+    }
+
+    .testimonial-title {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .testimonial-company {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .company-logo {
+      width: 32px;
+      height: 32px;
+      background: var(--bg-input);
+      border: 1px solid var(--border-mid);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .company-logo svg {
+      width: 18px;
+      height: 18px;
+      stroke: var(--rose-gold);
+      fill: none;
+    }
+
+    .company-name {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .testimonial-rating {
+      margin-left: auto;
+      display: flex;
+      gap: 2px;
+    }
+
+    .testimonial-rating span {
+      color: var(--rose-gold);
+      font-size: 14px;
+      text-shadow: 0 0 8px var(--glow-rose);
+    }
+
+    /* ============================================================================
+       TRUST BADGES SECTION
+       ============================================================================ */
+
+    .trust-section {
+      padding: 80px 24px;
+    }
+
+    .trust-container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .trust-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+    }
+
+    .trust-badge {
+      padding: 32px 20px;
+      text-align: center;
+      transition: all 0.4s var(--ease-smooth);
+      opacity: 0;
+      transform: scale(0.9);
+    }
+
+    .trust-badge.animate-in {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .trust-badge:hover {
+      /* STATIC - No vertical movement, rose gold glow effect */
+      border-color: rgba(217, 160, 122, 0.5);
+      box-shadow:
+        0 0 40px rgba(217, 160, 122, 0.4),
+        0 0 80px rgba(217, 160, 122, 0.2);
+    }
+
+    .trust-icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 16px;
+      background: linear-gradient(135deg, var(--rose-gold-dark), var(--rose-gold));
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 30px var(--glow-soft), inset 0 2px 0 rgba(255,255,255,0.3);
+    }
+
+    .trust-icon svg {
+      width: 32px;
+      height: 32px;
+      stroke: #1a1410;
+      fill: none;
+      stroke-width: 2;
+    }
+
+    .trust-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-bright);
+      margin-bottom: 4px;
+    }
+
+    .trust-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* ============================================================================
+       POWER FEATURES SECTION
+       ============================================================================ */
+
+    .power-features-section {
+      padding: 140px 24px;
+      background: linear-gradient(180deg, transparent 0%, rgba(217, 160, 122, 0.02) 50%, transparent 100%);
+    }
+
+    .power-features-container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .power-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 40px;
+      margin-top: 60px;
+    }
+
+    @media (max-width: 900px) {
+      .power-grid { grid-template-columns: 1fr; gap: 32px; }
+    }
+
+    .power-feature {
+      text-align: center;
+      padding: 40px 30px;
+    }
+
+    .power-number {
+      font-size: 64px;
+      font-weight: 700;
+      color: var(--rose-gold);
+      line-height: 1;
+      margin-bottom: 8px;
+      letter-spacing: -0.03em;
+    }
+
+    .power-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 20px;
+    }
+
+    .power-title {
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--text-bright);
+      margin-bottom: 12px;
+      letter-spacing: -0.01em;
+    }
+
+    .power-desc {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    /* Statement Section */
+    .statement-section {
+      padding: 100px 24px;
+      text-align: center;
+    }
+
+    .statement-container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .statement-text {
+      font-size: clamp(28px, 4vw, 36px);
+      font-weight: 500;
+      color: var(--text-primary);
+      line-height: 1.5;
+      letter-spacing: -0.01em;
+    }
+
+    .statement-text strong {
+      color: var(--rose-gold);
+      font-weight: 600;
+    }
+
+    /* ============================================================================
+       COMPARISON TABLE SECTION
+       ============================================================================ */
+
+    .comparison-section {
+      padding: 120px 24px;
+    }
+
+    .comparison-container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .comparison-table-wrapper {
+      padding: 32px;
+      overflow-x: auto;
+    }
+
+    .comparison-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+
+    .comparison-table th,
+    .comparison-table td {
+      padding: 20px 16px;
+      text-align: center;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .comparison-table th {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-bright);
+      background: var(--bg-panel);
+    }
+
+    .comparison-table th:first-child {
+      text-align: left;
+      border-radius: 12px 0 0 0;
+    }
+
+    .comparison-table th:last-child {
+      border-radius: 0 12px 0 0;
+    }
+
+    .comparison-table th.highlight {
+      background: linear-gradient(180deg, var(--rose-gold), var(--rose-gold-dark));
+      color: #1a1410;
+      position: relative;
+    }
+
+    .comparison-table th.highlight::before {
+      content: 'RECOMMENDED';
+      position: absolute;
+      top: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 4px 12px;
+      background: var(--status-active);
+      color: #0a0808;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      border-radius: 20px;
+    }
+
+    .comparison-table td {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    .comparison-table td:first-child {
+      text-align: left;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .comparison-table td.highlight {
+      background: rgba(217, 160, 122, 0.05);
+    }
+
+    .comparison-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .comparison-table tr:last-child td:first-child {
+      border-radius: 0 0 0 12px;
+    }
+
+    .comparison-table tr:last-child td:last-child {
+      border-radius: 0 0 12px 0;
+    }
+
+    .check-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      background: rgba(125, 211, 160, 0.15);
+      border: 1px solid rgba(125, 211, 160, 0.4);
+      border-radius: 50%;
+    }
+
+    .check-icon svg {
+      width: 14px;
+      height: 14px;
+      stroke: var(--status-active);
+      fill: none;
+      stroke-width: 3;
+    }
+
+    .cross-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      background: rgba(255, 100, 100, 0.1);
+      border: 1px solid rgba(255, 100, 100, 0.3);
+      border-radius: 50%;
+    }
+
+    .cross-icon svg {
+      width: 12px;
+      height: 12px;
+      stroke: #ff6666;
+      fill: none;
+      stroke-width: 3;
+    }
+
+    .partial-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      background: rgba(255, 189, 46, 0.1);
+      border: 1px solid rgba(255, 189, 46, 0.3);
+      border-radius: 50%;
+    }
+
+    .partial-icon svg {
+      width: 14px;
+      height: 14px;
+      stroke: #ffbd2e;
+      fill: none;
+      stroke-width: 3;
+    }
+
+    /* ============================================================================
+       FAQ SECTION
+       ============================================================================ */
+
+    .faq-section {
+      padding: 120px 24px;
+    }
+
+    .faq-container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .faq-list {
+      margin-top: 48px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .faq-item {
+      padding: 0;
+      overflow: hidden;
+      transition: all 0.4s var(--ease-smooth);
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    .faq-item.animate-in {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .faq-item:hover {
+      /* DRAMATIC rose gold glow - Apple quality */
+      border-color: rgba(217, 160, 122, 0.8);
+      background: rgba(217, 160, 122, 0.08);
+      box-shadow:
+        0 0 60px rgba(217, 160, 122, 0.6),
+        0 0 120px rgba(217, 160, 122, 0.3),
+        inset 0 0 30px rgba(217, 160, 122, 0.05);
+    }
+
+    .faq-question {
+      width: 100%;
+      padding: 24px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .faq-question h4 {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-bright);
+      padding-right: 20px;
+    }
+
+    .faq-toggle {
+      width: 32px;
+      height: 32px;
+      background: var(--bg-input);
+      border: 1px solid var(--border-mid);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.3s var(--ease-smooth);
+    }
+
+    .faq-toggle svg {
+      width: 16px;
+      height: 16px;
+      stroke: var(--rose-gold);
+      fill: none;
+      stroke-width: 2;
+      transition: transform 0.3s var(--ease-smooth);
+    }
+
+    .faq-item.active .faq-toggle {
+      background: var(--rose-gold);
+      border-color: var(--rose-gold);
+    }
+
+    .faq-item.active .faq-toggle svg {
+      stroke: #1a1410;
+      transform: rotate(180deg);
+    }
+
+    .faq-answer {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s var(--ease-smooth), padding 0.4s var(--ease-smooth);
+    }
+
+    .faq-item.active .faq-answer {
+      max-height: 300px;
+    }
+
+    .faq-answer-inner {
+      padding: 0 28px 24px;
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.8;
+    }
+
+    .faq-answer-inner a {
+      color: var(--rose-gold-light);
+      text-decoration: none;
+    }
+
+    .faq-answer-inner a:hover {
+      text-decoration: underline;
+    }
+
+    /* ============================================================================
+       SCROLL ANIMATIONS
+       ============================================================================ */
+
+    .scroll-animate {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity 0.6s var(--ease-smooth), transform 0.6s var(--ease-smooth);
+    }
+
+    .scroll-animate.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .scroll-animate-delay-1 { transition-delay: 0.1s; }
+    .scroll-animate-delay-2 { transition-delay: 0.2s; }
+    .scroll-animate-delay-3 { transition-delay: 0.3s; }
+    .scroll-animate-delay-4 { transition-delay: 0.4s; }
+
+    /* ============================================================================
+       RESPONSIVE
+       ============================================================================ */
+
+    @media (max-width: 900px) {
+      .nav-links { display: none; }
+
+      .preview-panels {
+        grid-template-columns: 1fr;
+      }
+
+      .preview-command {
+        flex-direction: column;
+      }
+
+      .footer-container {
+        flex-direction: column;
+        gap: 20px;
+        text-align: center;
+      }
+    }
+
+    @media (max-width: 900px) {
+      .trust-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .comparison-table-wrapper {
+        padding: 16px;
+      }
+
+      .comparison-table th,
+      .comparison-table td {
+        padding: 12px 8px;
+        font-size: 12px;
+      }
+
+      .testimonials-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .hero-ctas {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .chrome-btn {
+        width: 100%;
+        max-width: 300px;
+      }
+
+      .trust-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+
+      .trust-badge {
+        padding: 20px 12px;
+      }
+
+      .trust-icon {
+        width: 48px;
+        height: 48px;
+      }
+
+      .trust-icon svg {
+        width: 24px;
+        height: 24px;
+      }
+
+      .comparison-table {
+        font-size: 11px;
+      }
+
+      .comparison-table th.highlight::before {
+        display: none;
+      }
+
+      .demo-play-btn {
+        width: 70px;
+        height: 70px;
+      }
+
+      .demo-play-btn svg {
+        width: 28px;
+        height: 28px;
+      }
+
+      .faq-question h4 {
+        font-size: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Mobile Navigation Overlay -->
+  <div class="mobile-nav-overlay" id="mobileNavOverlay"></div>
+
+  <!-- Mobile Navigation Menu -->
+  <div class="mobile-nav-menu" id="mobileNavMenu">
+    <a href="#demo">Demo</a>
+    <a href="#departments">Departments</a>
+    <a href="#compare">Compare</a>
+    <a href="#faq">FAQ</a>
+    <div class="mobile-nav-divider"></div>
+    <a href="#pricing">Get Started</a>
+  </div>
+
+  <!-- Navigation -->
+  <nav>
+    <div class="nav-inner">
+      <a href="/" class="logo">
+        <img src="/images/logo.png" alt="Alabobai" class="logo-img">
+        <div class="logo-text">Alabo<span>bai</span></div>
+      </a>
+      <div class="nav-links">
+        <a href="#demo" class="nav-link">Demo</a>
+        <a href="#departments" class="nav-link">Departments</a>
+        <a href="#compare" class="nav-link">Compare</a>
+        <a href="#faq" class="nav-link">FAQ</a>
+        <a href="#pricing" class="nav-link">Pricing</a>
+      </div>
+      <a href="#pricing" class="nav-cta">Get Started</a>
+      <!-- Mobile Menu Toggle -->
+      <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle mobile menu">
+        <div class="hamburger-lines">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-content">
+      <!-- Hero Logo with pulsing glow -->
+      <img src="/images/logo.png" alt="Alabobai" class="hero-logo hero-logo-pulse">
+
+      <div class="hero-badge">System Online</div>
+      <h1 class="hero-title text-reveal-glow"><strong>Alabobai</strong></h1>
+      <div class="hero-version">The AI that executes.</div>
+      <p class="hero-subtitle">
+        12 departments. One platform. Complete execution.
+      </p>
+      <div class="hero-ctas">
+        <a href="#pricing" class="chrome-btn">Start Now</a>
+        <a href="#preview" class="chrome-btn chrome-btn-secondary">See It Work</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Demo Video Section -->
+  <section class="demo-section" id="demo">
+    <div class="demo-container">
+      <div class="preview-header scroll-animate">
+        <h2 class="section-title">See it <strong>work</strong>.</h2>
+        <p class="section-subtitle">Watch how your AI team executes real tasks in real time.</p>
+      </div>
+
+      <div class="morphic-panel demo-player scroll-animate scroll-animate-delay-1">
+        <div class="demo-video-wrapper">
+          <div class="demo-video-bg"></div>
+          <div class="demo-play-btn">
+            <svg viewBox="0 0 24 24">
+              <polygon points="5,3 19,12 5,21"/>
+            </svg>
+          </div>
+          <div class="demo-video-label">
+            <span>Watch 2-minute demo</span>
+            <span class="demo-duration">2:00</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interface Preview -->
+  <section class="preview-section" id="preview">
+    <div class="preview-container">
+      <div class="preview-header">
+        <h2 class="section-title">See it <strong>work</strong>.</h2>
+        <p class="section-subtitle">Real output. Real fast.</p>
+      </div>
+
+      <div class="morphic-panel interface-preview">
+        <div class="preview-header-bar">
+          <img src="/images/logo.png" alt="Alabobai" class="logo-img-preview">
+          <div class="preview-brand"><strong>Alabobai</strong></div>
+          <div class="preview-status">Online</div>
+        </div>
+
+        <div class="preview-command">
+          <div class="preview-input">Enter Command...</div>
+          <div class="preview-execute">Execute</div>
+        </div>
+
+        <div class="preview-panels">
+          <div class="preview-panel">
+            <div class="panel-header">
+              <div class="panel-icon">
+                <svg viewBox="0 0 24 24" stroke-width="1.5">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M12 6v6l4 2"/>
+                </svg>
+              </div>
+              <span class="panel-title">Neural Stream</span>
+            </div>
+            <div class="neural-code">
+              <span class="comment">[Agent]</span> <span class="function">Analyzing request...</span><br>
+              <span class="comment">[Agent]</span> Task type: <span class="keyword">document_generation</span><br>
+              <span class="comment">[Agent]</span> Loading template: <span class="string">pitch_deck_v2</span><br>
+              <span class="comment">[Agent]</span> Gathering context from <span class="keyword">3</span> sources<br>
+              <span class="comment">[Agent]</span> <span class="function">Generating outline...</span><br>
+              <span class="comment">[Agent]</span> Section <span class="keyword">1/12</span>: Executive Summary<br>
+              <span class="comment">[Agent]</span> Applying brand guidelines<br>
+              <span class="comment">[Agent]</span> <span class="function">Formatting for export...</span><br>
+              <span class="comment">[Agent]</span> Task complete <span class="string">&#10003;</span>
+            </div>
+            <div class="thinking-lines">
+              <div class="thinking-line">Analyzing request</div>
+              <div class="thinking-line">Gathering context</div>
+              <div class="thinking-line">Generating output</div>
+            </div>
+          </div>
+
+          <div class="preview-panel live-workspace-panel">
+            <div class="panel-header">
+              <div class="panel-icon">
+                <svg viewBox="0 0 24 24" stroke-width="1.5">
+                  <rect x="2" y="3" width="20" height="14" rx="2"/>
+                  <line x1="8" y1="21" x2="16" y2="21"/>
+                  <line x1="12" y1="17" x2="12" y2="21"/>
+                </svg>
+              </div>
+              <span class="panel-title">Live Workspace</span>
+              <div class="recording-badge">
+                <span class="rec-dot"></span>
+                REC
+              </div>
+            </div>
+            <!-- Mini Browser Simulation -->
+            <div class="mini-browser">
+              <div class="mini-browser-toolbar">
+                <div class="mini-dots">
+                  <span class="dot-red"></span>
+                  <span class="dot-yellow"></span>
+                  <span class="dot-green"></span>
+                </div>
+                <div class="mini-url">dashboard.company.com</div>
+              </div>
+              <div class="mini-browser-content">
+                <div class="sim-header"></div>
+                <div class="sim-nav">
+                  <span></span><span></span><span></span>
+                </div>
+                <div class="sim-blocks">
+                  <div class="sim-block"><div class="line"></div><div class="line short"></div></div>
+                  <div class="sim-block"><div class="line"></div><div class="line short"></div></div>
+                </div>
+                <div class="agent-cursor-mini">
+                  <svg viewBox="0 0 24 24" fill="var(--rose-gold)" stroke="#1a1410" stroke-width="1">
+                    <path d="M5.5 3.21V20.8c0 .45.54.67.85.35l4.86-4.86a.5.5 0 0 1 .35-.15h6.87c.48 0 .72-.58.38-.92L6.35 2.88a.5.5 0 0 0-.85.33z"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+            <!-- Video Controls -->
+            <div class="mini-controls">
+              <div class="play-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="6" y="4" width="4" height="16"/>
+                  <rect x="14" y="4" width="4" height="16"/>
+                </svg>
+              </div>
+              <div class="timeline-bar">
+                <div class="timeline-progress"></div>
+              </div>
+              <span class="time-label">00:42 / 02:15</span>
+            </div>
+            <!-- Activity -->
+            <div class="activity-mini">
+              <div class="activity-line">
+                <span class="act-time">00:38</span>
+                <span class="act-text">Navigating to <strong>dashboard</strong></span>
+              </div>
+              <div class="activity-line">
+                <span class="act-time">00:35</span>
+                <span class="act-text">Completed <strong>login</strong></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Trust Badges Section -->
+  <section class="trust-section">
+    <div class="trust-container">
+      <div class="trust-grid">
+        <div class="morphic-panel trust-badge scroll-animate">
+          <div class="trust-icon">
+            <svg viewBox="0 0 24 24">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              <path d="M9 12l2 2 4-4"/>
+            </svg>
+          </div>
+          <div class="trust-title">SOC 2 Ready</div>
+          <div class="trust-desc">Security Framework</div>
+        </div>
+
+        <div class="morphic-panel trust-badge scroll-animate scroll-animate-delay-1">
+          <div class="trust-icon">
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M12 8v4l2 2"/>
+              <path d="M3.5 12h1M19.5 12h1M12 3.5v1M12 19.5v1"/>
+            </svg>
+          </div>
+          <div class="trust-title">GDPR</div>
+          <div class="trust-desc">EU Data Protection</div>
+        </div>
+
+        <div class="morphic-panel trust-badge scroll-animate scroll-animate-delay-2">
+          <div class="trust-icon">
+            <svg viewBox="0 0 24 24">
+              <rect x="3" y="11" width="18" height="11" rx="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              <circle cx="12" cy="16" r="1"/>
+            </svg>
+          </div>
+          <div class="trust-title">256-bit Encryption</div>
+          <div class="trust-desc">Bank-level Security</div>
+        </div>
+
+        <div class="morphic-panel trust-badge scroll-animate scroll-animate-delay-3">
+          <div class="trust-icon">
+            <svg viewBox="0 0 24 24">
+              <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+            </svg>
+          </div>
+          <div class="trust-title">Enterprise Uptime</div>
+          <div class="trust-desc">High Availability</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Power Features -->
+  <section class="power-features-section">
+    <div class="power-features-container">
+      <div class="preview-header">
+        <h2 class="section-title">Built for <strong>execution.</strong></h2>
+        <p class="section-subtitle">Not conversations. Not suggestions. Real output.</p>
+      </div>
+
+      <div class="power-grid">
+        <div class="power-feature scroll-reveal">
+          <div class="power-number">12</div>
+          <div class="power-label">Specialized Departments</div>
+          <div class="power-title">Complete Coverage</div>
+          <p class="power-desc">Every function your business needs. Legal. Finance. Development. Marketing. Sales. HR. Operations. All working in parallel.</p>
+        </div>
+
+        <div class="power-feature scroll-reveal">
+          <div class="power-number">1</div>
+          <div class="power-label">Subscription</div>
+          <div class="power-title">Unlimited Access</div>
+          <p class="power-desc">No per-task fees. No token limits. No usage caps. One price. Unlimited execution across all departments.</p>
+        </div>
+
+        <div class="power-feature scroll-reveal">
+          <div class="power-number">0</div>
+          <div class="power-label">Learning Curve</div>
+          <div class="power-title">Instant Productivity</div>
+          <p class="power-desc">Ask for what you need. Get what you asked for. No prompts to master. No workflows to configure. Just results.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Statement -->
+  <section class="statement-section">
+    <div class="statement-container">
+      <p class="statement-text scroll-reveal">
+        Other AI tools give you <strong>conversations</strong>.<br>
+        Alabobai gives you <strong>deliverables</strong>.
+      </p>
+    </div>
+  </section>
+
+  <!-- Departments -->
+  <section class="departments-section" id="departments">
+    <div class="departments-container">
+      <div class="preview-header">
+        <h2 class="section-title">Your entire workforce. <strong>One platform.</strong></h2>
+        <p class="section-subtitle">12 specialized departments that execute. Not advise. Execute.</p>
+      </div>
+
+      <div class="dept-grid">
+        <div class="dept-card">
+          <div class="dept-icon">E</div>
+          <div class="dept-name">Executive</div>
+          <p class="dept-desc">Board-ready presentations. Strategic frameworks. OKRs that align teams. Executive briefs that command attention.</p>
+        </div>
+
+        <div class="dept-card">
+          <div class="dept-icon">L</div>
+          <div class="dept-name">Legal</div>
+          <p class="dept-desc">Enforceable contracts. Bulletproof NDAs. Terms of service. Privacy policies that protect. Compliance documentation.</p>
+        </div>
+
+        <div class="dept-card">
+          <div class="dept-icon">F</div>
+          <div class="dept-name">Finance</div>
+          <p class="dept-desc">Investor-grade financial models. Cash flow projections. P&L statements. Revenue forecasts. Audit-ready reports.</p>
+        </div>
+
+        <div class="dept-card">
+          <div class="dept-icon">$</div>
+          <div class="dept-name">Funding</div>
+          <p class="dept-desc">Pitch decks that close rounds. Investor updates that build confidence. Grant applications. Funding memoranda.</p>
+        </div>
+
+        <div class="dept-card">
+          <div class="dept-icon">C</div>
+          <div class="dept-name">Credit</div>
+          <p class="dept-desc">Business credit strategies. Dispute letters that work. Credit optimization. Tradeline management. Score improvement.</p>
+        </div>
+
+        <div class="dept-card">
+          <div class="dept-icon">M</div>
+          <div class="dept-name">Marketing</div>
+          <p class="dept-desc">Campaigns that convert. Ad copy that sells. Email sequences that nurture. Content calendars. Launch strategies.</p>
+        </div>
+
+        <div class="dept-card">
+          <div class="dept-icon">B</div>
+          <div class="dept-name">Brand</div>
+          <p class="dept-desc">Brand guidelines that scale. Market positioning. Messaging frameworks. Visual identity. Voice and tone systems.</p>
+        </div>
+
+        <div class="dept-card">
+          <div class="dept-icon">S</div>
+          <div class="dept-name">Sales</div>
+          <p class="dept-desc">Scripts that close. Proposal templates. Objection handlers. CRM workflows. Pipeline automation.</p>
+        </div>
+
+        <div class="dept-card">
+          <div class="dept-icon">D</div>
+          <div class="dept-name">Development</div>
+          <p class="dept-desc">Production-ready code. API integrations. Technical documentation. System architecture. Full-stack applications.</p>
+        </div>
+
+        <div class="dept-card">
+          <div class="dept-icon">H</div>
+          <div class="dept-name">HR</div>
+          <p class="dept-desc">Job descriptions that attract. Offer letters. Employee handbooks. Performance frameworks. Onboarding systems.</p>
+        </div>
+
+        <div class="dept-card">
+          <div class="dept-icon">O</div>
+          <div class="dept-name">Operations</div>
+          <p class="dept-desc">SOPs that scale. Process documentation. Vendor contracts. Operational playbooks. Efficiency frameworks.</p>
+        </div>
+
+        <div class="dept-card">
+          <div class="dept-icon">T</div>
+          <div class="dept-name">Support</div>
+          <p class="dept-desc">Knowledge bases that resolve. FAQ systems. Response templates. Escalation guides. Customer success workflows.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Testimonials Section -->
+  <section class="testimonials-section" id="testimonials">
+    <div class="testimonials-container">
+      <div class="preview-header scroll-animate">
+        <h2 class="section-title">Trusted by <strong>Industry Leaders</strong></h2>
+        <p class="section-subtitle">See what founders and executives say about Alabobai.</p>
+      </div>
+
+      <div class="testimonials-grid">
+        <div class="morphic-panel testimonial-card scroll-animate scroll-animate-delay-1">
+          <div class="testimonial-quote">
+            <p>The Funding department handles work that used to require hiring consultants. We got investor-ready materials in a fraction of the time.</p>
+          </div>
+          <div class="testimonial-author">
+            <div class="testimonial-info">
+              <div class="testimonial-title">Founder, Series A Startup</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="morphic-panel testimonial-card scroll-animate scroll-animate-delay-2">
+          <div class="testimonial-quote">
+            <p>The Legal department produces contracts that our attorneys review and approve. It handles work that used to require expensive outside counsel.</p>
+          </div>
+          <div class="testimonial-author">
+            <div class="testimonial-info">
+              <div class="testimonial-title">Director of Operations, Healthcare Company</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="morphic-panel testimonial-card scroll-animate scroll-animate-delay-3">
+          <div class="testimonial-quote">
+            <p>The Development department accelerates our prototyping significantly. What used to take weeks now takes days.</p>
+          </div>
+          <div class="testimonial-author">
+            <div class="testimonial-info">
+              <div class="testimonial-title">Technical Founder, SaaS Company</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Comparison Table Section -->
+  <section class="comparison-section" id="compare">
+    <div class="comparison-container">
+      <div class="preview-header scroll-animate">
+        <h2 class="section-title">How <strong>Alabobai</strong> Compares</h2>
+        <p class="section-subtitle">The only platform that executes across all business functions.</p>
+      </div>
+
+      <div class="morphic-panel comparison-table-wrapper scroll-animate scroll-animate-delay-1">
+        <table class="comparison-table">
+          <thead>
+            <tr>
+              <th>Feature</th>
+              <th class="highlight">Alabobai</th>
+              <th>ChatGPT</th>
+              <th>Manus AI</th>
+              <th>Bolt.new</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>12 Business Departments</td>
+              <td class="highlight"><span class="check-icon"><svg viewBox="0 0 24 24"><polyline points="20,6 9,17 4,12"/></svg></span></td>
+              <td><span class="cross-icon"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span></td>
+              <td><span class="cross-icon"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span></td>
+              <td><span class="cross-icon"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span></td>
+            </tr>
+            <tr>
+              <td>Unlimited Requests</td>
+              <td class="highlight"><span class="check-icon"><svg viewBox="0 0 24 24"><polyline points="20,6 9,17 4,12"/></svg></span></td>
+              <td><span class="partial-icon"><svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/></svg></span></td>
+              <td><span class="partial-icon"><svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/></svg></span></td>
+              <td><span class="cross-icon"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span></td>
+            </tr>
+            <tr>
+              <td>Real-time Execution</td>
+              <td class="highlight"><span class="check-icon"><svg viewBox="0 0 24 24"><polyline points="20,6 9,17 4,12"/></svg></span></td>
+              <td><span class="cross-icon"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span></td>
+              <td><span class="check-icon"><svg viewBox="0 0 24 24"><polyline points="20,6 9,17 4,12"/></svg></span></td>
+              <td><span class="check-icon"><svg viewBox="0 0 24 24"><polyline points="20,6 9,17 4,12"/></svg></span></td>
+            </tr>
+            <tr>
+              <td>Legal Document Generation</td>
+              <td class="highlight"><span class="check-icon"><svg viewBox="0 0 24 24"><polyline points="20,6 9,17 4,12"/></svg></span></td>
+              <td><span class="partial-icon"><svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/></svg></span></td>
+              <td><span class="cross-icon"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span></td>
+              <td><span class="cross-icon"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span></td>
+            </tr>
+            <tr>
+              <td>Financial Projections</td>
+              <td class="highlight"><span class="check-icon"><svg viewBox="0 0 24 24"><polyline points="20,6 9,17 4,12"/></svg></span></td>
+              <td><span class="partial-icon"><svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/></svg></span></td>
+              <td><span class="cross-icon"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span></td>
+              <td><span class="cross-icon"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span></td>
+            </tr>
+            <tr>
+              <td>Full-Stack Development</td>
+              <td class="highlight"><span class="check-icon"><svg viewBox="0 0 24 24"><polyline points="20,6 9,17 4,12"/></svg></span></td>
+              <td><span class="partial-icon"><svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/></svg></span></td>
+              <td><span class="cross-icon"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span></td>
+              <td><span class="partial-icon"><svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/></svg></span></td>
+            </tr>
+            <tr>
+              <td>Enterprise Security</td>
+              <td class="highlight"><span class="check-icon"><svg viewBox="0 0 24 24"><polyline points="20,6 9,17 4,12"/></svg></span></td>
+              <td><span class="check-icon"><svg viewBox="0 0 24 24"><polyline points="20,6 9,17 4,12"/></svg></span></td>
+              <td><span class="partial-icon"><svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/></svg></span></td>
+              <td><span class="partial-icon"><svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/></svg></span></td>
+            </tr>
+            <tr>
+              <td>Flat Monthly Pricing</td>
+              <td class="highlight"><span class="check-icon"><svg viewBox="0 0 24 24"><polyline points="20,6 9,17 4,12"/></svg></span></td>
+              <td><span class="check-icon"><svg viewBox="0 0 24 24"><polyline points="20,6 9,17 4,12"/></svg></span></td>
+              <td><span class="cross-icon"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span></td>
+              <td><span class="cross-icon"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ Section -->
+  <section class="faq-section" id="faq">
+    <div class="faq-container">
+      <div class="preview-header scroll-animate">
+        <h2 class="section-title">Frequently Asked <strong>Questions</strong></h2>
+        <p class="section-subtitle">Everything you need to know about Alabobai.</p>
+      </div>
+
+      <div class="faq-list">
+        <div class="morphic-panel faq-item scroll-animate">
+          <button class="faq-question">
+            <h4>How is Alabobai different from ChatGPT or other AI chatbots?</h4>
+            <div class="faq-toggle">
+              <svg viewBox="0 0 24 24"><polyline points="6,9 12,15 18,9"/></svg>
+            </div>
+          </button>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              ChatGPT gives advice. Alabobai executes. Our 12 specialized departments don't just tell you what to do - they produce complete, ready-to-use deliverables. Legal contracts, financial projections, production code, marketing campaigns - all generated to professional standards.
+            </div>
+          </div>
+        </div>
+
+        <div class="morphic-panel faq-item scroll-animate scroll-animate-delay-1">
+          <button class="faq-question">
+            <h4>What does "unlimited requests" actually mean?</h4>
+            <div class="faq-toggle">
+              <svg viewBox="0 0 24 24"><polyline points="6,9 12,15 18,9"/></svg>
+            </div>
+          </button>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              Exactly what it says. No token limits, no credit systems, no usage caps. Use any department as much as you need. Generate hundreds of documents, build multiple applications, run countless campaigns - all for one flat monthly fee.
+            </div>
+          </div>
+        </div>
+
+        <div class="morphic-panel faq-item scroll-animate scroll-animate-delay-2">
+          <button class="faq-question">
+            <h4>Is my data secure and private?</h4>
+            <div class="faq-toggle">
+              <svg viewBox="0 0 24 24"><polyline points="6,9 12,15 18,9"/></svg>
+            </div>
+          </button>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              Absolutely. Enterprise-grade security. Your data stays yours. SOC 2 ready security framework, GDPR-compliant, 256-bit encryption. Your data is never used to train our models.
+            </div>
+          </div>
+        </div>
+
+        <div class="morphic-panel faq-item scroll-animate scroll-animate-delay-3">
+          <button class="faq-question">
+            <h4>Can I cancel my subscription anytime?</h4>
+            <div class="faq-toggle">
+              <svg viewBox="0 0 24 24"><polyline points="6,9 12,15 18,9"/></svg>
+            </div>
+          </button>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              Yes. No contracts, no commitments. Cancel with one click anytime. Plus, we offer a 7-day money-back guarantee. If Alabobai doesn't transform how you work, we'll refund you completely - no questions asked.
+            </div>
+          </div>
+        </div>
+
+        <div class="morphic-panel faq-item scroll-animate scroll-animate-delay-4">
+          <button class="faq-question">
+            <h4>Do you offer enterprise or team plans?</h4>
+            <div class="faq-toggle">
+              <svg viewBox="0 0 24 24"><polyline points="6,9 12,15 18,9"/></svg>
+            </div>
+          </button>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              Yes. For teams of 5+, we offer custom enterprise plans with dedicated support, custom integrations, SSO, and volume discounts. <a href="mailto:enterprise@alabobai.com">Contact our enterprise team</a> for a personalized quote.
+            </div>
+          </div>
+        </div>
+
+        <div class="morphic-panel faq-item scroll-animate scroll-animate-delay-4">
+          <button class="faq-question">
+            <h4>What kind of support do you offer?</h4>
+            <div class="faq-toggle">
+              <svg viewBox="0 0 24 24"><polyline points="6,9 12,15 18,9"/></svg>
+            </div>
+          </button>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              All subscribers get priority email support with response times under 4 hours. We also provide comprehensive documentation, video tutorials, and a community Discord where you can connect with other users and our team.
+            </div>
+          </div>
+        </div>
+
+        <div class="morphic-panel faq-item scroll-animate scroll-animate-delay-4">
+          <button class="faq-question">
+            <h4>Can Alabobai integrate with my existing tools?</h4>
+            <div class="faq-toggle">
+              <svg viewBox="0 0 24 24"><polyline points="6,9 12,15 18,9"/></svg>
+            </div>
+          </button>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              Alabobai works seamlessly alongside your existing workflow. Export documents to Google Docs, deploy code to any hosting platform, integrate with your CRM, or connect via our API. We're designed to augment, not replace, your existing stack.
+            </div>
+          </div>
+        </div>
+
+        <div class="morphic-panel faq-item scroll-animate scroll-animate-delay-4">
+          <button class="faq-question">
+            <h4>What happens to my work if I cancel?</h4>
+            <div class="faq-toggle">
+              <svg viewBox="0 0 24 24"><polyline points="6,9 12,15 18,9"/></svg>
+            </div>
+          </button>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              Everything you create is yours. Before cancellation, you can export all your documents, code, and assets. We retain your data for 30 days after cancellation in case you change your mind, then securely delete everything per GDPR requirements.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing -->
+  <section class="pricing-section" id="pricing">
+    <div class="pricing-container">
+      <div class="preview-header">
+        <h2 class="section-title">Choose Your <strong>Plan</strong></h2>
+        <p class="section-subtitle">Scale your AI workforce as you grow. No hidden fees.</p>
+      </div>
+
+      <div class="pricing-grid">
+        <!-- Pro Tier -->
+        <div class="morphic-panel pricing-card">
+          <div class="pricing-tier-name">Pro</div>
+          <div class="pricing-tier-desc">For individuals and startups</div>
+          <div class="pricing-amount">$99<span>/mo</span></div>
+          <div class="pricing-period">Billed monthly. Cancel anytime.</div>
+
+          <ul class="pricing-features">
+            <li>12 AI Departments</li>
+            <li>1,000 AI requests/month</li>
+            <li>Standard support</li>
+            <li>Basic integrations</li>
+            <li>Isolated environment</li>
+            <li>Works in any country</li>
+          </ul>
+
+          <a href="https://alabobai.lemonsqueezy.com/buy/PRO_VARIANT_ID?checkout[custom][redirect_url]=https://alabobai.com/checkout/success" class="chrome-btn pricing-cta" id="checkout-btn-pro">
+            Get Started
+          </a>
+          <p class="pricing-guarantee">7-day money-back guarantee</p>
+        </div>
+
+        <!-- Professional Tier -->
+        <div class="morphic-panel pricing-card featured">
+          <div class="pricing-tier-name">Professional</div>
+          <div class="pricing-tier-desc">For growing teams</div>
+          <div class="pricing-amount">$299<span>/mo</span></div>
+          <div class="pricing-period">Billed monthly. Cancel anytime.</div>
+
+          <ul class="pricing-features">
+            <li class="inherited">Everything in Pro</li>
+            <li>5,000 AI requests/month</li>
+            <li>Priority support</li>
+            <li>Advanced integrations</li>
+            <li>API access</li>
+            <li>Team collaboration (5 seats)</li>
+          </ul>
+
+          <a href="https://alabobai.lemonsqueezy.com/buy/PROFESSIONAL_VARIANT_ID?checkout[custom][redirect_url]=https://alabobai.com/checkout/success" class="chrome-btn pricing-cta" id="checkout-btn-professional">
+            Start Your AI Company
+          </a>
+          <p class="pricing-guarantee">7-day money-back guarantee</p>
+        </div>
+
+        <!-- Enterprise Tier -->
+        <div class="morphic-panel pricing-card">
+          <div class="pricing-tier-name">Enterprise</div>
+          <div class="pricing-tier-desc">For large organizations</div>
+          <div class="pricing-amount">$999<span>/mo</span></div>
+          <div class="pricing-period">Billed monthly. Cancel anytime.</div>
+
+          <ul class="pricing-features">
+            <li class="inherited">Everything in Professional</li>
+            <li>Unlimited AI requests</li>
+            <li>Dedicated support</li>
+            <li>Custom integrations</li>
+            <li>White-label option</li>
+            <li>Unlimited team seats</li>
+            <li>SLA guarantee</li>
+          </ul>
+
+          <a href="https://alabobai.lemonsqueezy.com/buy/ENTERPRISE_VARIANT_ID?checkout[custom][redirect_url]=https://alabobai.com/checkout/success" class="chrome-btn pricing-cta" id="checkout-btn-enterprise">
+            Get Enterprise
+          </a>
+          <p class="pricing-guarantee">7-day money-back guarantee</p>
+        </div>
+
+        <!-- Custom Tier -->
+        <div class="morphic-panel pricing-card">
+          <div class="pricing-tier-name">Custom</div>
+          <div class="pricing-tier-desc">Tailored for your needs</div>
+          <div class="pricing-amount custom">Custom Pricing</div>
+          <div class="pricing-period">Contact us for a quote</div>
+
+          <ul class="pricing-features">
+            <li class="inherited">All Enterprise features</li>
+            <li>Volume discounts</li>
+            <li>On-premise deployment</li>
+            <li>Custom AI training</li>
+            <li>Dedicated account manager</li>
+            <li>Custom SLA terms</li>
+          </ul>
+
+          <a href="mailto:sales@alabobai.com" class="chrome-btn pricing-cta secondary" id="checkout-btn-custom">
+            Contact Sales
+          </a>
+          <p class="pricing-guarantee">Enterprise-grade security</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-container">
+      <div class="footer-links">
+        <a href="/terms">Terms</a>
+        <a href="/privacy">Privacy</a>
+        <a href="mailto:support@alabobai.com">Contact</a>
+      </div>
+      <div class="footer-copy">2026 Alabobai Inc. Delaware Corporation.</div>
+    </div>
+  </footer>
+
+  <script>
+    // Mobile Menu Toggle Functionality
+    const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+    const mobileNavMenu = document.getElementById('mobileNavMenu');
+    const mobileNavOverlay = document.getElementById('mobileNavOverlay');
+
+    function toggleMobileMenu() {
+      mobileMenuToggle.classList.toggle('active');
+      mobileNavMenu.classList.toggle('active');
+      mobileNavOverlay.classList.toggle('active');
+      document.body.style.overflow = mobileNavMenu.classList.contains('active') ? 'hidden' : '';
+    }
+
+    function closeMobileMenu() {
+      mobileMenuToggle.classList.remove('active');
+      mobileNavMenu.classList.remove('active');
+      mobileNavOverlay.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    mobileMenuToggle.addEventListener('click', toggleMobileMenu);
+    mobileNavOverlay.addEventListener('click', closeMobileMenu);
+
+    // Close mobile menu when clicking a link
+    mobileNavMenu.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', closeMobileMenu);
+    });
+
+    // Close mobile menu on escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && mobileNavMenu.classList.contains('active')) {
+        closeMobileMenu();
+      }
+    });
+
+    // Smooth scrolling for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function(e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) target.scrollIntoView({ behavior: 'smooth' });
+      });
+    });
+
+    // FAQ Toggle functionality
+    document.querySelectorAll('.faq-question').forEach(button => {
+      button.addEventListener('click', function() {
+        const faqItem = this.closest('.faq-item');
+        const isActive = faqItem.classList.contains('active');
+
+        // Close all other FAQ items
+        document.querySelectorAll('.faq-item').forEach(item => {
+          item.classList.remove('active');
+        });
+
+        // Toggle the clicked item
+        if (!isActive) {
+          faqItem.classList.add('active');
+        }
+      });
+    });
+
+    // Scroll animation observer
+    const observerOptions = {
+      root: null,
+      rootMargin: '0px',
+      threshold: 0.1
+    };
+
+    const animateOnScroll = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+
+          // For testimonial cards
+          if (entry.target.classList.contains('testimonial-card')) {
+            entry.target.classList.add('animate-in');
+          }
+
+          // For trust badges
+          if (entry.target.classList.contains('trust-badge')) {
+            entry.target.classList.add('animate-in');
+          }
+
+          // For FAQ items
+          if (entry.target.classList.contains('faq-item')) {
+            entry.target.classList.add('animate-in');
+          }
+        }
+      });
+    }, observerOptions);
+
+    // Observe all scroll-animate elements
+    document.querySelectorAll('.scroll-animate, .testimonial-card, .trust-badge, .faq-item').forEach(el => {
+      animateOnScroll.observe(el);
+    });
+
+    // Demo video play button interaction
+    const demoWrapper = document.querySelector('.demo-video-wrapper');
+    if (demoWrapper) {
+      demoWrapper.addEventListener('click', function() {
+        // Placeholder for video modal or embed functionality
+        alert('Demo video coming soon! Sign up to be notified when it launches.');
+      });
+    }
+
+    // ============================================================================
+    // LemonSqueezy Checkout Configuration
+    // ============================================================================
+    // Replace VARIANT_ID with your actual LemonSqueezy product variant ID
+    // You can find this in your LemonSqueezy dashboard: Products > Your Product > Variants
+    //
+    // Example checkout URL format:
+    // https://alabobai.lemonsqueezy.com/buy/VARIANT_ID
+    //
+    // Optional parameters:
+    // - checkout[email]=user@example.com (pre-fill email)
+    // - checkout[custom][user_id]=123 (pass user ID for webhook)
+    // - checkout[custom][redirect_url]=https://... (redirect after purchase)
+    //
+    // To configure:
+    // 1. Go to LemonSqueezy dashboard
+    // 2. Create product "Alabobai Pro" at $99/month
+    // 3. Copy the variant ID
+    // 4. Replace VARIANT_ID in the checkout button href below
+    //
+    // The checkout button uses this format:
+    // https://alabobai.lemonsqueezy.com/buy/{VARIANT_ID}?checkout[custom][redirect_url]=https://alabobai.com/checkout/success
+
+    // Dynamic checkout URL configuration (optional - for passing user data)
+    const checkoutBtn = document.getElementById('checkout-btn');
+    if (checkoutBtn) {
+      // If user is logged in, you can pre-fill their email
+      // const userEmail = getCurrentUserEmail(); // Your auth function
+      // if (userEmail) {
+      //   const url = new URL(checkoutBtn.href);
+      //   url.searchParams.set('checkout[email]', userEmail);
+      //   url.searchParams.set('checkout[custom][user_id]', getCurrentUserId());
+      //   checkoutBtn.href = url.toString();
+      // }
+    }
+  </script>
+
+  <!-- Dynamic Background Effects -->
+  <script src="../js/background.js"></script>
+
+  <!-- Ultra Animation System -->
+  <script src="../js/animations.js"></script>
+
+  <!-- Initialize Animations for Landing Page -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Add SVG filter for gooey effects (required for liquid buttons)
+      if (!document.getElementById('goo-filter')) {
+        const svgNS = 'http://www.w3.org/2000/svg';
+        const svg = document.createElementNS(svgNS, 'svg');
+        svg.setAttribute('style', 'position: absolute; width: 0; height: 0; pointer-events: none;');
+        svg.innerHTML = '<defs><filter id="goo-filter"><feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur" /><feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 19 -9" result="goo" /><feComposite in="SourceGraphic" in2="goo" operator="atop"/></filter></defs>';
+        document.body.insertBefore(svg, document.body.firstChild);
+      }
+
+      // Create star particles for ambient background effect
+      createStarParticles();
+
+      function createStarParticles() {
+        const container = document.createElement('div');
+        container.className = 'particle-container';
+        document.body.appendChild(container);
+
+        const numStars = 40; // Number of stars
+        for (let i = 0; i < numStars; i++) {
+          const star = document.createElement('div');
+          star.className = 'particle star';
+
+          // Random position
+          star.style.left = Math.random() * 100 + '%';
+          star.style.top = Math.random() * 100 + '%';
+
+          // Random size (2-5px)
+          const size = 2 + Math.random() * 3;
+          star.style.width = size + 'px';
+          star.style.height = size + 'px';
+
+          // Random animation delay and duration
+          star.style.animationDelay = Math.random() * 5 + 's';
+          star.style.animationDuration = (15 + Math.random() * 10) + 's';
+
+          // Random opacity
+          star.style.opacity = 0.3 + Math.random() * 0.7;
+
+          container.appendChild(star);
+        }
+
+        // Create a few larger glowing orbs
+        for (let i = 0; i < 5; i++) {
+          const orb = document.createElement('div');
+          orb.className = 'parallax-orb';
+
+          const size = 100 + Math.random() * 200;
+          orb.style.width = size + 'px';
+          orb.style.height = size + 'px';
+          orb.style.left = Math.random() * 100 + '%';
+          orb.style.top = Math.random() * 100 + '%';
+          orb.style.opacity = 0.1 + Math.random() * 0.15;
+
+          container.appendChild(orb);
+        }
+      }
+
+      // CPU Logo is already in the HTML - just let animations.js initialize it
+
+      // Enhance hero title with text glow
+      const heroTitle = document.querySelector('.hero-title');
+      if (heroTitle) {
+        heroTitle.classList.add('text-reveal-glow');
+        setTimeout(() => heroTitle.classList.add('revealed'), 300);
+      }
+
+      // Enhance hero subtitle with word reveal
+      const heroSubtitle = document.querySelector('.hero-subtitle');
+      if (heroSubtitle) {
+        heroSubtitle.setAttribute('data-text-reveal', 'word');
+        heroSubtitle.setAttribute('data-text-delay', '0.06');
+      }
+
+      // Enhance all CTA buttons with magnetic effect and liquid styling
+      document.querySelectorAll('.chrome-btn').forEach(btn => {
+        btn.classList.add('magnetic');
+
+        // Create magnetic inner wrapper
+        const content = btn.innerHTML;
+        const inner = document.createElement('span');
+        inner.className = 'magnetic-inner';
+        inner.innerHTML = content;
+        btn.innerHTML = '';
+        btn.appendChild(inner);
+      });
+
+      // Enhance nav CTA
+      document.querySelectorAll('.nav-cta').forEach(btn => {
+        btn.classList.add('magnetic');
+      });
+
+      // Department cards - static with subtle scroll reveal
+      document.querySelectorAll('.dept-card').forEach((card, index) => {
+        card.classList.add('scroll-reveal');
+        card.setAttribute('data-scroll-delay', (index * 0.03).toString());
+      });
+
+      // Testimonial cards - STATIC with scroll reveal only (no tilt)
+      document.querySelectorAll('.testimonial-card').forEach((card, index) => {
+        card.classList.add('scroll-reveal');
+        card.setAttribute('data-scroll-delay', (index * 0.05).toString());
+      });
+
+      // Trust badges - static, confident
+      document.querySelectorAll('.trust-badge').forEach((badge, index) => {
+        badge.classList.add('scroll-reveal');
+      });
+
+      // Enhance section titles with text reveal glow
+      document.querySelectorAll('.section-title').forEach(title => {
+        title.classList.add('text-reveal-glow', 'scroll-reveal');
+      });
+
+      // Preview panels - STATIC with scroll reveal only (no tilt)
+      document.querySelectorAll('.preview-panel').forEach(panel => {
+        panel.classList.add('scroll-reveal');
+      });
+
+      // Pricing card - STATIC with scroll reveal only (no tilt, no glow-pulse)
+      const pricingCard = document.querySelector('.pricing-card');
+      if (pricingCard) {
+        pricingCard.classList.add('scroll-reveal');
+      }
+
+      // Demo video wrapper - STATIC (no tilt)
+      const demoWrapper = document.querySelector('.demo-video-wrapper');
+      if (demoWrapper) {
+        demoWrapper.classList.add('scroll-reveal');
+      }
+
+      // Morphic panels - STATIC glass effect only (no animated border)
+      // Border animation removed for clean glass aesthetic
+
+      // DISABLED: hover-lift removed - FAQ items should be static (no vertical movement)
+      // document.querySelectorAll('.faq-item').forEach(item => {
+      //   item.classList.add('hover-lift');
+      // });
+
+      // No particle system - clean, professional background
+
+      // Re-initialize all animations after DOM enhancements
+      if (window.AlabobaiAnimations && window.AlabobaiAnimations.init) {
+        setTimeout(() => {
+          window.AlabobaiAnimations.init();
+        }, 100);
+      }
+
+      console.log('Landing page animations initialized');
+    });
+  </script>
+
+  <!-- Social Proof System -->
+  <script src="../js/social-proof.js"></script>
+</body>
+</html>

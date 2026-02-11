@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Billing - Alabobai Ultra Agent V4.0</title>
+  <meta name="description" content="Manage your Alabobai subscription, view billing history, and update payment methods.">
+
+  <!-- Shared CSS -->
+  <link rel="stylesheet" href="../css/background.css">
+  <link rel="stylesheet" href="../css/morphic-glass.css">
+  <link rel="stylesheet" href="../css/animations.css">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    /* ============================================================================
+       ULTRA AGENT V4.0 - Billing Page Brand Identity
+       ============================================================================ */
+
+    :root {
+      /* Metallic Rose Gold Palette */
+      --rose-gold: #d9a07a;
+      --rose-gold-light: #ecd4c0;
+      --rose-gold-bright: #f0e0d0;
+      --rose-gold-dark: #b8845c;
+      --rose-gold-deep: #8b6442;
+      --copper: #c9956c;
+      --bronze: #a67c52;
+
+      /* Glow Effects */
+      --glow-rose: rgba(217, 160, 122, 0.6);
+      --glow-rose-intense: rgba(217, 160, 122, 0.9);
+      --glow-soft: rgba(217, 160, 122, 0.3);
+
+      /* Backgrounds */
+      --bg-void: #000000;
+      --bg-dark: #0a0808;
+      --bg-card: rgba(12, 10, 8, 0.95);
+      --bg-panel: rgba(18, 14, 12, 0.9);
+      --bg-input: rgba(25, 20, 18, 0.8);
+
+      /* Borders */
+      --border-outer: rgba(217, 160, 122, 0.5);
+      --border-mid: rgba(217, 160, 122, 0.3);
+      --border-inner: rgba(217, 160, 122, 0.15);
+      --border-subtle: rgba(217, 160, 122, 0.08);
+
+      /* Text */
+      --text-bright: #f5ebe0;
+      --text-primary: #e8d5c4;
+      --text-secondary: #a89080;
+      --text-muted: #6b5a4a;
+
+      /* Status */
+      --status-active: #7dd3a0;
+      --status-glow: rgba(125, 211, 160, 0.5);
+      --status-warning: #f5a623;
+      --status-danger: #e74c3c;
+
+      /* Fonts */
+      --font-display: 'Inter', -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+
+      /* Animation */
+      --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: var(--font-display);
+      background: var(--bg-void);
+      color: var(--text-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ============================================================================
+       MORPHIC PANEL SYSTEM
+       ============================================================================ */
+
+    .morphic-panel {
+      background: var(--bg-card);
+      border-radius: 16px;
+      position: relative;
+    }
+
+    .morphic-panel::before {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, var(--rose-gold) 0%, var(--rose-gold-dark) 25%, transparent 50%, var(--rose-gold-deep) 75%, var(--rose-gold) 100%);
+      z-index: -1;
+      opacity: 0.7;
+    }
+
+    .morphic-panel::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 16px;
+      border: 1px solid var(--border-mid);
+      pointer-events: none;
+    }
+
+    /* ============================================================================
+       CHROME BUTTONS
+       ============================================================================ */
+
+    .chrome-btn {
+      position: relative;
+      padding: 14px 32px;
+      background: linear-gradient(180deg, var(--rose-gold-bright) 0%, var(--rose-gold-light) 20%, var(--rose-gold) 50%, var(--rose-gold-dark) 80%, var(--bronze) 100%);
+      border: none;
+      border-radius: 10px;
+      color: #1a1410;
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      transition: all 0.3s var(--ease-smooth);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.4), inset 0 2px 0 rgba(255,255,255,0.3), inset 0 -2px 0 rgba(0,0,0,0.2);
+      text-shadow: 0 1px 0 rgba(255,255,255,0.3);
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .chrome-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 50%;
+      background: linear-gradient(180deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 100%);
+      border-radius: 10px 10px 0 0;
+    }
+
+    .chrome-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px var(--glow-rose), inset 0 2px 0 rgba(255,255,255,0.4);
+    }
+
+    .chrome-btn-secondary {
+      background: var(--bg-input);
+      border: 2px solid var(--border-mid);
+      color: var(--text-primary);
+      box-shadow: none;
+      text-shadow: none;
+    }
+
+    .chrome-btn-secondary::before {
+      display: none;
+    }
+
+    .chrome-btn-secondary:hover {
+      border-color: var(--rose-gold);
+      box-shadow: 0 0 30px var(--glow-soft);
+    }
+
+    .chrome-btn-danger {
+      background: linear-gradient(180deg, #ff6b6b 0%, #e74c3c 50%, #c0392b 100%);
+      box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3), inset 0 2px 0 rgba(255,255,255,0.3);
+    }
+
+    .chrome-btn-danger:hover {
+      box-shadow: 0 8px 30px rgba(231, 76, 60, 0.5);
+    }
+
+    /* ============================================================================
+       NAVIGATION
+       ============================================================================ */
+
+    .top-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      padding: 16px 24px;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border-subtle);
+      backdrop-filter: blur(20px);
+    }
+
+    .top-bar-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+    }
+
+    .logo-icon svg {
+      width: 100%;
+      height: 100%;
+      stroke: var(--rose-gold);
+      fill: none;
+      stroke-width: 1.5;
+      filter: drop-shadow(0 0 6px var(--glow-rose));
+    }
+
+    .logo-text {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-bright);
+    }
+
+    .logo-text span {
+      color: var(--rose-gold-light);
+      text-shadow: 0 0 15px var(--glow-rose);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 8px;
+    }
+
+    .nav-link {
+      padding: 10px 18px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      border-radius: 8px;
+      transition: all 0.3s var(--ease-smooth);
+    }
+
+    .nav-link:hover,
+    .nav-link.active {
+      color: var(--rose-gold-light);
+      background: var(--bg-input);
+    }
+
+    /* ============================================================================
+       PAGE LAYOUT
+       ============================================================================ */
+
+    .page-container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 100px 24px 60px;
+    }
+
+    .page-header {
+      margin-bottom: 40px;
+    }
+
+    .page-title {
+      font-size: clamp(28px, 5vw, 36px);
+      font-weight: 300;
+      color: var(--text-bright);
+      margin-bottom: 8px;
+      text-shadow: 0 0 40px var(--glow-soft);
+    }
+
+    .page-title strong {
+      font-weight: 700;
+      color: var(--rose-gold-light);
+      text-shadow: 0 0 30px var(--glow-rose);
+    }
+
+    .page-subtitle {
+      font-size: 16px;
+      color: var(--text-secondary);
+    }
+
+    /* ============================================================================
+       SUBSCRIPTION CARD
+       ============================================================================ */
+
+    .billing-grid {
+      display: grid;
+      gap: 24px;
+    }
+
+    .subscription-card {
+      padding: 32px;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 32px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .plan-info h3 {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text-bright);
+      margin-bottom: 8px;
+    }
+
+    .plan-price {
+      font-size: 36px;
+      font-weight: 800;
+      color: var(--rose-gold-light);
+      text-shadow: 0 0 20px var(--glow-rose);
+    }
+
+    .plan-price span {
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: 50px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .status-badge.active {
+      background: rgba(125, 211, 160, 0.15);
+      border: 1px solid rgba(125, 211, 160, 0.4);
+      color: var(--status-active);
+    }
+
+    .status-badge.cancelled {
+      background: rgba(245, 166, 35, 0.15);
+      border: 1px solid rgba(245, 166, 35, 0.4);
+      color: var(--status-warning);
+    }
+
+    .status-badge.past-due {
+      background: rgba(231, 76, 60, 0.15);
+      border: 1px solid rgba(231, 76, 60, 0.4);
+      color: var(--status-danger);
+    }
+
+    .status-badge::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .status-badge.active::before {
+      background: var(--status-active);
+      box-shadow: 0 0 10px var(--status-glow);
+    }
+
+    .status-badge.cancelled::before {
+      background: var(--status-warning);
+      box-shadow: 0 0 10px rgba(245, 166, 35, 0.5);
+    }
+
+    .status-badge.past-due::before {
+      background: var(--status-danger);
+      box-shadow: 0 0 10px rgba(231, 76, 60, 0.5);
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* ============================================================================
+       BILLING DETAILS
+       ============================================================================ */
+
+    .billing-details {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+
+    .detail-item {
+      padding: 20px;
+      background: var(--bg-panel);
+      border-radius: 12px;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .detail-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+
+    .detail-value {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-bright);
+    }
+
+    .detail-value.highlight {
+      color: var(--rose-gold-light);
+      text-shadow: 0 0 15px var(--glow-rose);
+    }
+
+    /* ============================================================================
+       FEATURES LIST
+       ============================================================================ */
+
+    .features-section {
+      margin-bottom: 32px;
+    }
+
+    .features-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+    }
+
+    .feature-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      background: var(--bg-panel);
+      border-radius: 10px;
+      border: 1px solid var(--border-subtle);
+      font-size: 13px;
+      color: var(--text-primary);
+    }
+
+    .feature-item::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      background: var(--status-active);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--status-glow);
+      flex-shrink: 0;
+    }
+
+    /* ============================================================================
+       ACTIONS
+       ============================================================================ */
+
+    .card-actions {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      padding-top: 24px;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    /* ============================================================================
+       BILLING HISTORY
+       ============================================================================ */
+
+    .history-card {
+      padding: 32px;
+    }
+
+    .history-card h3 {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-bright);
+      margin-bottom: 24px;
+    }
+
+    .history-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .history-table th {
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-mid);
+    }
+
+    .history-table td {
+      padding: 16px;
+      border-bottom: 1px solid var(--border-subtle);
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    .history-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .history-table tr:hover td {
+      background: var(--bg-panel);
+    }
+
+    .invoice-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .invoice-status.paid {
+      background: rgba(125, 211, 160, 0.15);
+      color: var(--status-active);
+    }
+
+    .invoice-status.pending {
+      background: rgba(245, 166, 35, 0.15);
+      color: var(--status-warning);
+    }
+
+    .invoice-link {
+      color: var(--rose-gold);
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.3s;
+    }
+
+    .invoice-link:hover {
+      color: var(--rose-gold-light);
+      text-decoration: underline;
+    }
+
+    /* ============================================================================
+       CANCEL MODAL
+       ============================================================================ */
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      padding: 24px;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-content {
+      max-width: 480px;
+      width: 100%;
+      padding: 40px;
+      text-align: center;
+    }
+
+    .modal-icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 24px;
+      background: rgba(231, 76, 60, 0.15);
+      border: 1px solid rgba(231, 76, 60, 0.4);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-icon svg {
+      width: 32px;
+      height: 32px;
+      stroke: var(--status-danger);
+      stroke-width: 2;
+      fill: none;
+    }
+
+    .modal-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text-bright);
+      margin-bottom: 12px;
+    }
+
+    .modal-text {
+      font-size: 15px;
+      color: var(--text-secondary);
+      margin-bottom: 32px;
+      line-height: 1.7;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+    }
+
+    /* ============================================================================
+       RESPONSIVE
+       ============================================================================ */
+
+    @media (max-width: 768px) {
+      .card-header {
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .billing-details {
+        grid-template-columns: 1fr;
+      }
+
+      .history-table {
+        font-size: 13px;
+      }
+
+      .history-table th,
+      .history-table td {
+        padding: 12px 8px;
+      }
+
+      .modal-actions {
+        flex-direction: column;
+      }
+
+      .chrome-btn {
+        width: 100%;
+      }
+
+      .nav-links {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Top Navigation -->
+  <header class="top-bar">
+    <div class="top-bar-inner">
+      <a href="/app" class="logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24">
+            <rect x="4" y="4" width="16" height="16" rx="2" />
+            <rect x="9" y="9" width="6" height="6" />
+            <line x1="9" y1="1" x2="9" y2="4" />
+            <line x1="15" y1="1" x2="15" y2="4" />
+            <line x1="9" y1="20" x2="9" y2="23" />
+            <line x1="15" y1="20" x2="15" y2="23" />
+            <line x1="20" y1="9" x2="23" y2="9" />
+            <line x1="20" y1="15" x2="23" y2="15" />
+            <line x1="1" y1="9" x2="4" y2="9" />
+            <line x1="1" y1="15" x2="4" y2="15" />
+          </svg>
+        </div>
+        <div class="logo-text">Alabo<span>bai</span></div>
+      </a>
+
+      <nav class="nav-links">
+        <a href="/app" class="nav-link">Dashboard</a>
+        <a href="/app/billing" class="nav-link active">Billing</a>
+        <a href="/app/settings" class="nav-link">Settings</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Page Content -->
+  <main class="page-container">
+    <div class="page-header">
+      <h1 class="page-title">Subscription <strong>Billing</strong></h1>
+      <p class="page-subtitle">Manage your plan, payment methods, and billing history.</p>
+    </div>
+
+    <div class="billing-grid">
+      <!-- Subscription Overview -->
+      <div class="morphic-panel subscription-card">
+        <div class="card-header">
+          <div class="plan-info">
+            <h3>Alabobai Pro</h3>
+            <div class="plan-price">$99<span>/month</span></div>
+          </div>
+          <div class="status-badge active" id="status-badge">
+            Active
+          </div>
+        </div>
+
+        <div class="billing-details">
+          <div class="detail-item">
+            <div class="detail-label">Member Since</div>
+            <div class="detail-value" id="member-since">Loading...</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Next Billing Date</div>
+            <div class="detail-value highlight" id="next-billing">Loading...</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Payment Method</div>
+            <div class="detail-value" id="payment-method">Loading...</div>
+          </div>
+        </div>
+
+        <div class="features-section">
+          <div class="features-title">Your Plan Includes</div>
+          <div class="features-grid">
+            <div class="feature-item">All 12 departments</div>
+            <div class="feature-item">Unlimited requests</div>
+            <div class="feature-item">Neural Stream processing</div>
+            <div class="feature-item">Priority support</div>
+            <div class="feature-item">Quantum encryption</div>
+            <div class="feature-item">Cancel anytime</div>
+          </div>
+        </div>
+
+        <div class="card-actions">
+          <button class="chrome-btn" onclick="updatePaymentMethod()">Update Payment Method</button>
+          <button class="chrome-btn chrome-btn-secondary" onclick="openCustomerPortal()">Customer Portal</button>
+          <button class="chrome-btn chrome-btn-danger" onclick="showCancelModal()">Cancel Subscription</button>
+        </div>
+      </div>
+
+      <!-- Billing History -->
+      <div class="morphic-panel history-card">
+        <h3>Billing History</h3>
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Description</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Invoice</th>
+            </tr>
+          </thead>
+          <tbody id="billing-history">
+            <!-- Populated by JavaScript -->
+            <tr>
+              <td colspan="5" style="text-align: center; color: var(--text-muted);">Loading billing history...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- Cancel Subscription Modal -->
+  <div class="modal-overlay" id="cancel-modal">
+    <div class="morphic-panel modal-content">
+      <div class="modal-icon">
+        <svg viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+      </div>
+      <h2 class="modal-title">Cancel Subscription?</h2>
+      <p class="modal-text">
+        Your subscription will remain active until the end of your current billing period.
+        After that, you will lose access to all 12 departments and premium features.
+      </p>
+      <div class="modal-actions">
+        <button class="chrome-btn chrome-btn-secondary" onclick="closeCancelModal()">Keep Subscription</button>
+        <button class="chrome-btn chrome-btn-danger" onclick="confirmCancel()">Yes, Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Configuration - In production, these would come from your backend
+    const LEMONSQUEEZY_CUSTOMER_PORTAL_URL = 'https://alabobai.lemonsqueezy.com/billing';
+
+    // Mock subscription data - In production, fetch from your API
+    const subscriptionData = {
+      status: 'active', // 'active', 'cancelled', 'past_due'
+      memberSince: '2024-01-15',
+      nextBilling: '2024-02-15',
+      paymentMethod: 'Visa ending in 4242',
+      cancelAtPeriodEnd: false,
+      subscriptionId: null, // Will be set from LemonSqueezy webhook data
+      customerId: null
+    };
+
+    // Mock billing history
+    const billingHistory = [
+      { date: '2024-01-15', description: 'Alabobai Pro - Monthly', amount: '$99.00', status: 'paid', invoiceUrl: '#' },
+      { date: '2023-12-15', description: 'Alabobai Pro - Monthly', amount: '$99.00', status: 'paid', invoiceUrl: '#' },
+      { date: '2023-11-15', description: 'Alabobai Pro - Monthly', amount: '$99.00', status: 'paid', invoiceUrl: '#' }
+    ];
+
+    // Initialize page
+    document.addEventListener('DOMContentLoaded', () => {
+      loadSubscriptionData();
+      loadBillingHistory();
+    });
+
+    function loadSubscriptionData() {
+      // In production, fetch from your API
+      // const response = await fetch('/api/subscription');
+      // const data = await response.json();
+
+      // Update UI with subscription data
+      document.getElementById('member-since').textContent = formatDate(subscriptionData.memberSince);
+      document.getElementById('next-billing').textContent = formatDate(subscriptionData.nextBilling);
+      document.getElementById('payment-method').textContent = subscriptionData.paymentMethod;
+
+      // Update status badge
+      const statusBadge = document.getElementById('status-badge');
+      statusBadge.className = `status-badge ${subscriptionData.status.replace('_', '-')}`;
+      statusBadge.textContent = formatStatus(subscriptionData.status);
+    }
+
+    function loadBillingHistory() {
+      const tbody = document.getElementById('billing-history');
+
+      if (billingHistory.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No billing history yet.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = billingHistory.map(item => `
+        <tr>
+          <td>${formatDate(item.date)}</td>
+          <td>${item.description}</td>
+          <td>${item.amount}</td>
+          <td><span class="invoice-status ${item.status}">${item.status}</span></td>
+          <td><a href="${item.invoiceUrl}" class="invoice-link" target="_blank">Download</a></td>
+        </tr>
+      `).join('');
+    }
+
+    function formatDate(dateStr) {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    }
+
+    function formatStatus(status) {
+      const statusMap = {
+        'active': 'Active',
+        'cancelled': 'Cancelled',
+        'past_due': 'Past Due',
+        'paused': 'Paused',
+        'expired': 'Expired'
+      };
+      return statusMap[status] || status;
+    }
+
+    async function updatePaymentMethod() {
+      // In production, call your API to get the update payment URL from LemonSqueezy
+      // const response = await fetch('/api/subscription/update-payment-url');
+      // const { url } = await response.json();
+      // window.location.href = url;
+
+      // For demo, redirect to customer portal
+      alert('Redirecting to payment update page...\n\nIn production, this would open the LemonSqueezy payment update URL.');
+    }
+
+    function openCustomerPortal() {
+      // In production, call your API to get the customer portal URL
+      // const response = await fetch('/api/subscription/customer-portal');
+      // const { url } = await response.json();
+      // window.open(url, '_blank');
+
+      window.open(LEMONSQUEEZY_CUSTOMER_PORTAL_URL, '_blank');
+    }
+
+    function showCancelModal() {
+      document.getElementById('cancel-modal').classList.add('active');
+    }
+
+    function closeCancelModal() {
+      document.getElementById('cancel-modal').classList.remove('active');
+    }
+
+    async function confirmCancel() {
+      // In production, call your API to cancel the subscription
+      // const response = await fetch('/api/subscription/cancel', { method: 'POST' });
+
+      // Show loading state
+      const cancelBtn = document.querySelector('.modal-actions .chrome-btn-danger');
+      cancelBtn.textContent = 'Cancelling...';
+      cancelBtn.disabled = true;
+
+      // Simulate API call
+      setTimeout(() => {
+        // Update UI to show cancelled state
+        subscriptionData.status = 'cancelled';
+        subscriptionData.cancelAtPeriodEnd = true;
+
+        const statusBadge = document.getElementById('status-badge');
+        statusBadge.className = 'status-badge cancelled';
+        statusBadge.textContent = 'Cancelling';
+
+        closeCancelModal();
+
+        // Show confirmation message
+        alert('Your subscription has been cancelled.\n\nYou will continue to have access until ' + formatDate(subscriptionData.nextBilling) + '.');
+
+        // Reset button
+        cancelBtn.textContent = 'Yes, Cancel';
+        cancelBtn.disabled = false;
+      }, 1500);
+    }
+
+    // Close modal on overlay click
+    document.getElementById('cancel-modal').addEventListener('click', (e) => {
+      if (e.target.id === 'cancel-modal') {
+        closeCancelModal();
+      }
+    });
+
+    // Close modal on escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeCancelModal();
+      }
+    });
+  </script>
+</body>
+</html>

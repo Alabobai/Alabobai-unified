@@ -1,0 +1,940 @@
+/* ============================================================================
+   ALABOBAI ULTRA ANIMATION SYSTEM - Apple-Quality Design
+   Premium 3D animations, magnetic effects, and liquid morphing
+   Designed for Ultra Agent V4.0 with Rose Gold palette
+   ============================================================================ */
+
+/* ============================================================================
+   SVG FILTER DEFINITIONS (Referenced in HTML)
+   ============================================================================ */
+
+/* Gooey/Liquid Filter Reference - defined in SVG */
+.goo-filter {
+  filter: url('#goo-filter');
+}
+
+/* ============================================================================
+   3D ROTATING CPU LOGO
+   ============================================================================ */
+
+.cpu-logo-container {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  perspective: 1000px;
+  cursor: pointer;
+}
+
+.cpu-logo-wrapper {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.cpu-logo {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  transform-style: preserve-3d;
+  /* DISABLED: Floating animation removed for static cards */
+  /* animation: cpuFloat 12s cubic-bezier(0.45, 0, 0.55, 1) infinite; */
+}
+
+/* CPU Core */
+.cpu-core {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 60%;
+  height: 60%;
+  transform: translate(-50%, -50%) translateZ(10px);
+  background: linear-gradient(
+    135deg,
+    #f0e0d0 0%,
+    #ecd4c0 15%,
+    #d9a07a 40%,
+    #b8845c 70%,
+    #8b6442 100%
+  );
+  border-radius: 12px;
+  box-shadow:
+    inset 0 2px 4px rgba(255, 255, 255, 0.4),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.2),
+    0 0 40px rgba(217, 160, 122, 0.5),
+    0 0 80px rgba(217, 160, 122, 0.3);
+}
+
+.cpu-core::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.3) 0%,
+    transparent 50%,
+    rgba(0, 0, 0, 0.1) 100%
+  );
+  border-radius: 8px;
+}
+
+.cpu-core::after {
+  content: 'AI';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1410;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+/* CPU Pins */
+.cpu-pins {
+  position: absolute;
+}
+
+.cpu-pins.top {
+  top: 5%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+}
+
+.cpu-pins.bottom {
+  bottom: 5%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+}
+
+.cpu-pins.left {
+  left: 5%;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cpu-pins.right {
+  right: 5%;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cpu-pin {
+  width: 4px;
+  height: 10px;
+  background: linear-gradient(180deg, #ecd4c0, #d9a07a, #8b6442);
+  border-radius: 1px;
+  box-shadow: 0 0 8px rgba(217, 160, 122, 0.6);
+}
+
+.cpu-pins.left .cpu-pin,
+.cpu-pins.right .cpu-pin {
+  width: 10px;
+  height: 4px;
+}
+
+/* CPU Glow Effect */
+.cpu-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 150%;
+  height: 150%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(
+    circle,
+    rgba(217, 160, 122, 0.4) 0%,
+    rgba(217, 160, 122, 0.1) 40%,
+    transparent 70%
+  );
+  border-radius: 50%;
+  pointer-events: none;
+  /* DISABLED: cpuGlowPulse animation - use static glow instead */
+  /* animation: cpuGlowPulse 6s cubic-bezier(0.45, 0, 0.55, 1) infinite; */
+}
+
+/* CPU Reflection Layer */
+.cpu-reflection {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.15) 0%,
+    transparent 50%,
+    rgba(0, 0, 0, 0.1) 100%
+  );
+  border-radius: 16px;
+  pointer-events: none;
+  transform: translateZ(15px);
+}
+
+/* DISABLED: cpuFloat animation removed for static cards
+@keyframes cpuFloat {
+  0%, 100% {
+    transform: rotateY(0deg) rotateX(0deg) translateY(0);
+  }
+  20% {
+    transform: rotateY(3deg) rotateX(-2deg) translateY(-4px);
+  }
+  40% {
+    transform: rotateY(0deg) rotateX(0deg) translateY(-2px);
+  }
+  60% {
+    transform: rotateY(-3deg) rotateX(2deg) translateY(-4px);
+  }
+  80% {
+    transform: rotateY(0deg) rotateX(0deg) translateY(-2px);
+  }
+}
+*/
+
+@keyframes cpuGlowPulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+}
+
+/* ============================================================================
+   MAGNETIC CURSOR EFFECT
+   ============================================================================ */
+
+.magnetic {
+  position: relative;
+  transition: transform 0.6s cubic-bezier(0.25, 0.1, 0.25, 1);
+  will-change: transform;
+}
+
+.magnetic-inner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.6s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.magnetic.active {
+  z-index: 10;
+}
+
+/* ============================================================================
+   LIQUID MORPHING BUTTONS
+   ============================================================================ */
+
+.liquid-btn {
+  position: relative;
+  padding: 16px 40px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: 'Inter', -apple-system, sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #1a1410;
+  overflow: visible;
+  z-index: 1;
+}
+
+.liquid-btn-bg {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: calc(100% + 20px);
+  height: calc(100% + 20px);
+  transform: translate(-50%, -50%);
+  background: linear-gradient(
+    180deg,
+    #f0e0d0 0%,
+    #ecd4c0 20%,
+    #d9a07a 50%,
+    #b8845c 80%,
+    #8b6442 100%
+  );
+  border-radius: 16px;
+  z-index: -1;
+  transition: all 0.8s cubic-bezier(0.25, 0.1, 0.25, 1);
+  box-shadow:
+    0 4px 15px rgba(0, 0, 0, 0.4),
+    inset 0 2px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.2);
+}
+
+.liquid-btn-bg::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.4) 0%,
+    rgba(255, 255, 255, 0.1) 100%
+  );
+  border-radius: 16px 16px 50% 50%;
+  pointer-events: none;
+}
+
+.liquid-btn:hover .liquid-btn-bg {
+  transform: translate(-50%, -50%) scale(1.05);
+  box-shadow:
+    0 8px 30px rgba(217, 160, 122, 0.6),
+    inset 0 2px 0 rgba(255, 255, 255, 0.4);
+  border-radius: 20px;
+}
+
+.liquid-btn:active .liquid-btn-bg {
+  transform: translate(-50%, -50%) scale(0.98);
+}
+
+/* Gooey morphing version */
+.liquid-btn-gooey {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 40px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: 'Inter', -apple-system, sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a1410;
+  z-index: 1;
+}
+
+.liquid-btn-gooey::before,
+.liquid-btn-gooey::after {
+  content: '';
+  position: absolute;
+  background: linear-gradient(135deg, #d9a07a, #b8845c);
+  border-radius: 50%;
+  z-index: -1;
+  transition: all 1s cubic-bezier(0.25, 0.1, 0.25, 1);
+  filter: url('#goo-filter');
+}
+
+.liquid-btn-gooey::before {
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  border-radius: 12px;
+}
+
+.liquid-btn-gooey::after {
+  width: 30px;
+  height: 30px;
+  top: 50%;
+  right: -10px;
+  transform: translateY(-50%) scale(0);
+  opacity: 0;
+}
+
+.liquid-btn-gooey:hover::before {
+  transform: scale(1.05);
+  box-shadow: 0 0 40px rgba(217, 160, 122, 0.5);
+}
+
+.liquid-btn-gooey:hover::after {
+  transform: translateY(-50%) scale(1);
+  opacity: 1;
+  right: -20px;
+}
+
+/* ============================================================================
+   PARALLAX DEPTH LAYERS
+   ============================================================================ */
+
+.parallax-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.parallax-layer {
+  will-change: transform;
+  transition: transform 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.parallax-layer[data-depth="0.1"] {
+  --parallax-speed: 0.1;
+}
+
+.parallax-layer[data-depth="0.2"] {
+  --parallax-speed: 0.2;
+}
+
+.parallax-layer[data-depth="0.3"] {
+  --parallax-speed: 0.3;
+}
+
+.parallax-layer[data-depth="0.5"] {
+  --parallax-speed: 0.5;
+}
+
+.parallax-layer[data-depth="0.8"] {
+  --parallax-speed: 0.8;
+}
+
+/* Parallax background elements */
+.parallax-orb {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(217, 160, 122, 0.15) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+.parallax-orb.large {
+  width: 600px;
+  height: 600px;
+}
+
+.parallax-orb.medium {
+  width: 300px;
+  height: 300px;
+}
+
+.parallax-orb.small {
+  width: 150px;
+  height: 150px;
+}
+
+/* ============================================================================
+   CARD TILT EFFECT - DISABLED: Cards should be static
+   Only border/glow hover effects allowed
+   ============================================================================ */
+
+.tilt-card {
+  position: relative;
+  /* DISABLED: 3D transforms removed for static cards */
+  /* transform-style: preserve-3d; */
+  /* perspective: 1000px; */
+  /* will-change: transform; */
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.tilt-card:hover {
+  /* DRAMATIC rose gold glow - Apple quality */
+  border-color: rgba(217, 160, 122, 0.8);
+  background: rgba(217, 160, 122, 0.1);
+  box-shadow:
+    0 0 60px rgba(217, 160, 122, 0.6),
+    0 0 120px rgba(217, 160, 122, 0.3),
+    0 0 180px rgba(217, 160, 122, 0.15),
+    inset 0 0 50px rgba(217, 160, 122, 0.08);
+}
+
+.tilt-card-inner {
+  /* DISABLED: No 3D transforms */
+  /* transform-style: preserve-3d; */
+}
+
+/* Shine effect - DISABLED */
+.tilt-card-shine {
+  display: none !important;
+  /* Original styles disabled:
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.6s cubic-bezier(0.25, 0.1, 0.25, 1);
+  transform: translateZ(1px);
+  */
+}
+
+/* DISABLED: Shine hover effect
+.tilt-card:hover .tilt-card-shine {
+  opacity: 1;
+}
+*/
+
+/* Reflection strip - DISABLED */
+.tilt-card-reflection {
+  display: none !important;
+  /* Original styles disabled:
+  position: absolute;
+  top: -100%;
+  left: -50%;
+  width: 200%;
+  height: 100%;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.05) 50%,
+    transparent 100%
+  );
+  transform: rotate(35deg);
+  pointer-events: none;
+  opacity: 0;
+  transition: all 1.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+  */
+}
+
+/* DISABLED: Reflection hover effect
+.tilt-card:hover .tilt-card-reflection {
+  opacity: 1;
+  top: 100%;
+}
+*/
+
+/* ============================================================================
+   TEXT REVEAL ANIMATIONS
+   ============================================================================ */
+
+/* Character by character reveal */
+.text-reveal-char {
+  display: inline-block;
+  overflow: hidden;
+}
+
+.text-reveal-char .char {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(100%);
+  transition: all 0.8s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.text-reveal-char.revealed .char {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Word by word reveal from below */
+.text-reveal-word {
+  overflow: hidden;
+}
+
+.text-reveal-word .word {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(110%);
+  transition: all 1s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.text-reveal-word.revealed .word {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Line reveal with mask */
+.text-reveal-line {
+  position: relative;
+  overflow: hidden;
+}
+
+.text-reveal-line .line {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: all 1.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.text-reveal-line.revealed .line {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Glowing text reveal */
+.text-reveal-glow {
+  opacity: 0;
+  transform: translateY(30px);
+  filter: blur(10px);
+  transition: all 1.6s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.text-reveal-glow.revealed {
+  opacity: 1;
+  transform: translateY(0);
+  filter: blur(0);
+}
+
+/* Stagger delays (applied via JS) - longer pauses for breathing room */
+.stagger-delay-1 { transition-delay: 0.12s; }
+.stagger-delay-2 { transition-delay: 0.24s; }
+.stagger-delay-3 { transition-delay: 0.36s; }
+.stagger-delay-4 { transition-delay: 0.48s; }
+.stagger-delay-5 { transition-delay: 0.6s; }
+.stagger-delay-6 { transition-delay: 0.72s; }
+.stagger-delay-7 { transition-delay: 0.84s; }
+.stagger-delay-8 { transition-delay: 0.96s; }
+.stagger-delay-9 { transition-delay: 1.08s; }
+.stagger-delay-10 { transition-delay: 1.2s; }
+
+/* ============================================================================
+   FLOATING ELEMENTS - DISABLED FOR STATIC CARDS
+   ============================================================================ */
+
+/* DISABLED: Float animation removed - cards should be static
+.float-element {
+  animation: floatGentle 14s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+
+.float-element.delay-1 { animation-delay: -2.5s; }
+.float-element.delay-2 { animation-delay: -5s; }
+.float-element.delay-3 { animation-delay: -7.5s; }
+.float-element.delay-4 { animation-delay: -10s; }
+
+@keyframes floatGentle {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-6px) rotate(0.5deg);
+  }
+  50% {
+    transform: translateY(-3px) rotate(0deg);
+  }
+  75% {
+    transform: translateY(-6px) rotate(-0.5deg);
+  }
+}
+*/
+
+/* Static float-element - no animation */
+.float-element {
+  /* No floating animation */
+}
+
+/* ============================================================================
+   SHIMMER EFFECT
+   ============================================================================ */
+
+.shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.shimmer::after {
+  content: '';
+  position: absolute;
+  top: -100%;
+  left: -100%;
+  width: 50%;
+  height: 200%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    transparent 100%
+  );
+  transform: rotate(25deg);
+  animation: shimmerMove 6s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+  pointer-events: none;
+}
+
+@keyframes shimmerMove {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 200%;
+  }
+}
+
+/* ============================================================================
+   GLOW PULSE ANIMATION
+   ============================================================================ */
+
+/* DISABLED: Glow pulse animation - use static glow instead
+.glow-pulse {
+  animation: glowPulseAnim 5s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+*/
+
+.glow-pulse {
+  /* Static glow - no pulsing animation */
+  box-shadow: 0 0 30px rgba(217, 160, 122, 0.4);
+}
+
+/* DISABLED: Animation keyframes
+@keyframes glowPulseAnim {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(217, 160, 122, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(217, 160, 122, 0.6);
+  }
+}
+*/
+
+/* Text glow pulse - DISABLED: Use static glow instead */
+.text-glow-pulse {
+  /* DISABLED: animation: textGlowPulse 5s cubic-bezier(0.45, 0, 0.55, 1) infinite; */
+  text-shadow: 0 0 15px rgba(217, 160, 122, 0.4);
+}
+
+/* DISABLED: textGlowPulse animation
+@keyframes textGlowPulse {
+  0%, 100% {
+    text-shadow: 0 0 10px rgba(217, 160, 122, 0.3);
+  }
+  50% {
+    text-shadow: 0 0 25px rgba(217, 160, 122, 0.6), 0 0 50px rgba(217, 160, 122, 0.3);
+  }
+}
+*/
+
+/* ============================================================================
+   SCROLL REVEAL UTILITIES
+   ============================================================================ */
+
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: all 1.4s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.scroll-reveal.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.scroll-reveal.from-left {
+  transform: translateX(-60px);
+}
+
+.scroll-reveal.from-left.revealed {
+  transform: translateX(0);
+}
+
+.scroll-reveal.from-right {
+  transform: translateX(60px);
+}
+
+.scroll-reveal.from-right.revealed {
+  transform: translateX(0);
+}
+
+.scroll-reveal.scale-up {
+  transform: scale(0.9);
+}
+
+.scroll-reveal.scale-up.revealed {
+  transform: scale(1);
+}
+
+/* ============================================================================
+   HOVER LIFT EFFECT - MODIFIED: No vertical movement, only glow effect
+   ============================================================================ */
+
+.hover-lift {
+  transition: border-color 0.4s ease, box-shadow 0.4s ease;
+}
+
+.hover-lift:hover {
+  /* DRAMATIC rose gold glow - Apple quality */
+  border-color: rgba(217, 160, 122, 0.8);
+  background: rgba(217, 160, 122, 0.1);
+  box-shadow:
+    0 0 60px rgba(217, 160, 122, 0.6),
+    0 0 120px rgba(217, 160, 122, 0.3),
+    0 0 180px rgba(217, 160, 122, 0.15),
+    inset 0 0 50px rgba(217, 160, 122, 0.08);
+}
+
+/* ============================================================================
+   BORDER ANIMATION
+   ============================================================================ */
+
+.animated-border {
+  position: relative;
+}
+
+.animated-border::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: conic-gradient(
+    from 0deg,
+    #d9a07a,
+    #ecd4c0,
+    #b8845c,
+    #8b6442,
+    #d9a07a
+  );
+  z-index: -1;
+  animation: borderRotate 10s linear infinite;
+  opacity: 0;
+  transition: opacity 0.6s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.animated-border:hover::before {
+  opacity: 1;
+}
+
+@keyframes borderRotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* ============================================================================
+   PARTICLE SYSTEM STYLES
+   ============================================================================ */
+
+.particle-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: radial-gradient(circle, rgba(217, 160, 122, 0.9) 0%, rgba(217, 160, 122, 0) 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: particleFloat 15s linear infinite;
+}
+
+.particle.star {
+  width: 3px;
+  height: 3px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.9) 0%, rgba(217, 160, 122, 0.6) 40%, transparent 70%);
+  box-shadow: 0 0 6px rgba(217, 160, 122, 0.8), 0 0 12px rgba(217, 160, 122, 0.4);
+  animation: starTwinkle 3s ease-in-out infinite, particleFloat 20s linear infinite;
+}
+
+.parallax-orb {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(217, 160, 122, 0.3) 0%, transparent 70%);
+  filter: blur(40px);
+  pointer-events: none;
+}
+
+@keyframes starTwinkle {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.3); }
+}
+
+@keyframes particleFloat {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0;
+  }
+  5% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 1;
+  }
+  95% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translate(var(--tx, 0), var(--ty, -100vh)) scale(0.5);
+    opacity: 0;
+  }
+}
+
+/* ============================================================================
+   CURSOR TRAIL
+   ============================================================================ */
+
+.cursor-trail {
+  position: fixed;
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(217, 160, 122, 0.5);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  transition: transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+  mix-blend-mode: difference;
+}
+
+.cursor-trail-dot {
+  position: fixed;
+  width: 8px;
+  height: 8px;
+  background: #d9a07a;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 10px rgba(217, 160, 122, 0.5);
+}
+
+/* ============================================================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .cpu-logo-container {
+    width: 80px;
+    height: 80px;
+  }
+
+  .cpu-core::after {
+    font-size: 14px;
+  }
+
+  .parallax-layer {
+    transform: none !important;
+  }
+
+  .tilt-card {
+    transform: none !important;
+  }
+
+  .magnetic {
+    transform: none !important;
+  }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .parallax-layer,
+  .tilt-card,
+  .magnetic {
+    transform: none !important;
+  }
+}

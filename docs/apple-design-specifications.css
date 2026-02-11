@@ -1,0 +1,1317 @@
+/**
+ * ============================================================================
+ * APPLE DESIGN LANGUAGE SPECIFICATIONS
+ * iOS 17/18, visionOS & Liquid Glass (2024-2025)
+ * ============================================================================
+ *
+ * A comprehensive CSS/design specification for recreating Apple-tier quality
+ * visual design, based on official Human Interface Guidelines, WWDC sessions,
+ * and detailed analysis of Apple's design system.
+ *
+ * Sources:
+ * - Apple Human Interface Guidelines
+ * - WWDC 2023: Principles of spatial design
+ * - WWDC 2024: Enhance your UI animations and transitions
+ * - WWDC 2025: Liquid Glass design system
+ */
+
+/* ============================================================================
+   1. TYPOGRAPHY - SF PRO FONT SYSTEM
+   ============================================================================ */
+
+/**
+ * Apple's System Font Stack
+ * SF Pro is Apple's primary typeface with optical sizing
+ * - SF Pro Text: For sizes below 20pt (optimized letter spacing)
+ * - SF Pro Display: For sizes 20pt and above
+ */
+
+:root {
+  /* Primary System Font Stack */
+  --font-system: system-ui, -apple-system, BlinkMacSystemFont,
+                 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue',
+                 Helvetica, Arial, sans-serif;
+
+  /* Rounded Variant */
+  --font-rounded: ui-rounded, 'SF Pro Rounded', system-ui, sans-serif;
+
+  /* Serif Variant (New York) */
+  --font-serif: ui-serif, 'New York', Georgia, serif;
+
+  /* Monospace Variant */
+  --font-mono: ui-monospace, 'SF Mono', Menlo, Monaco, 'Courier New', monospace;
+
+  /* Emoji Support */
+  --font-emoji: 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+}
+
+/**
+ * Typography Scale - iOS Text Styles
+ * Based on Apple's Human Interface Guidelines
+ * Letter spacing values are critical for authentic Apple feel
+ */
+
+/* Large Title - 34pt Bold */
+.text-large-title {
+  font-family: var(--font-system);
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 41px;
+  letter-spacing: 0.37px;
+}
+
+/* Title 1 - 28pt Bold */
+.text-title-1 {
+  font-family: var(--font-system);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 34px;
+  letter-spacing: 0.36px;
+}
+
+/* Title 2 - 22pt Bold */
+.text-title-2 {
+  font-family: var(--font-system);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 28px;
+  letter-spacing: 0.35px;
+}
+
+/* Title 3 - 20pt Semibold */
+.text-title-3 {
+  font-family: var(--font-system);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 25px;
+  letter-spacing: 0.38px;
+}
+
+/* Headline - 17pt Semibold */
+.text-headline {
+  font-family: var(--font-system);
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 22px;
+  letter-spacing: -0.43px; /* Negative tracking for smaller sizes */
+}
+
+/* Body - 17pt Regular */
+.text-body {
+  font-family: var(--font-system);
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 22px;
+  letter-spacing: -0.43px;
+}
+
+/* Callout - 16pt Regular */
+.text-callout {
+  font-family: var(--font-system);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 21px;
+  letter-spacing: -0.32px;
+}
+
+/* Subheadline - 15pt Regular */
+.text-subheadline {
+  font-family: var(--font-system);
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 20px;
+  letter-spacing: -0.24px;
+}
+
+/* Footnote - 13pt Regular */
+.text-footnote {
+  font-family: var(--font-system);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 18px;
+  letter-spacing: -0.08px;
+}
+
+/* Caption 1 - 12pt Regular */
+.text-caption-1 {
+  font-family: var(--font-system);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+  letter-spacing: 0px;
+}
+
+/* Caption 2 - 11pt Regular (Minimum readable size per Apple) */
+.text-caption-2 {
+  font-family: var(--font-system);
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 13px;
+  letter-spacing: 0.07px;
+}
+
+
+/* ============================================================================
+   2. COLOR SYSTEM - iOS & visionOS Dynamic Colors
+   ============================================================================ */
+
+:root {
+  /* -------------------------------------------------------------------------
+     System Colors (Light Mode)
+     These are Apple's semantic colors that adapt to context
+  ------------------------------------------------------------------------- */
+
+  /* Primary Brand Colors */
+  --color-blue: #007AFF;
+  --color-green: #34C759;
+  --color-indigo: #5856D6;
+  --color-orange: #FF9500;
+  --color-pink: #FF2D55;
+  --color-purple: #AF52DE;
+  --color-red: #FF3B30;
+  --color-teal: #5AC8FA;
+  --color-yellow: #FFCC00;
+
+  /* Grayscale */
+  --color-gray: #8E8E93;
+  --color-gray-2: #AEAEB2;
+  --color-gray-3: #C7C7CC;
+  --color-gray-4: #D1D1D6;
+  --color-gray-5: #E5E5EA;
+  --color-gray-6: #F2F2F7;
+
+  /* Semantic Colors */
+  --color-label: #000000;
+  --color-label-secondary: rgba(60, 60, 67, 0.6);
+  --color-label-tertiary: rgba(60, 60, 67, 0.3);
+  --color-label-quaternary: rgba(60, 60, 67, 0.18);
+
+  /* Background Colors - System */
+  --color-bg-primary: #FFFFFF;
+  --color-bg-secondary: #F2F2F7;
+  --color-bg-tertiary: #FFFFFF;
+
+  /* Background Colors - Grouped */
+  --color-bg-grouped-primary: #F2F2F7;
+  --color-bg-grouped-secondary: #FFFFFF;
+  --color-bg-grouped-tertiary: #F2F2F7;
+
+  /* Separator Colors */
+  --color-separator: rgba(60, 60, 67, 0.29);
+  --color-separator-opaque: #C6C6C8;
+
+  /* Fill Colors (for shapes/buttons) */
+  --color-fill-primary: rgba(120, 120, 128, 0.2);
+  --color-fill-secondary: rgba(120, 120, 128, 0.16);
+  --color-fill-tertiary: rgba(118, 118, 128, 0.12);
+  --color-fill-quaternary: rgba(116, 116, 128, 0.08);
+}
+
+/* Dark Mode Colors */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-blue: #0A84FF;
+    --color-green: #30D158;
+    --color-indigo: #5E5CE6;
+    --color-orange: #FF9F0A;
+    --color-pink: #FF375F;
+    --color-purple: #BF5AF2;
+    --color-red: #FF453A;
+    --color-teal: #64D2FF;
+    --color-yellow: #FFD60A;
+
+    --color-gray: #8E8E93;
+    --color-gray-2: #636366;
+    --color-gray-3: #48484A;
+    --color-gray-4: #3A3A3C;
+    --color-gray-5: #2C2C2E;
+    --color-gray-6: #1C1C1E;
+
+    --color-label: #FFFFFF;
+    --color-label-secondary: rgba(235, 235, 245, 0.6);
+    --color-label-tertiary: rgba(235, 235, 245, 0.3);
+    --color-label-quaternary: rgba(235, 235, 245, 0.18);
+
+    --color-bg-primary: #000000;
+    --color-bg-secondary: #1C1C1E;
+    --color-bg-tertiary: #2C2C2E;
+
+    --color-bg-grouped-primary: #000000;
+    --color-bg-grouped-secondary: #1C1C1E;
+    --color-bg-grouped-tertiary: #2C2C2E;
+
+    --color-separator: rgba(84, 84, 88, 0.65);
+    --color-separator-opaque: #38383A;
+
+    --color-fill-primary: rgba(120, 120, 128, 0.36);
+    --color-fill-secondary: rgba(120, 120, 128, 0.32);
+    --color-fill-tertiary: rgba(118, 118, 128, 0.24);
+    --color-fill-quaternary: rgba(116, 116, 128, 0.18);
+  }
+}
+
+
+/* ============================================================================
+   3. GLASS MORPHISM - Liquid Glass Effect (iOS 26 / 2025)
+   ============================================================================ */
+
+/**
+ * Apple's Liquid Glass has three compositional layers:
+ * 1. Highlight - light casting and movement
+ * 2. Shadow - depth and foreground/background separation
+ * 3. Illumination - flexible material properties
+ */
+
+:root {
+  /* Glass Base Properties */
+  --glass-blur: 20px;
+  --glass-saturation: 180%;
+  --glass-brightness: 105%;
+  --glass-opacity: 0.15;
+  --glass-border-opacity: 0.3;
+
+  /* Glass Color Tints */
+  --glass-tint-light: rgba(255, 255, 255, 0.15);
+  --glass-tint-dark: rgba(0, 0, 0, 0.15);
+  --glass-tint-colored: rgba(100, 149, 237, 0.1);
+}
+
+/* Basic Glass Card - Foundation */
+.glass-basic {
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.35);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Enhanced Glass - iOS/visionOS Style */
+.glass-enhanced {
+  position: relative;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 20px;
+  box-shadow:
+    0 8px 32px rgba(31, 38, 135, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+}
+
+/* Liquid Glass - Full Apple Effect */
+.liquid-glass {
+  position: relative;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(2px) saturate(180%);
+  -webkit-backdrop-filter: blur(2px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 2rem;
+  box-shadow:
+    0 8px 32px rgba(31, 38, 135, 0.2),
+    inset 0 4px 20px rgba(255, 255, 255, 0.3);
+  overflow: hidden;
+}
+
+/* Liquid Glass Shine Layer (pseudo-element) */
+.liquid-glass::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: inherit;
+  backdrop-filter: blur(1px);
+  -webkit-backdrop-filter: blur(1px);
+  box-shadow:
+    inset -10px -8px 0px -11px rgba(255, 255, 255, 1),
+    inset 0px -9px 0px -8px rgba(255, 255, 255, 1);
+  opacity: 0.6;
+  z-index: -1;
+  filter: blur(1px) drop-shadow(10px 4px 6px rgba(0, 0, 0, 0.3)) brightness(115%);
+  pointer-events: none;
+}
+
+/* visionOS Window Glass */
+.visionos-glass {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(40px) saturate(150%) brightness(100%);
+  -webkit-backdrop-filter: blur(40px) saturate(150%) brightness(100%);
+  border: 0.5px solid rgba(255, 255, 255, 0.15);
+  border-radius: 32px;
+  box-shadow:
+    0 0 0 0.5px rgba(255, 255, 255, 0.1),
+    0 25px 50px -12px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+/* Dark Mode Glass Adjustment */
+@media (prefers-color-scheme: dark) {
+  .liquid-glass,
+  .glass-enhanced {
+    background: rgba(30, 30, 30, 0.6);
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+  }
+}
+
+/* Frosted Header/Navigation Style */
+.glass-header {
+  position: sticky;
+  top: 0;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 0.5px solid rgba(0, 0, 0, 0.1);
+}
+
+@media (prefers-color-scheme: dark) {
+  .glass-header {
+    background: rgba(29, 29, 31, 0.72);
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+
+/* ============================================================================
+   4. SHADOWS & DEPTH SYSTEM - Elevation Hierarchy
+   ============================================================================ */
+
+/**
+ * Apple's depth system uses subtle, layered shadows
+ * Shadows indicate hierarchy - higher elevation = more attention
+ * Always use consistent light source (top-left)
+ */
+
+:root {
+  /* Shadow Color Base - Tinted for warmth */
+  --shadow-color: 220deg 20% 20%;
+  --shadow-color-dark: 220deg 40% 10%;
+
+  /* Elevation Levels */
+  --elevation-1: 2px;
+  --elevation-2: 4px;
+  --elevation-3: 8px;
+  --elevation-4: 16px;
+  --elevation-5: 24px;
+}
+
+/* Elevation Level 1 - Subtle lift (buttons, cards) */
+.shadow-1 {
+  box-shadow:
+    0 1px 2px hsl(var(--shadow-color) / 0.06),
+    0 1px 3px hsl(var(--shadow-color) / 0.1);
+}
+
+/* Elevation Level 2 - Moderate lift (dropdowns, popovers) */
+.shadow-2 {
+  box-shadow:
+    0 1px 2px hsl(var(--shadow-color) / 0.04),
+    0 2px 4px hsl(var(--shadow-color) / 0.04),
+    0 4px 8px hsl(var(--shadow-color) / 0.08);
+}
+
+/* Elevation Level 3 - High lift (modals, floating panels) */
+.shadow-3 {
+  box-shadow:
+    0 1px 2px hsl(var(--shadow-color) / 0.03),
+    0 2px 4px hsl(var(--shadow-color) / 0.03),
+    0 4px 8px hsl(var(--shadow-color) / 0.03),
+    0 8px 16px hsl(var(--shadow-color) / 0.06),
+    0 16px 32px hsl(var(--shadow-color) / 0.09);
+}
+
+/* Elevation Level 4 - Maximum lift (dialogs, important overlays) */
+.shadow-4 {
+  box-shadow:
+    0 1px 1px hsl(var(--shadow-color) / 0.02),
+    0 2px 2px hsl(var(--shadow-color) / 0.02),
+    0 4px 4px hsl(var(--shadow-color) / 0.02),
+    0 8px 8px hsl(var(--shadow-color) / 0.02),
+    0 16px 16px hsl(var(--shadow-color) / 0.02),
+    0 32px 32px hsl(var(--shadow-color) / 0.04),
+    0 64px 64px hsl(var(--shadow-color) / 0.08);
+}
+
+/* Apple-style Card Shadow */
+.shadow-card {
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.shadow-card:hover {
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 8px 10px -6px rgba(0, 0, 0, 0.1);
+}
+
+/* Inset Shadow for depth */
+.shadow-inset {
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.06),
+    inset 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+
+/* ============================================================================
+   5. GLOW EFFECTS & LIGHTING
+   ============================================================================ */
+
+/**
+ * Apple uses glow effects sparingly for:
+ * - Interactive elements (buttons, icons)
+ * - Status indicators
+ * - Premium accent moments
+ */
+
+/* Subtle Glow - Interactive elements */
+.glow-subtle {
+  box-shadow: 0 0 20px rgba(0, 122, 255, 0.3);
+}
+
+/* Medium Glow - Active states */
+.glow-medium {
+  box-shadow:
+    0 0 15px rgba(0, 122, 255, 0.4),
+    0 0 30px rgba(0, 122, 255, 0.2),
+    0 0 45px rgba(0, 122, 255, 0.1);
+}
+
+/* Intense Glow - Focus/Selected states */
+.glow-intense {
+  box-shadow:
+    0 0 10px rgba(0, 122, 255, 0.5),
+    0 0 20px rgba(0, 122, 255, 0.4),
+    0 0 40px rgba(0, 122, 255, 0.3),
+    0 0 60px rgba(0, 122, 255, 0.2);
+}
+
+/* Text Glow */
+.text-glow {
+  text-shadow:
+    0 0 10px currentColor,
+    0 0 20px currentColor,
+    0 0 30px currentColor;
+}
+
+/* Ring Glow (Focus indicator) */
+.ring-glow {
+  outline: none;
+  box-shadow:
+    0 0 0 3px rgba(0, 122, 255, 0.5),
+    0 0 20px rgba(0, 122, 255, 0.3);
+}
+
+/* Specular Highlight - Simulates light reflection */
+.specular-highlight {
+  position: relative;
+}
+
+.specular-highlight::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 10%;
+  right: 10%;
+  height: 50%;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.4) 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    transparent 100%
+  );
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+
+/* ============================================================================
+   6. GRADIENTS - Apple Color Palette
+   ============================================================================ */
+
+/**
+ * Apple gradients are typically subtle with:
+ * - Soft transitions
+ * - Related color pairs
+ * - Natural light simulation
+ */
+
+/* iOS App Icon Style Gradients */
+.gradient-blue {
+  background: linear-gradient(180deg, #5AC8FA 0%, #007AFF 100%);
+}
+
+.gradient-purple {
+  background: linear-gradient(180deg, #BF5AF2 0%, #5856D6 100%);
+}
+
+.gradient-pink {
+  background: linear-gradient(180deg, #FF6B9D 0%, #FF2D55 100%);
+}
+
+.gradient-orange {
+  background: linear-gradient(180deg, #FFCC00 0%, #FF9500 100%);
+}
+
+.gradient-green {
+  background: linear-gradient(180deg, #4CD964 0%, #34C759 100%);
+}
+
+/* Mesh Gradient - iOS 18 Style */
+.gradient-mesh {
+  background:
+    radial-gradient(at 40% 20%, hsla(280, 100%, 76%, 0.8) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, hsla(189, 100%, 56%, 0.6) 0px, transparent 50%),
+    radial-gradient(at 0% 50%, hsla(355, 100%, 93%, 0.5) 0px, transparent 50%),
+    radial-gradient(at 80% 50%, hsla(340, 100%, 76%, 0.5) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, hsla(22, 100%, 77%, 0.5) 0px, transparent 50%),
+    radial-gradient(at 80% 100%, hsla(242, 100%, 70%, 0.5) 0px, transparent 50%),
+    radial-gradient(at 0% 0%, hsla(343, 100%, 76%, 0.5) 0px, transparent 50%);
+  background-color: #1a1a2e;
+}
+
+/* Vibrancy Overlay - visionOS style */
+.gradient-vibrancy {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.05) 50%,
+    rgba(255, 255, 255, 0.1) 100%
+  );
+}
+
+/* Ambient Light Gradient */
+.gradient-ambient {
+  background: radial-gradient(
+    ellipse at 50% 0%,
+    rgba(255, 255, 255, 0.15) 0%,
+    transparent 70%
+  );
+}
+
+
+/* ============================================================================
+   7. ANIMATION SYSTEM - Spring-Based Motion
+   ============================================================================ */
+
+/**
+ * Apple Motion Principles:
+ * 1. Use spring animations for natural feel
+ * 2. Maintain velocity continuity
+ * 3. Animations should communicate, not decorate
+ * 4. Respect user preferences (reduce-motion)
+ */
+
+:root {
+  /* Duration Scale */
+  --duration-instant: 100ms;
+  --duration-fast: 200ms;
+  --duration-normal: 300ms;
+  --duration-slow: 500ms;
+  --duration-slower: 700ms;
+
+  /* Apple-style Easing Functions */
+  /* Standard ease - default for most transitions */
+  --ease-standard: cubic-bezier(0.4, 0.0, 0.2, 1);
+
+  /* Ease out - elements entering */
+  --ease-out: cubic-bezier(0.0, 0.0, 0.2, 1);
+
+  /* Ease in - elements exiting */
+  --ease-in: cubic-bezier(0.4, 0.0, 1, 1);
+
+  /* Spring-like bounce - playful interactions */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* Soft spring - subtle bounce */
+  --ease-spring-soft: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* iOS-style - used in system animations */
+  --ease-ios: cubic-bezier(0.25, 0.1, 0.25, 1);
+
+  /* Smooth deceleration */
+  --ease-smooth: cubic-bezier(0.45, 0, 0.55, 1);
+}
+
+/* Base Transition Classes */
+.transition-fast {
+  transition-duration: var(--duration-fast);
+  transition-timing-function: var(--ease-standard);
+}
+
+.transition-normal {
+  transition-duration: var(--duration-normal);
+  transition-timing-function: var(--ease-standard);
+}
+
+.transition-slow {
+  transition-duration: var(--duration-slow);
+  transition-timing-function: var(--ease-standard);
+}
+
+/* Spring Animations */
+.transition-spring {
+  transition-duration: var(--duration-normal);
+  transition-timing-function: var(--ease-spring);
+}
+
+/* Specific Property Transitions */
+.transition-transform {
+  transition-property: transform;
+  transition-duration: var(--duration-normal);
+  transition-timing-function: var(--ease-spring-soft);
+}
+
+.transition-opacity {
+  transition-property: opacity;
+  transition-duration: var(--duration-fast);
+  transition-timing-function: var(--ease-standard);
+}
+
+.transition-colors {
+  transition-property: color, background-color, border-color;
+  transition-duration: var(--duration-fast);
+  transition-timing-function: var(--ease-standard);
+}
+
+.transition-all {
+  transition-property: all;
+  transition-duration: var(--duration-normal);
+  transition-timing-function: var(--ease-standard);
+}
+
+/* Keyframe Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes scaleOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* iOS-style Modal Presentation */
+@keyframes modalPresent {
+  from {
+    opacity: 0;
+    transform: scale(1.1);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes modalDismiss {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+/* Spring Bounce Animation */
+@keyframes springBounce {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.95);
+  }
+  75% {
+    transform: scale(1.02);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Pulse Glow Animation */
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(0, 122, 255, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(0, 122, 255, 0.6);
+  }
+}
+
+/* Animation Classes */
+.animate-fade-in {
+  animation: fadeIn var(--duration-normal) var(--ease-out) forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn var(--duration-normal) var(--ease-spring-soft) forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp var(--duration-normal) var(--ease-spring-soft) forwards;
+}
+
+.animate-modal-present {
+  animation: modalPresent var(--duration-slow) var(--ease-spring-soft) forwards;
+}
+
+.animate-spring-bounce {
+  animation: springBounce var(--duration-slow) var(--ease-spring);
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+
+/* Respect Reduced Motion Preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+
+/* ============================================================================
+   8. SPATIAL DESIGN - visionOS Concepts
+   ============================================================================ */
+
+/**
+ * visionOS Design Principles:
+ * 1. Windows float in space with depth
+ * 2. Transparency over solid colors
+ * 3. Content scales dynamically with distance
+ * 4. Ergonomic placement within field of view
+ */
+
+/* Spatial Container - Floating panel effect */
+.spatial-container {
+  --spatial-depth: 20px;
+
+  position: relative;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(40px) saturate(150%);
+  -webkit-backdrop-filter: blur(40px) saturate(150%);
+  border: 0.5px solid rgba(255, 255, 255, 0.15);
+  border-radius: 32px;
+
+  /* Simulated 3D floating effect */
+  box-shadow:
+    0 0 0 0.5px rgba(255, 255, 255, 0.1),
+    0 var(--spatial-depth) calc(var(--spatial-depth) * 2) calc(var(--spatial-depth) * -0.5) rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+
+  /* Smooth transforms */
+  transform-style: preserve-3d;
+  transition: transform 0.3s var(--ease-spring-soft),
+              box-shadow 0.3s var(--ease-standard);
+}
+
+.spatial-container:hover {
+  --spatial-depth: 30px;
+  transform: translateZ(10px);
+}
+
+/* Depth Layers - z-index system */
+.layer-base { z-index: 0; }
+.layer-raised { z-index: 10; }
+.layer-overlay { z-index: 20; }
+.layer-modal { z-index: 30; }
+.layer-popover { z-index: 40; }
+.layer-tooltip { z-index: 50; }
+.layer-notification { z-index: 60; }
+
+/* Spatial Card with Parallax-ready structure */
+.spatial-card {
+  position: relative;
+  border-radius: 24px;
+  overflow: hidden;
+  transform-style: preserve-3d;
+  perspective: 1000px;
+}
+
+.spatial-card__background {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(60px);
+  -webkit-backdrop-filter: blur(60px);
+  transform: translateZ(-10px);
+}
+
+.spatial-card__content {
+  position: relative;
+  padding: 24px;
+  transform: translateZ(0);
+}
+
+.spatial-card__highlight {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 100%
+  );
+  transform: translateZ(5px);
+}
+
+
+/* ============================================================================
+   9. INTERACTIVE COMPONENTS - Apple-Style UI Elements
+   ============================================================================ */
+
+/* Button - Primary */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 24px;
+  font-family: var(--font-system);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.43px;
+  color: white;
+  background: var(--color-blue);
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+
+  transition:
+    transform 0.15s var(--ease-spring),
+    background-color 0.15s var(--ease-standard),
+    box-shadow 0.15s var(--ease-standard);
+}
+
+.btn-primary:hover {
+  background: #0066CC;
+}
+
+.btn-primary:active {
+  transform: scale(0.97);
+}
+
+.btn-primary:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 3px rgba(0, 122, 255, 0.4),
+    0 0 20px rgba(0, 122, 255, 0.2);
+}
+
+/* Button - Glass Style */
+.btn-glass {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 24px;
+  font-family: var(--font-system);
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--color-label);
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px) saturate(180%);
+  -webkit-backdrop-filter: blur(10px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  cursor: pointer;
+
+  transition:
+    transform 0.15s var(--ease-spring),
+    background-color 0.15s var(--ease-standard),
+    border-color 0.15s var(--ease-standard);
+}
+
+.btn-glass:hover {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.btn-glass:active {
+  transform: scale(0.97);
+}
+
+/* Toggle/Switch - iOS Style */
+.toggle {
+  position: relative;
+  width: 51px;
+  height: 31px;
+  background: var(--color-fill-primary);
+  border-radius: 15.5px;
+  cursor: pointer;
+  transition: background-color 0.25s var(--ease-standard);
+}
+
+.toggle::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 27px;
+  height: 27px;
+  background: white;
+  border-radius: 50%;
+  box-shadow:
+    0 3px 8px rgba(0, 0, 0, 0.15),
+    0 3px 1px rgba(0, 0, 0, 0.06);
+  transition: transform 0.25s var(--ease-spring);
+}
+
+.toggle[aria-checked="true"],
+.toggle.active {
+  background: var(--color-green);
+}
+
+.toggle[aria-checked="true"]::after,
+.toggle.active::after {
+  transform: translateX(20px);
+}
+
+/* Card - Standard iOS Card */
+.card {
+  background: var(--color-bg-grouped-secondary);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.08),
+    0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+.card__header {
+  padding: 16px;
+  border-bottom: 0.5px solid var(--color-separator);
+}
+
+.card__content {
+  padding: 16px;
+}
+
+
+/* ============================================================================
+   10. PREMIUM FEEL - Micro-Interactions & Polish
+   ============================================================================ */
+
+/**
+ * What creates Apple's "premium feel":
+ * 1. Consistent, intentional motion
+ * 2. Subtle feedback on every interaction
+ * 3. Layered shadows for depth perception
+ * 4. High contrast with soft transitions
+ * 5. Attention to tiny details
+ */
+
+/* Haptic-like Visual Feedback */
+.haptic-press {
+  transition: transform 0.1s var(--ease-standard);
+}
+
+.haptic-press:active {
+  transform: scale(0.98);
+}
+
+/* Hover Lift Effect */
+.hover-lift {
+  transition:
+    transform 0.25s var(--ease-spring-soft),
+    box-shadow 0.25s var(--ease-standard);
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 10px 20px rgba(0, 0, 0, 0.12),
+    0 4px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* Focus Ring - Accessible and beautiful */
+.focus-ring:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 4px rgba(0, 122, 255, 0.4),
+    0 0 0 2px rgba(0, 122, 255, 0.8);
+  border-radius: inherit;
+}
+
+/* Shimmer Loading Effect */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--color-gray-6) 25%,
+    var(--color-gray-5) 50%,
+    var(--color-gray-6) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* Subtle Border Glow on Focus */
+.border-glow {
+  position: relative;
+}
+
+.border-glow::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: linear-gradient(
+    135deg,
+    rgba(0, 122, 255, 0.4),
+    rgba(88, 86, 214, 0.4)
+  );
+  border-radius: inherit;
+  opacity: 0;
+  z-index: -1;
+  transition: opacity 0.3s var(--ease-standard);
+}
+
+.border-glow:focus-within::before,
+.border-glow:hover::before {
+  opacity: 1;
+}
+
+/* Text Selection Styling */
+::selection {
+  background: rgba(0, 122, 255, 0.3);
+  color: inherit;
+}
+
+/* Smooth Scroll */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Hide Scrollbar but Keep Functionality */
+.scrollbar-hidden {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+}
+
+/* Custom Thin Scrollbar */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-gray-4) transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: var(--color-gray-4);
+  border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: var(--color-gray-3);
+}
+
+
+/* ============================================================================
+   11. SVG FILTERS - Advanced Liquid Glass Distortion
+   ============================================================================ */
+
+/**
+ * For true Liquid Glass distortion effect, SVG filters are required.
+ * Include this SVG in your HTML and reference the filter ID.
+ */
+
+/*
+<svg style="display: none;">
+  <defs>
+    <filter id="liquid-glass-distortion">
+      <!-- Base blur for glass effect -->
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1" result="blurred" />
+
+      <!-- Turbulence for organic distortion -->
+      <feTurbulence
+        type="fractalNoise"
+        baseFrequency="0.015"
+        numOctaves="2"
+        result="noise"
+      />
+
+      <!-- Displacement for refraction -->
+      <feDisplacementMap
+        in="blurred"
+        in2="noise"
+        scale="15"
+        xChannelSelector="R"
+        yChannelSelector="G"
+        result="displaced"
+      />
+
+      <!-- Boost saturation -->
+      <feColorMatrix
+        in="displaced"
+        type="saturate"
+        values="1.2"
+        result="saturated"
+      />
+
+      <!-- Add specular highlights -->
+      <feSpecularLighting
+        in="noise"
+        surfaceScale="2"
+        specularConstant="0.5"
+        specularExponent="20"
+        lighting-color="white"
+        result="specular"
+      >
+        <fePointLight x="-100" y="-100" z="200" />
+      </feSpecularLighting>
+
+      <!-- Composite specular with content -->
+      <feComposite
+        in="specular"
+        in2="saturated"
+        operator="in"
+        result="specularMask"
+      />
+
+      <!-- Blend everything -->
+      <feBlend in="saturated" in2="specularMask" mode="screen" />
+    </filter>
+  </defs>
+</svg>
+*/
+
+/* Apply SVG filter to element */
+.liquid-glass-distortion {
+  filter: url(#liquid-glass-distortion) brightness(105%);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+
+
+/* ============================================================================
+   12. UTILITY CLASSES - Quick Application
+   ============================================================================ */
+
+/* Border Radius Scale */
+.rounded-sm { border-radius: 4px; }
+.rounded-md { border-radius: 8px; }
+.rounded-lg { border-radius: 12px; }
+.rounded-xl { border-radius: 16px; }
+.rounded-2xl { border-radius: 24px; }
+.rounded-3xl { border-radius: 32px; }
+.rounded-full { border-radius: 9999px; }
+
+/* Opacity Scale */
+.opacity-0 { opacity: 0; }
+.opacity-10 { opacity: 0.1; }
+.opacity-20 { opacity: 0.2; }
+.opacity-30 { opacity: 0.3; }
+.opacity-40 { opacity: 0.4; }
+.opacity-50 { opacity: 0.5; }
+.opacity-60 { opacity: 0.6; }
+.opacity-70 { opacity: 0.7; }
+.opacity-80 { opacity: 0.8; }
+.opacity-90 { opacity: 0.9; }
+.opacity-100 { opacity: 1; }
+
+/* Blur Utilities */
+.blur-none { filter: blur(0); backdrop-filter: blur(0); }
+.blur-sm { filter: blur(4px); }
+.blur-md { filter: blur(8px); }
+.blur-lg { filter: blur(16px); }
+.blur-xl { filter: blur(24px); }
+.blur-2xl { filter: blur(40px); }
+
+/* Backdrop Blur Utilities */
+.backdrop-blur-sm { backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+.backdrop-blur-md { backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+.backdrop-blur-lg { backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+.backdrop-blur-xl { backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); }
+.backdrop-blur-2xl { backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px); }
+
+
+/* ============================================================================
+   END OF APPLE DESIGN SPECIFICATIONS
+   ============================================================================ */

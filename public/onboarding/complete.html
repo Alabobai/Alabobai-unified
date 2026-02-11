@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Setup Complete - Alabobai</title>
+  <meta name="description" content="Your AI company is ready. Start building.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Dynamic Background Styles -->
+  <link rel="stylesheet" href="../css/background.css">
+
+  <style>
+    /* ============================================================================
+       ULTRA AGENT V4.0 - Onboarding Design System
+       ============================================================================ */
+
+    :root {
+      /* Metallic Rose Gold Palette */
+      --rose-gold: #d9a07a;
+      --rose-gold-light: #ecd4c0;
+      --rose-gold-bright: #f0e0d0;
+      --rose-gold-dark: #b8845c;
+      --rose-gold-deep: #8b6442;
+      --copper: #c9956c;
+      --bronze: #a67c52;
+
+      /* Glow Effects */
+      --glow-rose: rgba(217, 160, 122, 0.6);
+      --glow-rose-intense: rgba(217, 160, 122, 0.9);
+      --glow-soft: rgba(217, 160, 122, 0.3);
+
+      /* Backgrounds */
+      --bg-void: #000000;
+      --bg-dark: #0a0808;
+      --bg-card: rgba(12, 10, 8, 0.95);
+      --bg-panel: rgba(18, 14, 12, 0.9);
+      --bg-input: rgba(25, 20, 18, 0.8);
+
+      /* Borders */
+      --border-outer: rgba(217, 160, 122, 0.5);
+      --border-mid: rgba(217, 160, 122, 0.3);
+      --border-inner: rgba(217, 160, 122, 0.15);
+      --border-subtle: rgba(217, 160, 122, 0.08);
+
+      /* Text */
+      --text-bright: #f5ebe0;
+      --text-primary: #e8d5c4;
+      --text-secondary: #a89080;
+      --text-muted: #6b5a4a;
+
+      /* Status */
+      --status-active: #7dd3a0;
+      --status-glow: rgba(125, 211, 160, 0.5);
+
+      /* Fonts */
+      --font-display: 'Inter', -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+
+      /* Animation */
+      --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+      --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-display);
+      background: var(--bg-void);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ============================================================================
+       MORPHIC PANEL SYSTEM
+       ============================================================================ */
+
+    .morphic-panel {
+      background: var(--bg-card);
+      border-radius: 16px;
+      position: relative;
+    }
+
+    .morphic-panel::before {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, var(--rose-gold) 0%, var(--rose-gold-dark) 25%, transparent 50%, var(--rose-gold-deep) 75%, var(--rose-gold) 100%);
+      z-index: -1;
+      opacity: 0.7;
+    }
+
+    .morphic-panel::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 16px;
+      border: 1px solid var(--border-mid);
+      pointer-events: none;
+    }
+
+    /* ============================================================================
+       CHROME BUTTONS
+       ============================================================================ */
+
+    .chrome-btn {
+      position: relative;
+      padding: 18px 48px;
+      background: linear-gradient(180deg, var(--rose-gold-bright) 0%, var(--rose-gold-light) 20%, var(--rose-gold) 50%, var(--rose-gold-dark) 80%, var(--bronze) 100%);
+      border: none;
+      border-radius: 12px;
+      color: #1a1410;
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      transition: all 0.3s var(--ease-smooth);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.4), inset 0 2px 0 rgba(255,255,255,0.3), inset 0 -2px 0 rgba(0,0,0,0.2);
+      text-shadow: 0 1px 0 rgba(255,255,255,0.3);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .chrome-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 50%;
+      background: linear-gradient(180deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 100%);
+      border-radius: 12px 12px 0 0;
+      pointer-events: none;
+    }
+
+    .chrome-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 40px var(--glow-rose), inset 0 2px 0 rgba(255,255,255,0.4);
+    }
+
+    .chrome-btn svg {
+      width: 20px;
+      height: 20px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+    }
+
+    /* ============================================================================
+       ONBOARDING LAYOUT
+       ============================================================================ */
+
+    .onboarding-container {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 24px;
+    }
+
+    /* ============================================================================
+       STEP INDICATOR
+       ============================================================================ */
+
+    .step-indicator {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 48px;
+    }
+
+    .step {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .step-number {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: var(--font-mono);
+      transition: all 0.3s var(--ease-smooth);
+    }
+
+    .step-number.active {
+      background: linear-gradient(135deg, var(--rose-gold), var(--rose-gold-dark));
+      color: #1a1410;
+      box-shadow: 0 0 20px var(--glow-rose);
+    }
+
+    .step-number.completed {
+      background: var(--status-active);
+      color: #1a1410;
+      box-shadow: 0 0 15px var(--status-glow);
+    }
+
+    .step-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      display: none;
+    }
+
+    @media (min-width: 600px) {
+      .step-label {
+        display: block;
+      }
+    }
+
+    .step.active .step-label {
+      color: var(--rose-gold-light);
+    }
+
+    .step-connector {
+      width: 40px;
+      height: 2px;
+      background: var(--status-active);
+    }
+
+    /* ============================================================================
+       MAIN CARD
+       ============================================================================ */
+
+    .onboarding-card {
+      width: 100%;
+      max-width: 600px;
+      padding: 60px 48px;
+      text-align: center;
+      animation: cardEnter 0.6s var(--ease-smooth);
+    }
+
+    @keyframes cardEnter {
+      from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.98);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    /* ============================================================================
+       CELEBRATION
+       ============================================================================ */
+
+    .celebration-icon {
+      width: 100px;
+      height: 100px;
+      margin: 0 auto 32px;
+      position: relative;
+    }
+
+    .success-ring {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 3px solid var(--status-active);
+      animation: ringPulse 2s ease-in-out infinite;
+    }
+
+    .success-ring:nth-child(2) {
+      animation-delay: 0.3s;
+    }
+
+    .success-ring:nth-child(3) {
+      animation-delay: 0.6s;
+    }
+
+    @keyframes ringPulse {
+      0% {
+        transform: scale(1);
+        opacity: 1;
+      }
+      100% {
+        transform: scale(1.8);
+        opacity: 0;
+      }
+    }
+
+    .success-check {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--status-active);
+      border-radius: 50%;
+      animation: checkBounce 0.8s var(--ease-bounce) 0.3s both;
+    }
+
+    @keyframes checkBounce {
+      from {
+        transform: scale(0);
+      }
+      to {
+        transform: scale(1);
+      }
+    }
+
+    .success-check svg {
+      width: 48px;
+      height: 48px;
+      stroke: #1a1410;
+      stroke-width: 3;
+      fill: none;
+      animation: checkDraw 0.5s ease-out 0.8s both;
+    }
+
+    @keyframes checkDraw {
+      from {
+        stroke-dasharray: 100;
+        stroke-dashoffset: 100;
+      }
+      to {
+        stroke-dasharray: 100;
+        stroke-dashoffset: 0;
+      }
+    }
+
+    /* Confetti */
+    .confetti-container {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 100;
+    }
+
+    .confetti {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background: var(--rose-gold);
+      animation: confettiFall 4s ease-out forwards;
+    }
+
+    .confetti:nth-child(even) {
+      background: var(--rose-gold-light);
+      width: 8px;
+      height: 8px;
+    }
+
+    .confetti:nth-child(3n) {
+      background: var(--status-active);
+      border-radius: 50%;
+    }
+
+    .confetti:nth-child(4n) {
+      background: var(--rose-gold-dark);
+      width: 12px;
+      height: 6px;
+    }
+
+    @keyframes confettiFall {
+      0% {
+        transform: translateY(-100vh) rotate(0deg);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(100vh) rotate(720deg);
+        opacity: 0;
+      }
+    }
+
+    /* ============================================================================
+       CONTENT
+       ============================================================================ */
+
+    .complete-title {
+      font-size: clamp(28px, 5vw, 40px);
+      font-weight: 300;
+      color: var(--text-bright);
+      margin-bottom: 8px;
+      text-shadow: 0 0 40px var(--glow-soft);
+    }
+
+    .complete-title strong {
+      font-weight: 700;
+      color: var(--rose-gold-light);
+      text-shadow: 0 0 30px var(--glow-rose);
+    }
+
+    .complete-subtitle {
+      font-size: 16px;
+      color: var(--text-secondary);
+      margin-bottom: 40px;
+    }
+
+    /* ============================================================================
+       TIPS SECTION
+       ============================================================================ */
+
+    .tips-section {
+      margin-bottom: 40px;
+      text-align: left;
+    }
+
+    .tips-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--rose-gold-light);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tips-label svg {
+      width: 16px;
+      height: 16px;
+      stroke: var(--rose-gold);
+      fill: none;
+    }
+
+    .tips-list {
+      list-style: none;
+    }
+
+    .tip-item {
+      display: flex;
+      gap: 16px;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border-subtle);
+      animation: tipEnter 0.4s var(--ease-smooth) forwards;
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+
+    .tip-item:nth-child(1) { animation-delay: 0.5s; }
+    .tip-item:nth-child(2) { animation-delay: 0.6s; }
+    .tip-item:nth-child(3) { animation-delay: 0.7s; }
+    .tip-item:nth-child(4) { animation-delay: 0.8s; }
+
+    @keyframes tipEnter {
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .tip-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--bg-input);
+      border: 1px solid var(--border-mid);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .tip-icon svg {
+      width: 18px;
+      height: 18px;
+      stroke: var(--rose-gold);
+      fill: none;
+      stroke-width: 1.5;
+    }
+
+    .tip-content {
+      flex: 1;
+    }
+
+    .tip-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-bright);
+      margin-bottom: 2px;
+    }
+
+    .tip-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .tip-shortcut {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 2px 6px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border-mid);
+      border-radius: 4px;
+      color: var(--rose-gold-light);
+    }
+
+    /* ============================================================================
+       STATS
+       ============================================================================ */
+
+    .stats-row {
+      display: flex;
+      justify-content: center;
+      gap: 32px;
+      margin-bottom: 40px;
+      flex-wrap: wrap;
+    }
+
+    .stat-item {
+      text-align: center;
+      animation: statPop 0.5s var(--ease-bounce) forwards;
+      opacity: 0;
+      transform: scale(0.8);
+    }
+
+    .stat-item:nth-child(1) { animation-delay: 0.3s; }
+    .stat-item:nth-child(2) { animation-delay: 0.4s; }
+    .stat-item:nth-child(3) { animation-delay: 0.5s; }
+
+    @keyframes statPop {
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    .stat-value {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--rose-gold-light);
+      text-shadow: 0 0 20px var(--glow-rose);
+      font-family: var(--font-mono);
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 4px;
+    }
+
+    /* ============================================================================
+       ACTION BUTTONS
+       ============================================================================ */
+
+    .action-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      align-items: center;
+    }
+
+    /* ============================================================================
+       BACKGROUND EFFECTS
+       ============================================================================ */
+
+    .bg-gradient {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .bg-gradient::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(ellipse at 30% 30%, rgba(217, 160, 122, 0.08) 0%, transparent 50%),
+                  radial-gradient(ellipse at 70% 70%, rgba(217, 160, 122, 0.05) 0%, transparent 40%),
+                  radial-gradient(ellipse at 50% 50%, rgba(125, 211, 160, 0.03) 0%, transparent 60%);
+      animation: bgFloat 20s ease-in-out infinite;
+    }
+
+    @keyframes bgFloat {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      50% { transform: translate(-5%, 5%) rotate(5deg); }
+    }
+
+    /* ============================================================================
+       RESPONSIVE
+       ============================================================================ */
+
+    @media (max-width: 600px) {
+      .onboarding-card {
+        padding: 40px 24px;
+      }
+
+      .step-connector {
+        width: 24px;
+      }
+
+      .chrome-btn {
+        width: 100%;
+        padding: 16px 32px;
+        font-size: 16px;
+      }
+
+      .stats-row {
+        gap: 24px;
+      }
+
+      .stat-value {
+        font-size: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-gradient"></div>
+  <div class="confetti-container" id="confetti"></div>
+
+  <div class="onboarding-container">
+    <!-- Step Indicator -->
+    <div class="step-indicator">
+      <div class="step">
+        <div class="step-number completed">1</div>
+        <span class="step-label">Welcome</span>
+      </div>
+      <div class="step-connector"></div>
+      <div class="step">
+        <div class="step-number completed">2</div>
+        <span class="step-label">Departments</span>
+      </div>
+      <div class="step-connector"></div>
+      <div class="step">
+        <div class="step-number completed">3</div>
+        <span class="step-label">First Task</span>
+      </div>
+      <div class="step-connector"></div>
+      <div class="step active">
+        <div class="step-number active">4</div>
+        <span class="step-label">Complete</span>
+      </div>
+    </div>
+
+    <!-- Main Card -->
+    <div class="morphic-panel onboarding-card">
+      <!-- Celebration Icon -->
+      <div class="celebration-icon">
+        <div class="success-ring"></div>
+        <div class="success-ring"></div>
+        <div class="success-ring"></div>
+        <div class="success-check">
+          <svg viewBox="0 0 24 24">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+      </div>
+
+      <h1 class="complete-title">You're <strong>All Set</strong></h1>
+      <p class="complete-subtitle">Your AI company is ready to execute. Here are some tips to get the most out of Alabobai.</p>
+
+      <!-- Stats -->
+      <div class="stats-row">
+        <div class="stat-item">
+          <div class="stat-value">12</div>
+          <div class="stat-label">Departments</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="deptCount">0</div>
+          <div class="stat-label">Selected</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">0ms</div>
+          <div class="stat-label">Latency</div>
+        </div>
+      </div>
+
+      <!-- Tips Section -->
+      <div class="tips-section">
+        <div class="tips-label">
+          <svg viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+          Pro Tips
+        </div>
+        <ul class="tips-list">
+          <li class="tip-item">
+            <div class="tip-icon">
+              <svg viewBox="0 0 24 24"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+            </div>
+            <div class="tip-content">
+              <div class="tip-title">Be Specific</div>
+              <div class="tip-desc">The more context you provide, the better the output. Include industry, audience, and desired format.</div>
+            </div>
+          </li>
+          <li class="tip-item">
+            <div class="tip-icon">
+              <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            </div>
+            <div class="tip-content">
+              <div class="tip-title">Watch It Work</div>
+              <div class="tip-desc">Use the Live Workspace to see your AI execute tasks in real-time with full transparency.</div>
+            </div>
+          </li>
+          <li class="tip-item">
+            <div class="tip-icon">
+              <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+            </div>
+            <div class="tip-content">
+              <div class="tip-title">Chain Departments</div>
+              <div class="tip-desc">Start with Marketing research, then send to Brand for positioning, then to Development for landing page.</div>
+            </div>
+          </li>
+          <li class="tip-item">
+            <div class="tip-icon">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            </div>
+            <div class="tip-content">
+              <div class="tip-title">Save Time</div>
+              <div class="tip-desc">Use keyboard shortcuts: <span class="tip-shortcut">Cmd+K</span> for quick commands, <span class="tip-shortcut">Cmd+Enter</span> to execute.</div>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <div class="action-buttons">
+        <a href="/app" class="chrome-btn">
+          Launch Alabobai
+          <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Load selected departments count
+    const savedDepts = localStorage.getItem('selectedDepartments');
+    if (savedDepts) {
+      const depts = JSON.parse(savedDepts);
+      document.getElementById('deptCount').textContent = depts.length;
+    }
+
+    // Create confetti
+    function createConfetti() {
+      const container = document.getElementById('confetti');
+      const colors = ['#d9a07a', '#ecd4c0', '#b8845c', '#7dd3a0', '#8b6442'];
+
+      for (let i = 0; i < 80; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'confetti';
+        confetti.style.left = Math.random() * 100 + 'vw';
+        confetti.style.animationDuration = (Math.random() * 2 + 3) + 's';
+        confetti.style.animationDelay = (Math.random() * 1) + 's';
+        confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+
+        // Random shapes
+        const shape = Math.floor(Math.random() * 4);
+        if (shape === 0) {
+          confetti.style.borderRadius = '50%';
+          confetti.style.width = (Math.random() * 8 + 6) + 'px';
+          confetti.style.height = confetti.style.width;
+        } else if (shape === 1) {
+          confetti.style.width = (Math.random() * 10 + 8) + 'px';
+          confetti.style.height = (Math.random() * 6 + 4) + 'px';
+        } else if (shape === 2) {
+          confetti.style.width = (Math.random() * 6 + 4) + 'px';
+          confetti.style.height = (Math.random() * 12 + 8) + 'px';
+        } else {
+          confetti.style.width = (Math.random() * 8 + 6) + 'px';
+          confetti.style.height = confetti.style.width;
+          confetti.style.transform = 'rotate(45deg)';
+        }
+
+        container.appendChild(confetti);
+      }
+
+      // Remove confetti after animation
+      setTimeout(() => {
+        container.innerHTML = '';
+      }, 5000);
+    }
+
+    // Trigger confetti on load
+    setTimeout(createConfetti, 500);
+
+    // Page transitions
+    document.querySelectorAll('a:not([target="_blank"])').forEach(link => {
+      link.addEventListener('click', function(e) {
+        if (this.href.includes('#')) return;
+        e.preventDefault();
+        const href = this.href;
+        document.body.style.opacity = '0';
+        document.body.style.transform = 'translateY(-20px)';
+        document.body.style.transition = 'all 0.3s ease';
+        setTimeout(() => {
+          window.location.href = href;
+        }, 300);
+      });
+    });
+
+    // Entrance animation
+    document.body.style.opacity = '0';
+    document.body.style.transform = 'translateY(20px)';
+    requestAnimationFrame(() => {
+      document.body.style.transition = 'all 0.5s ease';
+      document.body.style.opacity = '1';
+      document.body.style.transform = 'translateY(0)';
+    });
+
+    // Mark onboarding as complete
+    localStorage.setItem('onboardingComplete', 'true');
+  </script>
+
+  <!-- Dynamic Background Effects -->
+  <script src="../js/background.js"></script>
+</body>
+</html>

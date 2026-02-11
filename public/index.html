@@ -1,0 +1,2764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alabobai - AI Operating System</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Dynamic Background Styles -->
+  <link rel="stylesheet" href="css/background.css">
+  <!-- Morphic Glass Component System -->
+  <link rel="stylesheet" href="css/morphic-glass.css">
+  <!-- Ultra Animation System -->
+  <link rel="stylesheet" href="css/animations.css">
+
+  <style>
+    :root {
+      --rose-gold: #d9a07a;
+      --rose-gold-light: #e8c4a8;
+      --rose-gold-dark: #b8845c;
+      --copper: #b87333;
+      --rose-gold-glow: rgba(217, 160, 122, 0.6);
+      --rose-gold-subtle: rgba(217, 160, 122, 0.1);
+      --rose-gold-border: rgba(217, 160, 122, 0.3);
+      --bg-primary: #0a0a0a;
+      --bg-secondary: #0f0f0f;
+      --bg-card: rgba(15, 15, 15, 0.85);
+      --bg-glass: rgba(20, 20, 20, 0.7);
+      --bg-input: rgba(30, 30, 30, 0.6);
+      --text-primary: #ffffff;
+      --text-secondary: #a0a0a0;
+      --text-muted: #606060;
+      --success: #4ade80;
+      --glow-text: 0 0 10px var(--rose-gold-glow), 0 0 20px var(--rose-gold-glow), 0 0 30px var(--rose-gold-glow);
+      --glow-sm: 0 0 15px var(--rose-gold-glow);
+      --glow-md: 0 0 30px var(--rose-gold-glow);
+      --glow-lg: 0 0 50px var(--rose-gold-glow);
+      --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.6);
+      --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--rose-gold-border); border-radius: 3px; }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       MORPHIC GLASS CARD - Double Beveled Border
+       ═══════════════════════════════════════════════════════════════════════════ */
+
+    .glass-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 16px;
+      position: relative;
+      overflow: hidden;
+      transition: var(--transition);
+    }
+
+    .glass-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 16px;
+      padding: 2px;
+      background: linear-gradient(135deg, var(--rose-gold) 0%, transparent 50%, var(--rose-gold-dark) 100%);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+    }
+
+    .glass-card::after {
+      content: '';
+      position: absolute;
+      inset: 4px;
+      border-radius: 12px;
+      border: 1px solid rgba(217, 160, 122, 0.15);
+      pointer-events: none;
+    }
+
+    .glass-card:hover {
+      /* STATIC - No transform, only border/glow effect */
+      border-color: rgba(217, 160, 122, 0.4);
+      box-shadow: 0 0 30px rgba(217, 160, 122, 0.15), var(--shadow-card);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       GLOWING TEXT EFFECTS
+       ═══════════════════════════════════════════════════════════════════════════ */
+
+    .glow-text {
+      color: var(--rose-gold-light);
+      text-shadow: var(--glow-text);
+    }
+
+    .glow-text-subtle {
+      color: var(--rose-gold);
+      text-shadow: 0 0 8px var(--rose-gold-glow);
+    }
+
+    /* Glowing input text */
+    .glow-input {
+      caret-color: var(--rose-gold);
+    }
+
+    .glow-input:focus {
+      text-shadow: 0 0 8px var(--rose-gold-glow);
+    }
+
+    @keyframes letterGlow {
+      0%, 100% { text-shadow: 0 0 5px var(--rose-gold-glow); }
+      50% { text-shadow: 0 0 15px var(--rose-gold-glow), 0 0 25px var(--rose-gold-glow); }
+    }
+
+    .typing-glow {
+      animation: letterGlow 1.5s ease-in-out infinite;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       LAYOUT
+       ═══════════════════════════════════════════════════════════════════════════ */
+
+    .app { display: flex; flex-direction: column; height: 100vh; }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       HEADER WITH 3D LOGO
+       ═══════════════════════════════════════════════════════════════════════════ */
+
+    .header {
+      padding: 12px 24px;
+      border-bottom: 1px solid var(--rose-gold-border);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: linear-gradient(180deg, rgba(15,15,15,0.98) 0%, var(--bg-secondary) 100%);
+      position: relative;
+      z-index: 100;
+    }
+
+    /* 3D Logo Container */
+    .logo-3d-container {
+      width: 56px;
+      height: 56px;
+      position: relative;
+      perspective: 1000px;
+      cursor: pointer;
+    }
+
+    .logo-3d {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      animation: logoFloat 6s ease-in-out infinite, logoRotate 20s linear infinite;
+    }
+
+    .logo-image {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      filter: drop-shadow(0 0 15px var(--rose-gold-glow)) drop-shadow(0 0 30px var(--rose-gold-glow));
+      transition: var(--transition);
+    }
+
+    .logo-3d-container:hover .logo-image {
+      filter: drop-shadow(0 0 20px var(--rose-gold-glow)) drop-shadow(0 0 40px var(--rose-gold-glow)) drop-shadow(0 0 60px var(--rose-gold-glow));
+      transform: scale(1.1);
+    }
+
+    .logo-glow-ring {
+      position: absolute;
+      inset: -10px;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--rose-gold-glow) 0%, transparent 70%);
+      opacity: 0.5;
+      animation: pulseGlow 3s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    @keyframes logoFloat {
+      0%, 100% { transform: translateY(0) rotateX(0deg); }
+      50% { transform: translateY(-3px) rotateX(5deg); }
+    }
+
+    @keyframes logoRotate {
+      0% { transform: rotateY(0deg); }
+      100% { transform: rotateY(360deg); }
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 0.4; transform: scale(1); }
+      50% { opacity: 0.7; transform: scale(1.15); }
+    }
+
+    .header-brand {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header-title {
+      font-size: 28px;
+      font-weight: 300;
+      letter-spacing: -0.5px;
+    }
+
+    .header-title .highlight {
+      font-weight: 700;
+      color: var(--rose-gold-light);
+      text-shadow: var(--glow-text);
+    }
+
+    .header-tagline {
+      font-size: 10px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      margin-top: 2px;
+    }
+
+    /* Navigation */
+    .header-nav {
+      display: flex;
+      gap: 8px;
+      margin-left: auto;
+    }
+
+    .nav-btn {
+      padding: 10px 20px;
+      background: transparent;
+      border: 1px solid var(--rose-gold-border);
+      border-radius: 10px;
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .nav-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, var(--rose-gold-subtle) 0%, transparent 100%);
+      opacity: 0;
+      transition: var(--transition);
+    }
+
+    .nav-btn:hover::before, .nav-btn.active::before { opacity: 1; }
+
+    .nav-btn:hover, .nav-btn.active {
+      color: var(--rose-gold-light);
+      border-color: var(--rose-gold);
+      box-shadow: var(--glow-sm);
+      text-shadow: 0 0 10px var(--rose-gold-glow);
+    }
+
+    /* Status */
+    .header-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: rgba(74, 222, 128, 0.08);
+      border: 1px solid rgba(74, 222, 128, 0.25);
+      border-radius: 20px;
+      font-size: 11px;
+      color: var(--success);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--success);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--success);
+      animation: statusPulse 2s infinite;
+    }
+
+    @keyframes statusPulse {
+      0%, 100% { opacity: 1; box-shadow: 0 0 10px var(--success); }
+      50% { opacity: 0.5; box-shadow: 0 0 5px var(--success); }
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       MAIN CONTENT
+       ═══════════════════════════════════════════════════════════════════════════ */
+
+    .main-content {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    .page { display: none; flex: 1; overflow: hidden; }
+    .page.active { display: flex; }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       COMMAND CENTER
+       ═══════════════════════════════════════════════════════════════════════════ */
+
+    .command-center {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* Chat Area */
+    .chat-area {
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--rose-gold-border);
+    }
+
+    .chat-header {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--rose-gold-border);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: var(--bg-secondary);
+    }
+
+    .chat-mode-selector {
+      display: flex;
+      gap: 4px;
+      padding: 4px;
+      background: var(--bg-glass);
+      border-radius: 10px;
+      border: 1px solid var(--rose-gold-border);
+    }
+
+    .mode-btn {
+      padding: 8px 16px;
+      background: transparent;
+      border: none;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .mode-btn.active {
+      background: linear-gradient(135deg, var(--rose-gold) 0%, var(--rose-gold-dark) 100%);
+      color: #0a0a0a;
+      box-shadow: var(--glow-sm);
+    }
+
+    .mode-btn:hover:not(.active) {
+      color: var(--text-secondary);
+    }
+
+    .chat-model-info {
+      margin-left: auto;
+      font-size: 11px;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .chat-model-info span {
+      color: var(--rose-gold);
+      text-shadow: 0 0 8px var(--rose-gold-glow);
+    }
+
+    /* Messages */
+    .chat-messages {
+      flex: 1;
+      padding: 24px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .message {
+      display: flex;
+      gap: 16px;
+      max-width: 90%;
+      animation: messageIn 0.4s ease;
+    }
+
+    @keyframes messageIn {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .message.user {
+      align-self: flex-end;
+      flex-direction: row-reverse;
+    }
+
+    .message-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 600;
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    .message.user .message-avatar {
+      background: var(--bg-glass);
+      border: 1px solid var(--rose-gold-border);
+      color: var(--text-secondary);
+    }
+
+    .message.assistant .message-avatar {
+      background: linear-gradient(135deg, var(--rose-gold) 0%, var(--rose-gold-dark) 100%);
+      color: #0a0a0a;
+      box-shadow: var(--glow-sm);
+    }
+
+    .message-content {
+      flex: 1;
+    }
+
+    .message-bubble {
+      padding: 16px 20px;
+      border-radius: 16px;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .message.user .message-bubble {
+      background: linear-gradient(135deg, var(--rose-gold) 0%, var(--rose-gold-dark) 100%);
+      color: #0a0a0a;
+      border-bottom-right-radius: 4px;
+      box-shadow: var(--glow-sm);
+    }
+
+    .message.assistant .message-bubble {
+      background: var(--bg-glass);
+      border: 1px solid var(--rose-gold-border);
+      border-bottom-left-radius: 4px;
+    }
+
+    .message-bubble ul {
+      margin: 12px 0 0 20px;
+    }
+
+    .message-bubble li {
+      margin-bottom: 6px;
+      color: var(--text-secondary);
+    }
+
+    /* Agent Activity Panel */
+    .agent-activity-panel {
+      margin-top: 12px;
+      padding: 16px;
+    }
+
+    .activity-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--rose-gold);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .activity-indicator {
+      width: 8px;
+      height: 8px;
+      background: var(--rose-gold);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--rose-gold-glow);
+    }
+
+    .activity-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .activity-step {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .step-status {
+      width: 18px;
+      height: 18px;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      background: rgba(74, 222, 128, 0.15);
+      color: var(--success);
+      border: 1px solid rgba(74, 222, 128, 0.3);
+    }
+
+    /* Chat Input */
+    .chat-input-area {
+      padding: 20px 24px;
+      border-top: 1px solid var(--rose-gold-border);
+      background: var(--bg-secondary);
+    }
+
+    .input-container {
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+    }
+
+    .input-wrapper {
+      flex: 1;
+      position: relative;
+    }
+
+    .chat-input {
+      width: 100%;
+      padding: 18px 22px;
+      padding-right: 90px;
+      background: var(--bg-glass);
+      border: 1px solid var(--rose-gold-border);
+      border-radius: 14px;
+      font-size: 14px;
+      color: var(--text-primary);
+      outline: none;
+      transition: var(--transition);
+      resize: none;
+      min-height: 58px;
+      max-height: 150px;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .chat-input:focus {
+      border-color: var(--rose-gold);
+      box-shadow: var(--glow-sm);
+      text-shadow: 0 0 8px var(--rose-gold-glow);
+    }
+
+    .chat-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .input-actions {
+      position: absolute;
+      right: 14px;
+      bottom: 14px;
+      display: flex;
+      gap: 8px;
+    }
+
+    .input-action-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      border: 1px solid var(--rose-gold-border);
+      background: var(--bg-glass);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+    }
+
+    .input-action-btn:hover {
+      background: var(--rose-gold-subtle);
+      color: var(--rose-gold);
+      border-color: var(--rose-gold);
+      box-shadow: var(--glow-sm);
+    }
+
+    .send-btn {
+      padding: 18px 32px;
+      background: linear-gradient(135deg, var(--rose-gold-light) 0%, var(--rose-gold) 50%, var(--rose-gold-dark) 100%);
+      border: none;
+      border-radius: 14px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #0a0a0a;
+      cursor: pointer;
+      transition: var(--transition);
+      box-shadow: var(--glow-sm);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .send-btn:hover {
+      transform: scale(1.02);
+      box-shadow: var(--glow-md);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       RIGHT PANEL - Neural Stream & Sources
+       ═══════════════════════════════════════════════════════════════════════════ */
+
+    .right-panel {
+      background: var(--bg-secondary);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .panel-section {
+      padding: 20px;
+      border-bottom: 1px solid var(--rose-gold-border);
+    }
+
+    .panel-title {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--rose-gold);
+      margin-bottom: 16px;
+      font-weight: 600;
+      text-shadow: 0 0 10px var(--rose-gold-glow);
+    }
+
+    /* Neural Stream */
+    .neural-stream {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    .stream-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      border-left: 2px solid var(--rose-gold);
+      background: linear-gradient(90deg, var(--rose-gold-subtle) 0%, transparent 100%);
+      border-radius: 0 10px 10px 0;
+      animation: streamIn 0.4s ease;
+    }
+
+    @keyframes streamIn {
+      from { opacity: 0; transform: translateX(-20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .stream-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      background: var(--bg-glass);
+      border: 1px solid var(--rose-gold-border);
+      color: var(--rose-gold);
+      flex-shrink: 0;
+    }
+
+    .stream-content {
+      flex: 1;
+    }
+
+    .stream-label {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .stream-value {
+      font-size: 12px;
+      color: var(--text-primary);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Sources */
+    .sources-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+
+    .source-item {
+      padding: 12px 14px;
+      border-radius: 10px;
+      background: var(--bg-glass);
+      border: 1px solid transparent;
+      transition: var(--transition);
+    }
+
+    .source-item:hover {
+      border-color: var(--rose-gold-border);
+      box-shadow: var(--glow-sm);
+    }
+
+    .source-url {
+      font-size: 9px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .source-title {
+      font-size: 12px;
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .source-confidence {
+      font-size: 10px;
+      color: var(--success);
+      margin-top: 6px;
+    }
+
+    /* Quick Actions */
+    .quick-actions {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .quick-action {
+      padding: 16px 12px;
+      text-align: center;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .quick-action-icon {
+      width: 36px;
+      height: 36px;
+      margin: 0 auto 10px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-glass);
+      border: 1px solid var(--rose-gold-border);
+      color: var(--rose-gold);
+      font-size: 14px;
+      transition: var(--transition);
+    }
+
+    .quick-action:hover .quick-action-icon {
+      background: var(--rose-gold-subtle);
+      box-shadow: var(--glow-sm);
+    }
+
+    .quick-action-label {
+      font-size: 10px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       AGENTS PAGE
+       ═══════════════════════════════════════════════════════════════════════════ */
+
+    .agents-page {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      overflow: hidden;
+    }
+
+    .agents-sidebar {
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--rose-gold-border);
+      padding: 24px;
+      overflow-y: auto;
+    }
+
+    .agents-main {
+      padding: 28px;
+      overflow-y: auto;
+    }
+
+    .agent-category {
+      margin-bottom: 28px;
+    }
+
+    .category-title {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+      padding-left: 14px;
+    }
+
+    .agent-list-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: var(--transition);
+      margin-bottom: 6px;
+      border: 1px solid transparent;
+    }
+
+    .agent-list-item:hover {
+      background: var(--rose-gold-subtle);
+    }
+
+    .agent-list-item.active {
+      background: var(--rose-gold-subtle);
+      border-color: var(--rose-gold-border);
+      box-shadow: var(--glow-sm);
+    }
+
+    .agent-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      background: linear-gradient(135deg, var(--rose-gold) 0%, var(--rose-gold-dark) 100%);
+      color: #0a0a0a;
+      font-weight: 700;
+      box-shadow: var(--glow-sm);
+    }
+
+    .agent-info h4 {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 2px;
+    }
+
+    .agent-info span {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .agent-status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-left: auto;
+      box-shadow: 0 0 8px currentColor;
+    }
+
+    .agent-status-dot.online {
+      background: var(--success);
+      color: var(--success);
+    }
+
+    /* Agent Detail */
+    .agent-detail-header {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      margin-bottom: 28px;
+    }
+
+    .agent-detail-icon {
+      width: 72px;
+      height: 72px;
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      background: linear-gradient(135deg, var(--rose-gold) 0%, var(--rose-gold-dark) 100%);
+      color: #0a0a0a;
+      font-weight: 700;
+      box-shadow: var(--glow-md);
+    }
+
+    .agent-detail-title h2 {
+      font-size: 26px;
+      font-weight: 600;
+      color: var(--text-primary);
+      text-shadow: 0 0 20px var(--rose-gold-glow);
+    }
+
+    .agent-detail-title p {
+      color: var(--text-secondary);
+      margin-top: 6px;
+      font-size: 14px;
+    }
+
+    .agent-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+      margin-bottom: 28px;
+    }
+
+    .stat-card {
+      padding: 24px 20px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--rose-gold);
+      margin-bottom: 6px;
+      text-shadow: var(--glow-text);
+    }
+
+    .stat-label {
+      font-size: 10px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Swarm Controls */
+    .swarm-section {
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+
+    .swarm-section .panel-title {
+      margin-bottom: 12px;
+    }
+
+    .swarm-description {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 18px;
+      line-height: 1.6;
+    }
+
+    .swarm-controls {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .swarm-btn {
+      padding: 16px;
+      background: var(--bg-glass);
+      border: 1px solid var(--rose-gold-border);
+      border-radius: 12px;
+      color: var(--text-primary);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition);
+      text-align: center;
+    }
+
+    .swarm-btn:hover {
+      background: var(--rose-gold-subtle);
+      box-shadow: var(--glow-sm);
+    }
+
+    .swarm-btn.primary {
+      background: linear-gradient(135deg, var(--rose-gold) 0%, var(--rose-gold-dark) 100%);
+      color: #0a0a0a;
+      border: none;
+      font-weight: 600;
+      box-shadow: var(--glow-sm);
+    }
+
+    .swarm-btn-icon {
+      display: block;
+      font-size: 20px;
+      margin-bottom: 8px;
+      font-weight: 400;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       INTEGRATIONS PAGE
+       ═══════════════════════════════════════════════════════════════════════════ */
+
+    .integrations-page {
+      padding: 28px;
+      overflow-y: auto;
+    }
+
+    .integrations-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 28px;
+    }
+
+    .integrations-header h2 {
+      font-size: 26px;
+      font-weight: 600;
+      text-shadow: 0 0 20px var(--rose-gold-glow);
+    }
+
+    .search-box {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 18px;
+      background: var(--bg-glass);
+      border: 1px solid var(--rose-gold-border);
+      border-radius: 12px;
+      width: 320px;
+      transition: var(--transition);
+    }
+
+    .search-box:focus-within {
+      border-color: var(--rose-gold);
+      box-shadow: var(--glow-sm);
+    }
+
+    .search-icon {
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    .search-box input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text-primary);
+      font-size: 13px;
+      outline: none;
+    }
+
+    .search-box input::placeholder { color: var(--text-muted); }
+
+    .integration-categories {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+
+    .category-chip {
+      padding: 10px 18px;
+      background: var(--bg-glass);
+      border: 1px solid var(--rose-gold-border);
+      border-radius: 20px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .category-chip:hover, .category-chip.active {
+      background: var(--rose-gold-subtle);
+      color: var(--rose-gold);
+      border-color: var(--rose-gold);
+      box-shadow: var(--glow-sm);
+      text-shadow: 0 0 8px var(--rose-gold-glow);
+    }
+
+    .integrations-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 18px;
+    }
+
+    .integration-card {
+      padding: 24px 18px;
+      text-align: center;
+      cursor: pointer;
+    }
+
+    .integration-icon {
+      width: 52px;
+      height: 52px;
+      margin: 0 auto 14px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 700;
+      background: var(--bg-glass);
+      border: 1px solid var(--rose-gold-border);
+      color: var(--rose-gold);
+      transition: var(--transition);
+    }
+
+    .integration-card:hover .integration-icon {
+      box-shadow: var(--glow-sm);
+      background: var(--rose-gold-subtle);
+    }
+
+    .integration-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .integration-status {
+      font-size: 10px;
+      padding: 5px 12px;
+      border-radius: 10px;
+      display: inline-block;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .integration-status.connected {
+      background: rgba(74, 222, 128, 0.1);
+      color: var(--success);
+      border: 1px solid rgba(74, 222, 128, 0.25);
+    }
+
+    .integration-status.available {
+      background: var(--bg-glass);
+      color: var(--text-muted);
+      border: 1px solid var(--rose-gold-border);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       BUILDER PAGE
+       ═══════════════════════════════════════════════════════════════════════════ */
+
+    .builder-page {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .builder-left {
+      width: 50%;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--rose-gold-border);
+    }
+
+    .builder-chat {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .builder-messages {
+      flex: 1;
+      padding: 24px;
+      overflow-y: auto;
+    }
+
+    .builder-input-area {
+      padding: 18px 24px;
+      border-top: 1px solid var(--rose-gold-border);
+      display: flex;
+      gap: 14px;
+      background: var(--bg-secondary);
+    }
+
+    .builder-input {
+      flex: 1;
+      padding: 16px 20px;
+      background: var(--bg-glass);
+      border: 1px solid var(--rose-gold-border);
+      border-radius: 12px;
+      font-size: 14px;
+      color: var(--text-primary);
+      outline: none;
+      transition: var(--transition);
+    }
+
+    .builder-input:focus {
+      border-color: var(--rose-gold);
+      box-shadow: var(--glow-sm);
+      text-shadow: 0 0 8px var(--rose-gold-glow);
+    }
+
+    .builder-input::placeholder { color: var(--text-muted); }
+
+    /* Code Section */
+    .code-section {
+      height: 300px;
+      border-top: 1px solid var(--rose-gold-border);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .code-header {
+      display: flex;
+      align-items: center;
+      padding: 12px 18px;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--rose-gold-border);
+      gap: 10px;
+    }
+
+    .code-tabs { display: flex; gap: 6px; }
+
+    .code-tab {
+      padding: 8px 14px;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      font-size: 11px;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: var(--transition);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .code-tab.active {
+      background: var(--rose-gold-subtle);
+      border-color: var(--rose-gold-border);
+      color: var(--rose-gold);
+    }
+
+    .code-actions {
+      margin-left: auto;
+      display: flex;
+      gap: 8px;
+    }
+
+    .code-action-btn {
+      padding: 7px 14px;
+      background: var(--bg-glass);
+      border: 1px solid var(--rose-gold-border);
+      border-radius: 8px;
+      font-size: 11px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .code-action-btn:hover {
+      background: var(--rose-gold-subtle);
+      color: var(--rose-gold);
+      border-color: var(--rose-gold);
+    }
+
+    .code-editor {
+      flex: 1;
+      padding: 18px;
+      background: #080808;
+      overflow: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      line-height: 1.7;
+      color: var(--text-secondary);
+      white-space: pre-wrap;
+    }
+
+    .code-editor .keyword { color: #c792ea; }
+    .code-editor .string { color: #c3e88d; }
+    .code-editor .function { color: #82aaff; }
+    .code-editor .comment { color: #546e7a; font-style: italic; }
+
+    /* Builder Right - Simulator */
+    .builder-right {
+      width: 50%;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-secondary);
+    }
+
+    .simulator-header {
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--rose-gold-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .device-selector {
+      display: flex;
+      gap: 8px;
+    }
+
+    .device-btn {
+      padding: 10px 16px;
+      background: transparent;
+      border: 1px solid var(--rose-gold-border);
+      border-radius: 10px;
+      font-size: 11px;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .device-btn.active {
+      background: var(--rose-gold-subtle);
+      color: var(--rose-gold);
+      border-color: var(--rose-gold);
+      box-shadow: var(--glow-sm);
+    }
+
+    .simulator-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .sim-action-btn {
+      padding: 10px 16px;
+      background: var(--bg-glass);
+      border: 1px solid var(--rose-gold-border);
+      border-radius: 10px;
+      font-size: 11px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .sim-action-btn:hover {
+      background: var(--rose-gold-subtle);
+      color: var(--rose-gold);
+    }
+
+    .simulator-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 28px;
+      overflow: hidden;
+    }
+
+    .device-frame {
+      position: relative;
+      background: linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 100%);
+      box-shadow:
+        0 0 0 2px #333,
+        0 0 0 4px #1a1a1a,
+        var(--glow-sm),
+        0 25px 70px rgba(0, 0, 0, 0.6);
+    }
+
+    .device-frame.iphone {
+      width: 280px;
+      height: 580px;
+      border-radius: 46px;
+      padding: 12px;
+    }
+
+    .device-frame.android {
+      width: 280px;
+      height: 580px;
+      border-radius: 26px;
+      padding: 12px;
+    }
+
+    .device-frame.ipad {
+      width: 460px;
+      height: 340px;
+      border-radius: 26px;
+      padding: 18px;
+    }
+
+    .device-frame.desktop {
+      width: 540px;
+      height: 340px;
+      border-radius: 14px;
+      padding: 10px;
+    }
+
+    .device-screen {
+      width: 100%;
+      height: 100%;
+      background: #fff;
+      border-radius: inherit;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .device-frame.iphone .device-screen { border-radius: 38px; }
+    .device-frame.android .device-screen { border-radius: 18px; }
+
+    .device-notch {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 95px;
+      height: 30px;
+      background: #000;
+      border-radius: 15px;
+      z-index: 10;
+    }
+
+    .preview-iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #0a0a0a;
+    }
+
+    .preview-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #0a0a0a;
+      color: var(--text-muted);
+    }
+
+    .preview-placeholder-icon {
+      width: 70px;
+      height: 70px;
+      border: 2px dashed var(--rose-gold-border);
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 18px;
+      font-size: 24px;
+      color: var(--rose-gold-border);
+    }
+
+    /* Deploy Bar */
+    .deploy-bar {
+      padding: 18px 22px;
+      border-top: 1px solid var(--rose-gold-border);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: var(--bg-primary);
+    }
+
+    .deploy-status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .deploy-status .status-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--success);
+      border-radius: 50%;
+    }
+
+    .deploy-actions {
+      margin-left: auto;
+      display: flex;
+      gap: 10px;
+    }
+
+    .deploy-btn {
+      padding: 12px 20px;
+      background: var(--bg-glass);
+      border: 1px solid var(--rose-gold-border);
+      border-radius: 10px;
+      font-size: 11px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .deploy-btn:hover {
+      background: var(--rose-gold-subtle);
+      color: var(--rose-gold);
+      border-color: var(--rose-gold);
+    }
+
+    .deploy-btn.primary {
+      background: linear-gradient(135deg, var(--rose-gold) 0%, var(--rose-gold-dark) 100%);
+      color: #0a0a0a;
+      border: none;
+      font-weight: 600;
+      box-shadow: var(--glow-sm);
+    }
+
+    .deploy-btn.primary:hover {
+      box-shadow: var(--glow-md);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       SETTINGS PAGE
+       ═══════════════════════════════════════════════════════════════════════════ */
+
+    .settings-page {
+      padding: 28px;
+      max-width: 850px;
+      margin: 0 auto;
+      overflow-y: auto;
+    }
+
+    .settings-page h2 {
+      font-size: 28px;
+      font-weight: 600;
+      margin-bottom: 36px;
+      text-shadow: 0 0 20px var(--rose-gold-glow);
+    }
+
+    .settings-section {
+      margin-bottom: 36px;
+    }
+
+    .settings-section h3 {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--rose-gold);
+      margin-bottom: 18px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--rose-gold-border);
+      text-shadow: 0 0 10px var(--rose-gold-glow);
+    }
+
+    .setting-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+
+    .setting-info h4 {
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 5px;
+    }
+
+    .setting-info p {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .toggle {
+      width: 50px;
+      height: 28px;
+      background: var(--bg-glass);
+      border: 1px solid var(--rose-gold-border);
+      border-radius: 14px;
+      position: relative;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .toggle.active {
+      background: linear-gradient(135deg, var(--rose-gold) 0%, var(--rose-gold-dark) 100%);
+      border-color: var(--rose-gold);
+      box-shadow: var(--glow-sm);
+    }
+
+    .toggle::after {
+      content: '';
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      background: white;
+      border-radius: 50%;
+      top: 2px;
+      left: 3px;
+      transition: var(--transition);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .toggle.active::after {
+      left: 24px;
+    }
+
+    /* Responsive */
+    @media (max-width: 1200px) {
+      .command-center { grid-template-columns: 1fr 300px; }
+      .agents-page { grid-template-columns: 260px 1fr; }
+    }
+
+    @media (max-width: 900px) {
+      .command-center { grid-template-columns: 1fr; }
+      .right-panel { display: none; }
+      .builder-page { flex-direction: column; }
+      .builder-left, .builder-right { width: 100%; }
+      .builder-right { height: 420px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="logo-3d-container">
+        <div class="logo-glow-ring"></div>
+        <div class="logo-3d">
+          <img src="/logo.png"
+               alt="Alabobai"
+               class="logo-image"
+               onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=\'width:56px;height:56px;background:linear-gradient(135deg,#d9a07a,#b8845c);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#0a0a0a;box-shadow:0 0 30px rgba(217,160,122,0.6);\'>A</div>'">
+        </div>
+      </div>
+
+      <div class="header-brand">
+        <h1 class="header-title">Alabo<span class="highlight">bai</span></h1>
+        <div class="header-tagline">AI Operating System</div>
+      </div>
+
+      <nav class="header-nav">
+        <button class="nav-btn active" onclick="showPage('command')">Command</button>
+        <button class="nav-btn" onclick="showPage('agents')">Agents</button>
+        <button class="nav-btn" onclick="showPage('integrations')">Integrations</button>
+        <button class="nav-btn" onclick="showPage('builder')">Builder</button>
+        <button class="nav-btn" onclick="showPage('settings')">Settings</button>
+      </nav>
+
+      <div class="header-status">
+        <div class="status-dot"></div>
+        <span>Online</span>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <!-- Command Center -->
+      <div class="page active" id="page-command">
+        <div class="command-center">
+          <div class="chat-area">
+            <div class="chat-header">
+              <div class="chat-mode-selector">
+                <button class="mode-btn active">Chat</button>
+                <button class="mode-btn">Voice</button>
+                <button class="mode-btn">Swarm</button>
+              </div>
+              <div class="chat-model-info">
+                Model: <span>Claude Opus 4.5</span> | Unlimited
+              </div>
+            </div>
+
+            <div class="chat-messages" id="chatMessages">
+              <div class="message assistant">
+                <div class="message-avatar">A</div>
+                <div class="message-content">
+                  <div class="message-bubble">
+                    <p>Welcome to Alabobai. I'm your AI operating system with unlimited capabilities.</p>
+                    <ul>
+                      <li>Manage emails, calendar, and meetings</li>
+                      <li>Update CRM automatically</li>
+                      <li>Research with full source transparency</li>
+                      <li>Build and deploy apps</li>
+                      <li>Launch agent swarms</li>
+                    </ul>
+                  </div>
+                  <div class="agent-activity-panel glass-card">
+                    <div class="activity-title">
+                      <div class="activity-indicator"></div>
+                      Agent Activity
+                    </div>
+                    <div class="activity-steps">
+                      <div class="activity-step">
+                        <div class="step-status">+</div>
+                        <span>System initialized</span>
+                      </div>
+                      <div class="activity-step">
+                        <div class="step-status">+</div>
+                        <span>12 integrations connected</span>
+                      </div>
+                      <div class="activity-step">
+                        <div class="step-status">+</div>
+                        <span>Agent swarm ready</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="chat-input-area">
+              <div class="input-container">
+                <div class="input-wrapper">
+                  <textarea class="chat-input glow-input" id="chatInput" placeholder="Ask anything or describe a task..." rows="1" onkeydown="handleChatKey(event)" oninput="handleTyping(this)"></textarea>
+                  <div class="input-actions">
+                    <button class="input-action-btn" title="Voice">V</button>
+                    <button class="input-action-btn" title="Attach">+</button>
+                  </div>
+                </div>
+                <button class="send-btn" onclick="sendMessage()">Send</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="right-panel">
+            <div class="panel-section">
+              <div class="panel-title">Neural Stream</div>
+            </div>
+            <div class="neural-stream" id="neuralStream">
+              <div class="stream-item">
+                <div class="stream-icon">S</div>
+                <div class="stream-content">
+                  <div class="stream-label">System</div>
+                  <div class="stream-value">Ready for commands</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel-section">
+              <div class="panel-title">Sources Collected</div>
+              <div class="sources-list" id="sourcesList">
+                <div class="source-item">
+                  <div class="source-url">awaiting input</div>
+                  <div class="source-title">Sources appear as agent works</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel-section">
+              <div class="panel-title">Quick Actions</div>
+              <div class="quick-actions">
+                <div class="glass-card quick-action" onclick="quickAction('email')">
+                  <div class="quick-action-icon">E</div>
+                  <div class="quick-action-label">Email</div>
+                </div>
+                <div class="glass-card quick-action" onclick="quickAction('calendar')">
+                  <div class="quick-action-icon">C</div>
+                  <div class="quick-action-label">Calendar</div>
+                </div>
+                <div class="glass-card quick-action" onclick="quickAction('meeting')">
+                  <div class="quick-action-icon">M</div>
+                  <div class="quick-action-label">Meeting</div>
+                </div>
+                <div class="glass-card quick-action" onclick="quickAction('research')">
+                  <div class="quick-action-icon">R</div>
+                  <div class="quick-action-label">Research</div>
+                </div>
+                <div class="glass-card quick-action" onclick="quickAction('crm')">
+                  <div class="quick-action-icon">D</div>
+                  <div class="quick-action-label">CRM</div>
+                </div>
+                <div class="glass-card quick-action" onclick="quickAction('swarm')">
+                  <div class="quick-action-icon">S</div>
+                  <div class="quick-action-label">Swarm</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Departments Page (Your AI Company) -->
+      <div class="page" id="page-agents">
+        <div class="agents-page">
+          <div class="agents-sidebar">
+            <div class="agent-category">
+              <div class="category-title">Executive</div>
+              <div class="agent-list-item active" onclick="selectDept('executive')">
+                <div class="agent-icon">E</div>
+                <div class="agent-info">
+                  <h4>Executive Office</h4>
+                  <span>Strategy, planning, decisions</span>
+                </div>
+                <div class="agent-status-dot online"></div>
+              </div>
+            </div>
+
+            <div class="agent-category">
+              <div class="category-title">Legal & Finance</div>
+              <div class="agent-list-item" onclick="selectDept('legal')">
+                <div class="agent-icon">L</div>
+                <div class="agent-info">
+                  <h4>Legal Department</h4>
+                  <span>Contracts, compliance, IP</span>
+                </div>
+                <div class="agent-status-dot online"></div>
+              </div>
+              <div class="agent-list-item" onclick="selectDept('finance')">
+                <div class="agent-icon">F</div>
+                <div class="agent-info">
+                  <h4>Finance & Accounting</h4>
+                  <span>Taxes, projections, books</span>
+                </div>
+                <div class="agent-status-dot online"></div>
+              </div>
+              <div class="agent-list-item" onclick="selectDept('funding')">
+                <div class="agent-icon">$</div>
+                <div class="agent-info">
+                  <h4>Funding & Capital</h4>
+                  <span>Investors, grants, loans</span>
+                </div>
+                <div class="agent-status-dot online"></div>
+              </div>
+              <div class="agent-list-item" onclick="selectDept('credit')">
+                <div class="agent-icon">C</div>
+                <div class="agent-info">
+                  <h4>Credit Optimization</h4>
+                  <span>Credit repair, business credit</span>
+                </div>
+                <div class="agent-status-dot online"></div>
+              </div>
+            </div>
+
+            <div class="agent-category">
+              <div class="category-title">Growth</div>
+              <div class="agent-list-item" onclick="selectDept('marketing')">
+                <div class="agent-icon">M</div>
+                <div class="agent-info">
+                  <h4>Marketing</h4>
+                  <span>Content, ads, social media</span>
+                </div>
+                <div class="agent-status-dot online"></div>
+              </div>
+              <div class="agent-list-item" onclick="selectDept('brand')">
+                <div class="agent-icon">B</div>
+                <div class="agent-info">
+                  <h4>Brand & Design</h4>
+                  <span>Identity, visuals, creative</span>
+                </div>
+                <div class="agent-status-dot online"></div>
+              </div>
+              <div class="agent-list-item" onclick="selectDept('sales')">
+                <div class="agent-icon">S</div>
+                <div class="agent-info">
+                  <h4>Sales</h4>
+                  <span>Outreach, proposals, CRM</span>
+                </div>
+                <div class="agent-status-dot online"></div>
+              </div>
+            </div>
+
+            <div class="agent-category">
+              <div class="category-title">Operations</div>
+              <div class="agent-list-item" onclick="selectDept('development')">
+                <div class="agent-icon">D</div>
+                <div class="agent-info">
+                  <h4>Product & Development</h4>
+                  <span>Code, apps, technical</span>
+                </div>
+                <div class="agent-status-dot online"></div>
+              </div>
+              <div class="agent-list-item" onclick="selectDept('hr')">
+                <div class="agent-icon">H</div>
+                <div class="agent-info">
+                  <h4>Human Resources</h4>
+                  <span>Hiring, policies, culture</span>
+                </div>
+                <div class="agent-status-dot online"></div>
+              </div>
+              <div class="agent-list-item" onclick="selectDept('operations')">
+                <div class="agent-icon">O</div>
+                <div class="agent-info">
+                  <h4>Operations</h4>
+                  <span>Processes, SOPs, projects</span>
+                </div>
+                <div class="agent-status-dot online"></div>
+              </div>
+              <div class="agent-list-item" onclick="selectDept('support')">
+                <div class="agent-icon">T</div>
+                <div class="agent-info">
+                  <h4>Customer Success</h4>
+                  <span>Support, onboarding, retention</span>
+                </div>
+                <div class="agent-status-dot online"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="agents-main" id="deptMain">
+            <div class="agent-detail-header">
+              <div class="agent-detail-icon" id="deptIcon">E</div>
+              <div class="agent-detail-title">
+                <h2 class="glow-text-subtle" id="deptName">Executive Office</h2>
+                <p id="deptDesc">Strategic planning, decision making, company vision and OKRs</p>
+              </div>
+            </div>
+
+            <div class="agent-stats">
+              <div class="glass-card stat-card">
+                <div class="stat-value">12</div>
+                <div class="stat-label">Departments</div>
+              </div>
+              <div class="glass-card stat-card">
+                <div class="stat-value">0</div>
+                <div class="stat-label">Credits Used</div>
+              </div>
+              <div class="glass-card stat-card">
+                <div class="stat-value">∞</div>
+                <div class="stat-label">Tasks Available</div>
+              </div>
+              <div class="glass-card stat-card">
+                <div class="stat-value">24/7</div>
+                <div class="stat-label">Availability</div>
+              </div>
+            </div>
+
+            <div class="glass-card swarm-section">
+              <div class="panel-title">What This Department Can Do</div>
+              <div id="deptCapabilities" class="swarm-description" style="margin-bottom: 0;">
+                <ul style="margin-left: 20px; line-height: 1.8;">
+                  <li>Create business plans and strategic roadmaps</li>
+                  <li>Decision-making frameworks and analysis</li>
+                  <li>OKR and goal setting</li>
+                  <li>Competitive analysis and market research</li>
+                  <li>Vision and mission development</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="glass-card swarm-section" style="margin-top: 20px;">
+              <div class="panel-title">Quick Actions</div>
+              <div class="swarm-controls">
+                <button class="swarm-btn" onclick="deptAction('Create business plan')">
+                  <span class="swarm-btn-icon">P</span>
+                  Business Plan
+                </button>
+                <button class="swarm-btn" onclick="deptAction('Create strategic roadmap')">
+                  <span class="swarm-btn-icon">R</span>
+                  Roadmap
+                </button>
+                <button class="swarm-btn" onclick="deptAction('Help me make a decision')">
+                  <span class="swarm-btn-icon">D</span>
+                  Decision Matrix
+                </button>
+                <button class="swarm-btn primary" onclick="chatWithDept()">
+                  <span class="swarm-btn-icon">+</span>
+                  Ask Anything
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Integrations Page -->
+      <div class="page" id="page-integrations">
+        <div class="integrations-page">
+          <div class="integrations-header">
+            <h2 class="glow-text-subtle">Integrations</h2>
+            <div class="search-box">
+              <span class="search-icon">S</span>
+              <input type="text" placeholder="Search 500+ integrations...">
+            </div>
+          </div>
+
+          <div class="integration-categories">
+            <div class="category-chip active">All</div>
+            <div class="category-chip">Email</div>
+            <div class="category-chip">Calendar</div>
+            <div class="category-chip">CRM</div>
+            <div class="category-chip">Communication</div>
+            <div class="category-chip">Storage</div>
+            <div class="category-chip">Development</div>
+          </div>
+
+          <div class="integrations-grid">
+            <div class="glass-card integration-card">
+              <div class="integration-icon">G</div>
+              <div class="integration-name">Gmail</div>
+              <div class="integration-status connected">Connected</div>
+            </div>
+            <div class="glass-card integration-card">
+              <div class="integration-icon">C</div>
+              <div class="integration-name">Google Calendar</div>
+              <div class="integration-status connected">Connected</div>
+            </div>
+            <div class="glass-card integration-card">
+              <div class="integration-icon">S</div>
+              <div class="integration-name">Slack</div>
+              <div class="integration-status connected">Connected</div>
+            </div>
+            <div class="glass-card integration-card">
+              <div class="integration-icon">Z</div>
+              <div class="integration-name">Zoom</div>
+              <div class="integration-status connected">Connected</div>
+            </div>
+            <div class="glass-card integration-card">
+              <div class="integration-icon">SF</div>
+              <div class="integration-name">Salesforce</div>
+              <div class="integration-status available">Connect</div>
+            </div>
+            <div class="glass-card integration-card">
+              <div class="integration-icon">H</div>
+              <div class="integration-name">HubSpot</div>
+              <div class="integration-status available">Connect</div>
+            </div>
+            <div class="glass-card integration-card">
+              <div class="integration-icon">N</div>
+              <div class="integration-name">Notion</div>
+              <div class="integration-status connected">Connected</div>
+            </div>
+            <div class="glass-card integration-card">
+              <div class="integration-icon">D</div>
+              <div class="integration-name">Google Drive</div>
+              <div class="integration-status connected">Connected</div>
+            </div>
+            <div class="glass-card integration-card">
+              <div class="integration-icon">O</div>
+              <div class="integration-name">Outlook</div>
+              <div class="integration-status available">Connect</div>
+            </div>
+            <div class="glass-card integration-card">
+              <div class="integration-icon">T</div>
+              <div class="integration-name">Teams</div>
+              <div class="integration-status available">Connect</div>
+            </div>
+            <div class="glass-card integration-card">
+              <div class="integration-icon">W</div>
+              <div class="integration-name">WhatsApp</div>
+              <div class="integration-status available">Connect</div>
+            </div>
+            <div class="glass-card integration-card">
+              <div class="integration-icon">L</div>
+              <div class="integration-name">LinkedIn</div>
+              <div class="integration-status available">Connect</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Builder Page -->
+      <div class="page" id="page-builder">
+        <div class="builder-page">
+          <div class="builder-left">
+            <div class="builder-chat">
+              <div class="builder-messages" id="builderMessages">
+                <div class="message assistant">
+                  <div class="message-avatar">A</div>
+                  <div class="message-bubble">
+                    <p><strong>Welcome to Builder Studio</strong></p>
+                    <p style="margin-top: 10px;">Describe your app and I'll build it with live preview.</p>
+                    <ul>
+                      <li>Build mobile apps (iOS/Android)</li>
+                      <li>Create web applications</li>
+                      <li>Deploy to App Store and Play Store</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+              <div class="builder-input-area">
+                <input type="text" class="builder-input glow-input" id="builderInput" placeholder="Describe your app idea..." onkeydown="if(event.key==='Enter')buildApp()">
+                <button class="send-btn" onclick="buildApp()">Build</button>
+              </div>
+            </div>
+
+            <div class="code-section">
+              <div class="code-header">
+                <div class="code-tabs">
+                  <button class="code-tab active">App.tsx</button>
+                  <button class="code-tab">styles.css</button>
+                  <button class="code-tab">api.ts</button>
+                </div>
+                <div class="code-actions">
+                  <button class="code-action-btn">Copy</button>
+                  <button class="code-action-btn">Download</button>
+                </div>
+              </div>
+              <div class="code-editor" id="codeEditor"><span class="comment">// Your app code will appear here</span>
+<span class="comment">// Start by describing what you want to build</span>
+
+<span class="keyword">import</span> React <span class="keyword">from</span> <span class="string">'react'</span>;
+
+<span class="keyword">export default function</span> <span class="function">App</span>() {
+  <span class="keyword">return</span> (
+    &lt;<span class="function">div</span>&gt;
+      &lt;<span class="function">h1</span>&gt;Welcome to Alabobai&lt;/<span class="function">h1</span>&gt;
+    &lt;/<span class="function">div</span>&gt;
+  );
+}</div>
+            </div>
+          </div>
+
+          <div class="builder-right">
+            <div class="simulator-header">
+              <div class="device-selector">
+                <button class="device-btn active" onclick="setDevice('iphone')">iPhone</button>
+                <button class="device-btn" onclick="setDevice('android')">Android</button>
+                <button class="device-btn" onclick="setDevice('ipad')">iPad</button>
+                <button class="device-btn" onclick="setDevice('desktop')">Desktop</button>
+              </div>
+              <div class="simulator-actions">
+                <button class="sim-action-btn">Refresh</button>
+                <button class="sim-action-btn">Interact</button>
+              </div>
+            </div>
+
+            <div class="simulator-container">
+              <div class="device-frame iphone" id="deviceFrame">
+                <div class="device-notch" id="deviceNotch"></div>
+                <div class="device-screen">
+                  <div class="preview-placeholder" id="previewPlaceholder">
+                    <div class="preview-placeholder-icon">A</div>
+                    <div style="font-size: 14px; font-weight: 500;">App Preview</div>
+                    <div style="font-size: 11px; margin-top: 6px;">Your app will appear here</div>
+                  </div>
+                  <iframe id="previewIframe" class="preview-iframe" style="display: none;"></iframe>
+                </div>
+              </div>
+            </div>
+
+            <div class="deploy-bar">
+              <div class="deploy-status">
+                <div class="status-dot"></div>
+                <span>Ready to deploy</span>
+              </div>
+              <div class="deploy-actions">
+                <button class="deploy-btn">Preview</button>
+                <button class="deploy-btn">Web</button>
+                <button class="deploy-btn">App Store</button>
+                <button class="deploy-btn">Play Store</button>
+                <button class="deploy-btn primary">Publish</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Settings Page -->
+      <div class="page" id="page-settings">
+        <div class="settings-page">
+          <h2 class="glow-text-subtle">Settings</h2>
+
+          <div class="settings-section">
+            <h3>Account</h3>
+            <div class="setting-row">
+              <div class="setting-info">
+                <h4>Plan: Unlimited</h4>
+                <p>No credit limits, no surprise charges</p>
+              </div>
+              <button class="deploy-btn">Manage</button>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <h3>AI Models</h3>
+            <div class="setting-row">
+              <div class="setting-info">
+                <h4>Default Model</h4>
+                <p>Claude Opus 4.5 (Best quality)</p>
+              </div>
+              <select style="padding: 10px 14px; background: var(--bg-glass); border: 1px solid var(--rose-gold-border); border-radius: 10px; color: var(--text-primary); outline: none;">
+                <option>Claude Opus 4.5</option>
+                <option>Claude Sonnet 4.5</option>
+                <option>GPT-5</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <h3>Privacy</h3>
+            <div class="setting-row">
+              <div class="setting-info">
+                <h4>Local Processing</h4>
+                <p>Process sensitive data locally</p>
+              </div>
+              <div class="toggle active" onclick="this.classList.toggle('active')"></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-info">
+                <h4>End-to-End Encryption</h4>
+                <p>Encrypt all communications</p>
+              </div>
+              <div class="toggle active" onclick="this.classList.toggle('active')"></div>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <h3>Support</h3>
+            <div class="setting-row">
+              <div class="setting-info">
+                <h4>Human Support</h4>
+                <p>Real humans available 24/7</p>
+              </div>
+              <button class="deploy-btn primary">Contact</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // ═══════════════════════════════════════════════════════════════════════════
+    // ALABOBAI - Your AI Company
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    // Department definitions
+    const DEPARTMENTS = {
+      executive: {
+        name: 'Executive Office',
+        icon: 'E',
+        description: 'Strategic planning, decision making, company vision and OKRs',
+        capabilities: [
+          'Create business plans and strategic roadmaps',
+          'Decision-making frameworks and analysis',
+          'OKR and goal setting',
+          'Competitive analysis and market research',
+          'Vision and mission development'
+        ],
+        actions: [
+          { label: 'Business Plan', icon: 'P', prompt: 'Help me create a comprehensive business plan' },
+          { label: 'Roadmap', icon: 'R', prompt: 'Create a strategic roadmap for my company' },
+          { label: 'Decision Matrix', icon: 'D', prompt: 'Help me make a decision using a framework' }
+        ]
+      },
+      legal: {
+        name: 'Legal Department',
+        icon: 'L',
+        description: 'Business formation, contracts, compliance, IP protection',
+        capabilities: [
+          'LLC and Corporation formation guidance',
+          'Contract drafting (NDA, freelancer, partnership)',
+          'Terms of Service and Privacy Policy',
+          'Trademark and IP basics',
+          'Compliance overview'
+        ],
+        actions: [
+          { label: 'Form LLC', icon: 'L', prompt: 'Help me form an LLC in my state' },
+          { label: 'NDA', icon: 'N', prompt: 'Create a non-disclosure agreement' },
+          { label: 'Terms', icon: 'T', prompt: 'Generate Terms of Service for my app' }
+        ]
+      },
+      finance: {
+        name: 'Finance & Accounting',
+        icon: 'F',
+        description: 'Financial planning, taxes, bookkeeping, projections',
+        capabilities: [
+          'Financial projections and modeling',
+          'Tax planning and optimization strategies',
+          'Bookkeeping setup and best practices',
+          'Cash flow management',
+          'Invoice and billing templates'
+        ],
+        actions: [
+          { label: 'Projections', icon: 'P', prompt: 'Create 5-year financial projections for my business' },
+          { label: 'Tax Strategy', icon: 'T', prompt: 'Help me optimize my tax strategy' },
+          { label: 'Invoice', icon: 'I', prompt: 'Create a professional invoice template' }
+        ]
+      },
+      funding: {
+        name: 'Funding & Capital',
+        icon: '$',
+        description: 'Investor pitches, grants, loans, crowdfunding',
+        capabilities: [
+          'Pitch deck creation',
+          'Grant research and application writing',
+          'SBA loan guidance',
+          'Crowdfunding campaign planning',
+          'Investor relations'
+        ],
+        actions: [
+          { label: 'Pitch Deck', icon: 'P', prompt: 'Create an investor pitch deck for my startup' },
+          { label: 'Find Grants', icon: 'G', prompt: 'Find grants I can apply for' },
+          { label: 'SBA Loan', icon: 'L', prompt: 'Guide me through SBA loan application' }
+        ]
+      },
+      credit: {
+        name: 'Credit Optimization',
+        icon: 'C',
+        description: 'Credit repair, business credit building, funding strategy',
+        capabilities: [
+          'Personal credit analysis and improvement',
+          'Business credit establishment (D&B, Experian)',
+          'Credit dispute letter templates',
+          'Net 30 vendor account guidance',
+          'Funding stack optimization'
+        ],
+        actions: [
+          { label: 'Credit Plan', icon: 'C', prompt: 'Create a credit improvement plan' },
+          { label: 'Dispute Letter', icon: 'D', prompt: 'Help me write a credit dispute letter' },
+          { label: 'Business Credit', icon: 'B', prompt: 'How do I build business credit from scratch' }
+        ]
+      },
+      marketing: {
+        name: 'Marketing',
+        icon: 'M',
+        description: 'Content creation, social media, email marketing, advertising',
+        capabilities: [
+          'Marketing strategy development',
+          'Content calendar creation',
+          'Social media posts (ready to publish)',
+          'Email marketing sequences',
+          'Ad copy for Facebook, Google, LinkedIn'
+        ],
+        actions: [
+          { label: 'Content Calendar', icon: 'C', prompt: 'Create a 30-day content calendar' },
+          { label: 'Email Sequence', icon: 'E', prompt: 'Write a welcome email sequence' },
+          { label: 'Ad Copy', icon: 'A', prompt: 'Write Facebook ad copy for my product' }
+        ]
+      },
+      brand: {
+        name: 'Brand & Design',
+        icon: 'B',
+        description: 'Brand identity, visual guidelines, creative direction',
+        capabilities: [
+          'Brand strategy and positioning',
+          'Color palette and typography selection',
+          'Brand guideline document',
+          'Website structure and UX',
+          'Marketing collateral guidance'
+        ],
+        actions: [
+          { label: 'Brand Guide', icon: 'B', prompt: 'Create a brand guideline document' },
+          { label: 'Color Palette', icon: 'C', prompt: 'Suggest a color palette for my brand' },
+          { label: 'Positioning', icon: 'P', prompt: 'Help me position my brand in the market' }
+        ]
+      },
+      sales: {
+        name: 'Sales',
+        icon: 'S',
+        description: 'Sales strategy, outreach, proposals, CRM management',
+        capabilities: [
+          'Sales playbook creation',
+          'Cold email sequences',
+          'LinkedIn outreach messages',
+          'Proposal and quote generation',
+          'Objection handling scripts'
+        ],
+        actions: [
+          { label: 'Cold Emails', icon: 'E', prompt: 'Write a cold email outreach sequence' },
+          { label: 'Proposal', icon: 'P', prompt: 'Create a proposal template' },
+          { label: 'Objections', icon: 'O', prompt: 'Create an objection handling guide' }
+        ]
+      },
+      development: {
+        name: 'Product & Development',
+        icon: 'D',
+        description: 'Technical strategy, code, app development, deployment',
+        capabilities: [
+          'Technical architecture design',
+          'Full-stack development',
+          'Mobile app development',
+          'API development',
+          'Deployment and DevOps'
+        ],
+        actions: [
+          { label: 'Architecture', icon: 'A', prompt: 'Design technical architecture for my app' },
+          { label: 'Build Feature', icon: 'F', prompt: 'Help me build a feature' },
+          { label: 'Deploy', icon: 'D', prompt: 'Help me deploy my application' }
+        ]
+      },
+      hr: {
+        name: 'Human Resources',
+        icon: 'H',
+        description: 'Hiring, employee management, policies, culture',
+        capabilities: [
+          'Job description creation',
+          'Interview question bank',
+          'Employee handbook sections',
+          'Performance review templates',
+          'Compensation benchmarking'
+        ],
+        actions: [
+          { label: 'Job Post', icon: 'J', prompt: 'Write a job description' },
+          { label: 'Handbook', icon: 'H', prompt: 'Create employee handbook section' },
+          { label: 'Interview', icon: 'I', prompt: 'Create interview questions' }
+        ]
+      },
+      operations: {
+        name: 'Operations',
+        icon: 'O',
+        description: 'Processes, SOPs, project management, efficiency',
+        capabilities: [
+          'SOP documentation',
+          'Process flowchart creation',
+          'Project timeline building',
+          'Vendor comparison matrices',
+          'Meeting agenda templates'
+        ],
+        actions: [
+          { label: 'SOP', icon: 'S', prompt: 'Create a standard operating procedure' },
+          { label: 'Project Plan', icon: 'P', prompt: 'Create a project plan' },
+          { label: 'Process Map', icon: 'M', prompt: 'Map out my business processes' }
+        ]
+      },
+      support: {
+        name: 'Customer Success',
+        icon: 'T',
+        description: 'Customer onboarding, support, retention',
+        capabilities: [
+          'Customer onboarding sequences',
+          'FAQ and help documentation',
+          'Support response templates',
+          'Feedback collection systems',
+          'Churn prevention playbooks'
+        ],
+        actions: [
+          { label: 'Onboarding', icon: 'O', prompt: 'Create customer onboarding sequence' },
+          { label: 'FAQ', icon: 'F', prompt: 'Generate FAQ for my product' },
+          { label: 'Support Template', icon: 'S', prompt: 'Create support response templates' }
+        ]
+      }
+    };
+
+    let currentDepartment = 'executive';
+    let ws = null;
+    let isConnected = false;
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // PAGE NAVIGATION
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    function showPage(pageId) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(`page-${pageId}`).classList.add('active');
+      event.target.closest('.nav-btn').classList.add('active');
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // DEPARTMENT SELECTION
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    function selectDept(deptKey) {
+      currentDepartment = deptKey;
+      const dept = DEPARTMENTS[deptKey];
+
+      // Update sidebar selection
+      document.querySelectorAll('.agent-list-item').forEach(el => el.classList.remove('active'));
+      event.target.closest('.agent-list-item').classList.add('active');
+
+      // Update main panel
+      document.getElementById('deptIcon').textContent = dept.icon;
+      document.getElementById('deptName').textContent = dept.name;
+      document.getElementById('deptDesc').textContent = dept.description;
+
+      // Update capabilities
+      const capList = dept.capabilities.map(c => `<li>${c}</li>`).join('');
+      document.getElementById('deptCapabilities').innerHTML = `<ul style="margin-left: 20px; line-height: 1.8;">${capList}</ul>`;
+
+      addStreamItem(dept.icon, 'Department', `Switched to ${dept.name}`);
+    }
+
+    function deptAction(prompt) {
+      document.getElementById('chatInput').value = prompt;
+      showPage('command');
+      document.querySelector('.nav-btn').classList.add('active');
+      sendMessage();
+    }
+
+    function chatWithDept() {
+      showPage('command');
+      document.querySelector('.nav-btn').classList.add('active');
+      document.getElementById('chatInput').focus();
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // WEBSOCKET CONNECTION
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    function connectWebSocket() {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      ws = new WebSocket(`${protocol}//${window.location.host}`);
+
+      ws.onopen = () => {
+        isConnected = true;
+        console.log('Connected to Alabobai');
+        addStreamItem('S', 'Connected', 'AI departments ready');
+        updateConnectionStatus(true);
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          handleWebSocketMessage(data);
+        } catch (e) {
+          console.error('Failed to parse message:', e);
+        }
+      };
+
+      ws.onclose = () => {
+        isConnected = false;
+        updateConnectionStatus(false);
+        // Reconnect after 3 seconds
+        setTimeout(connectWebSocket, 3000);
+      };
+
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+      };
+    }
+
+    function handleWebSocketMessage(data) {
+      switch (data.event) {
+        case 'connected':
+          console.log('Session:', data.data.sessionId);
+          break;
+        case 'chat-response':
+          addMessage('assistant', formatMessage(data.data.content), data.data.agentName);
+          addStreamItem('+', 'Complete', 'Response delivered');
+          break;
+        case 'agent-started':
+          addStreamItem('A', 'Agent', `${data.data.agentName || 'Agent'} started`);
+          break;
+        case 'task-started':
+          addStreamItem('T', 'Task', 'Processing request...');
+          break;
+        case 'task-completed':
+          addStreamItem('+', 'Done', 'Task completed');
+          break;
+        case 'error':
+          addMessage('assistant', 'Sorry, there was an error processing your request. Please try again.');
+          break;
+      }
+    }
+
+    function updateConnectionStatus(connected) {
+      const statusEl = document.querySelector('.header-status span');
+      const dotEl = document.querySelector('.header-status .status-dot');
+      if (connected) {
+        statusEl.textContent = 'Online';
+        dotEl.style.background = 'var(--success)';
+      } else {
+        statusEl.textContent = 'Reconnecting...';
+        dotEl.style.background = '#f59e0b';
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // CHAT FUNCTIONS
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    function handleTyping(el) {
+      el.classList.add('typing-glow');
+      clearTimeout(el.glowTimeout);
+      el.glowTimeout = setTimeout(() => el.classList.remove('typing-glow'), 500);
+    }
+
+    function handleChatKey(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    }
+
+    function sendMessage() {
+      const input = document.getElementById('chatInput');
+      const message = input.value.trim();
+      if (!message) return;
+
+      addMessage('user', message);
+      input.value = '';
+
+      // Show thinking state
+      addStreamItem('T', 'Thinking', 'Analyzing your request...');
+
+      // Send to backend
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({
+          type: 'chat',
+          content: message,
+          department: currentDepartment
+        }));
+      } else {
+        // Fallback to REST API
+        sendViaAPI(message);
+      }
+    }
+
+    async function sendViaAPI(message) {
+      try {
+        addStreamItem('R', 'Routing', `Sending to ${DEPARTMENTS[currentDepartment].name}...`);
+
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content: message })
+        });
+
+        const data = await response.json();
+
+        if (data.message) {
+          addMessage('assistant', formatMessage(data.message.content), data.message.agentName);
+          addStreamItem('+', 'Complete', 'Response delivered');
+        }
+      } catch (error) {
+        console.error('API Error:', error);
+        addMessage('assistant', 'Connection error. Please check if the server is running.');
+        addStreamItem('!', 'Error', 'Connection failed');
+      }
+    }
+
+    function formatMessage(content) {
+      // Convert markdown-style formatting to HTML
+      return content
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\n/g, '<br>')
+        .replace(/```([\s\S]*?)```/g, '<pre style="background:#111;padding:12px;border-radius:8px;margin:10px 0;overflow-x:auto;"><code>$1</code></pre>')
+        .replace(/`(.*?)`/g, '<code style="background:#222;padding:2px 6px;border-radius:4px;">$1</code>');
+    }
+
+    function addMessage(type, content, agentName) {
+      const container = document.getElementById('chatMessages');
+      const msgDiv = document.createElement('div');
+      msgDiv.className = `message ${type}`;
+
+      const avatar = type === 'user' ? 'U' : (DEPARTMENTS[currentDepartment]?.icon || 'A');
+      const label = type === 'user' ? '' : `<div style="font-size:10px;color:var(--rose-gold);margin-bottom:6px;">${agentName || DEPARTMENTS[currentDepartment]?.name || 'Alabobai'}</div>`;
+
+      msgDiv.innerHTML = `
+        <div class="message-avatar">${avatar}</div>
+        <div class="message-content">
+          ${label}
+          <div class="message-bubble">${content}</div>
+        </div>
+      `;
+      container.appendChild(msgDiv);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function addStreamItem(icon, label, value) {
+      const stream = document.getElementById('neuralStream');
+      const item = document.createElement('div');
+      item.className = 'stream-item';
+      item.innerHTML = `
+        <div class="stream-icon">${icon}</div>
+        <div class="stream-content">
+          <div class="stream-label">${label}</div>
+          <div class="stream-value">${value}</div>
+        </div>
+      `;
+      stream.insertBefore(item, stream.firstChild);
+
+      // Keep only last 10 items
+      while (stream.children.length > 10) {
+        stream.removeChild(stream.lastChild);
+      }
+    }
+
+    function quickAction(action) {
+      const prompts = {
+        email: 'Help me write a professional email',
+        calendar: 'Help me plan my schedule',
+        meeting: 'Create a meeting agenda',
+        research: 'Research the latest trends in AI',
+        crm: 'Help me organize my customer data',
+        swarm: 'I need help with multiple tasks at once'
+      };
+      document.getElementById('chatInput').value = prompts[action];
+      sendMessage();
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // BUILDER FUNCTIONS
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    function buildApp() {
+      const input = document.getElementById('builderInput');
+      const prompt = input.value.trim();
+      if (!prompt) return;
+
+      const msgContainer = document.getElementById('builderMessages');
+      msgContainer.innerHTML += `
+        <div class="message user">
+          <div class="message-avatar">U</div>
+          <div class="message-bubble">${prompt}</div>
+        </div>
+        <div class="message assistant">
+          <div class="message-avatar">D</div>
+          <div class="message-bubble">
+            <div style="font-size:10px;color:var(--rose-gold);margin-bottom:6px;">Development Department</div>
+            Building your app: "${prompt}"
+          </div>
+        </div>
+      `;
+      input.value = '';
+
+      const codeEditor = document.getElementById('codeEditor');
+      codeEditor.innerHTML = `<span class="keyword">import</span> React, { useState } <span class="keyword">from</span> <span class="string">'react'</span>;
+
+<span class="keyword">export default function</span> <span class="function">App</span>() {
+  <span class="keyword">const</span> [count, setCount] = useState(0);
+  <span class="keyword">return</span> (
+    &lt;View style={styles.container}&gt;
+      &lt;Text style={styles.title}&gt;${prompt}&lt;/Text&gt;
+      &lt;Text style={styles.counter}&gt;{count}&lt;/Text&gt;
+      &lt;TouchableOpacity onPress={() =&gt; setCount(c =&gt; c + 1)}&gt;
+        &lt;Text&gt;Tap Me&lt;/Text&gt;
+      &lt;/TouchableOpacity&gt;
+    &lt;/View&gt;
+  );
+}`;
+
+      const html = `<!DOCTYPE html><html><head><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,sans-serif;background:#0a0a0a;min-height:100vh;display:flex;align-items:center;justify-content:center}.container{text-align:center;padding:20px}h1{font-size:18px;color:#d9a07a;margin-bottom:16px;text-shadow:0 0 20px rgba(217,160,122,0.5)}.counter{font-size:56px;font-weight:bold;color:#fff;margin-bottom:32px}button{background:linear-gradient(135deg,#e8c4a8,#d9a07a,#b8845c);border:none;padding:14px 36px;border-radius:12px;font-size:15px;font-weight:600;color:#0a0a0a;cursor:pointer;box-shadow:0 0 20px rgba(217,160,122,0.4)}button:active{transform:scale(0.95)}</style></head><body><div class="container"><h1>${prompt}</h1><div class="counter" id="count">0</div><button onclick="document.getElementById('count').textContent=parseInt(document.getElementById('count').textContent)+1">Tap Me</button></div></body></html>`;
+
+      document.getElementById('previewPlaceholder').style.display = 'none';
+      const iframe = document.getElementById('previewIframe');
+      iframe.style.display = 'block';
+      iframe.srcdoc = html;
+    }
+
+    function setDevice(device) {
+      const frame = document.getElementById('deviceFrame');
+      const notch = document.getElementById('deviceNotch');
+      document.querySelectorAll('.device-btn').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+      frame.className = `device-frame ${device}`;
+      notch.style.display = device === 'iphone' ? 'block' : 'none';
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // INITIALIZE
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    document.addEventListener('DOMContentLoaded', () => {
+      connectWebSocket();
+      addStreamItem('S', 'System', 'Alabobai initialized');
+      addStreamItem('D', 'Departments', '12 departments ready');
+    });
+  </script>
+
+  <!-- Dynamic Background Effects -->
+  <script src="js/background.js"></script>
+
+  <!-- Ultra Animation System -->
+  <script src="js/animations.js"></script>
+
+  <!-- Initialize App Animations -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Add SVG filter for gooey effects
+      if (!document.getElementById('goo-filter')) {
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('style', 'position: absolute; width: 0; height: 0; pointer-events: none;');
+        svg.innerHTML = '<defs><filter id="goo-filter"><feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur" /><feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 19 -9" result="goo" /><feComposite in="SourceGraphic" in2="goo" operator="atop"/></filter></defs>';
+        document.body.insertBefore(svg, document.body.firstChild);
+      }
+
+      // DISABLED: Tilt effect removed - cards should be static
+      // document.querySelectorAll('.glass-card').forEach(card => {
+      //   card.classList.add('tilt-card');
+      //   card.setAttribute('data-tilt-max', '6');
+      //   card.setAttribute('data-tilt-scale', '1.01');
+      //   const shine = document.createElement('div');
+      //   shine.className = 'tilt-card-shine';
+      //   card.appendChild(shine);
+      // });
+
+      // Enhance nav buttons with magnetic effect
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.add('magnetic');
+      });
+
+      // Enhance deploy buttons with magnetic effect (hover-lift removed - no vertical movement)
+      document.querySelectorAll('.deploy-btn').forEach(btn => {
+        btn.classList.add('magnetic');
+      });
+
+      // Enhance department cards (hover-lift removed - no vertical movement, shimmer kept)
+      document.querySelectorAll('.department-card').forEach(card => {
+        card.classList.add('shimmer');
+      });
+
+      // Re-initialize animations
+      if (window.AlabobaiAnimations && window.AlabobaiAnimations.init) {
+        setTimeout(() => window.AlabobaiAnimations.init(), 100);
+      }
+    });
+  </script>
+</body>
+</html>

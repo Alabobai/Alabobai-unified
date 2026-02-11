@@ -1,0 +1,1281 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://api.alabobai.com/schemas/execution-streaming/v1",
+  "title": "Alabobai Execution Streaming Protocol",
+  "description": "JSON Schema for the Alabobai real-time execution streaming protocol",
+  "version": "1.0.0",
+
+  "$defs": {
+    "uuid": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+
+    "priority": {
+      "type": "string",
+      "enum": ["low", "normal", "high", "critical"],
+      "default": "normal"
+    },
+
+    "compression": {
+      "type": "string",
+      "enum": ["none", "gzip", "lz4", "zstd", "brotli"],
+      "default": "none"
+    },
+
+    "baseMessage": {
+      "type": "object",
+      "required": ["id", "type", "timestamp", "sessionId", "sequence", "payload"],
+      "properties": {
+        "id": { "$ref": "#/$defs/uuid" },
+        "type": { "type": "string" },
+        "timestamp": { "$ref": "#/$defs/timestamp" },
+        "sessionId": { "type": "string", "minLength": 1 },
+        "sequence": { "type": "integer", "minimum": 0 },
+        "correlationId": { "$ref": "#/$defs/uuid" },
+        "payload": { "type": "object" },
+        "metadata": {
+          "type": "object",
+          "properties": {
+            "agentId": { "type": "string" },
+            "taskId": { "type": "string" },
+            "priority": { "$ref": "#/$defs/priority" },
+            "requiresAck": { "type": "boolean", "default": false },
+            "compression": { "$ref": "#/$defs/compression" },
+            "chunk": {
+              "type": "object",
+              "required": ["index", "total", "hash"],
+              "properties": {
+                "index": { "type": "integer", "minimum": 0 },
+                "total": { "type": "integer", "minimum": 1 },
+                "hash": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "bounds": {
+      "type": "object",
+      "required": ["x", "y", "width", "height"],
+      "properties": {
+        "x": { "type": "number" },
+        "y": { "type": "number" },
+        "width": { "type": "number", "minimum": 0 },
+        "height": { "type": "number", "minimum": 0 }
+      }
+    },
+
+    "modifiers": {
+      "type": "object",
+      "properties": {
+        "ctrl": { "type": "boolean", "default": false },
+        "shift": { "type": "boolean", "default": false },
+        "alt": { "type": "boolean", "default": false },
+        "meta": { "type": "boolean", "default": false }
+      }
+    },
+
+    "ansiStyle": {
+      "type": "object",
+      "properties": {
+        "bold": { "type": "boolean" },
+        "italic": { "type": "boolean" },
+        "underline": { "type": "boolean" },
+        "strikethrough": { "type": "boolean" },
+        "foreground": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+        "background": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+        "dim": { "type": "boolean" },
+        "blink": { "type": "boolean" },
+        "inverse": { "type": "boolean" },
+        "hidden": { "type": "boolean" }
+      }
+    },
+
+    "agentContext": {
+      "type": "object",
+      "required": ["agentId", "taskId", "reason"],
+      "properties": {
+        "agentId": { "type": "string" },
+        "taskId": { "type": "string" },
+        "reason": { "type": "string" }
+      }
+    },
+
+    "agentState": {
+      "type": "string",
+      "enum": [
+        "idle", "initializing", "thinking", "planning", "acting",
+        "waiting", "blocked", "collaborating", "paused", "error", "completed"
+      ]
+    },
+
+    "thoughtType": {
+      "type": "string",
+      "enum": [
+        "observation", "analysis", "planning", "hypothesis",
+        "decision", "reflection", "correction", "question", "insight", "summary"
+      ]
+    },
+
+    "diffHunk": {
+      "type": "object",
+      "required": ["oldStart", "oldLines", "newStart", "newLines", "changes"],
+      "properties": {
+        "oldStart": { "type": "integer", "minimum": 0 },
+        "oldLines": { "type": "integer", "minimum": 0 },
+        "newStart": { "type": "integer", "minimum": 0 },
+        "newLines": { "type": "integer", "minimum": 0 },
+        "header": { "type": "string" },
+        "changes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["type", "content"],
+            "properties": {
+              "type": { "type": "string", "enum": ["add", "remove", "context"] },
+              "content": { "type": "string" },
+              "oldLineNumber": { "type": "integer" },
+              "newLineNumber": { "type": "integer" }
+            }
+          }
+        }
+      }
+    },
+
+    "directoryTreeNode": {
+      "type": "object",
+      "required": ["name", "path", "type"],
+      "properties": {
+        "name": { "type": "string" },
+        "path": { "type": "string" },
+        "type": { "type": "string", "enum": ["file", "directory", "symlink"] },
+        "sizeBytes": { "type": "integer", "minimum": 0 },
+        "extension": { "type": "string" },
+        "children": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/directoryTreeNode" }
+        },
+        "childCount": { "type": "integer", "minimum": 0 },
+        "changed": { "type": "boolean", "default": false },
+        "changeType": { "type": "string", "enum": ["added", "modified", "deleted"] },
+        "symlinkTarget": { "type": "string" }
+      }
+    }
+  },
+
+  "oneOf": [
+    { "$ref": "#/$defs/messages/connectionInit" },
+    { "$ref": "#/$defs/messages/connectionAuth" },
+    { "$ref": "#/$defs/messages/connectionAck" },
+    { "$ref": "#/$defs/messages/ping" },
+    { "$ref": "#/$defs/messages/pong" },
+    { "$ref": "#/$defs/messages/subscribe" },
+    { "$ref": "#/$defs/messages/browserScreenshot" },
+    { "$ref": "#/$defs/messages/browserDomChange" },
+    { "$ref": "#/$defs/messages/browserNavigation" },
+    { "$ref": "#/$defs/messages/browserClick" },
+    { "$ref": "#/$defs/messages/browserInput" },
+    { "$ref": "#/$defs/messages/browserFormFill" },
+    { "$ref": "#/$defs/messages/browserPageState" },
+    { "$ref": "#/$defs/messages/terminalCommandStart" },
+    { "$ref": "#/$defs/messages/terminalOutput" },
+    { "$ref": "#/$defs/messages/terminalCommandEnd" },
+    { "$ref": "#/$defs/messages/terminalCwdChange" },
+    { "$ref": "#/$defs/messages/fileCreate" },
+    { "$ref": "#/$defs/messages/fileModify" },
+    { "$ref": "#/$defs/messages/fileDelete" },
+    { "$ref": "#/$defs/messages/fileDiff" },
+    { "$ref": "#/$defs/messages/fileBinary" },
+    { "$ref": "#/$defs/messages/directoryTree" },
+    { "$ref": "#/$defs/messages/agentStateChange" },
+    { "$ref": "#/$defs/messages/agentToolInvoke" },
+    { "$ref": "#/$defs/messages/agentToolResult" },
+    { "$ref": "#/$defs/messages/agentReasoning" },
+    { "$ref": "#/$defs/messages/agentProgress" },
+    { "$ref": "#/$defs/messages/agentCollaboration" }
+  ],
+
+  "messages": {
+    "connectionInit": {
+      "allOf": [
+        { "$ref": "#/$defs/baseMessage" },
+        {
+          "properties": {
+            "type": { "const": "CONNECTION_INIT" },
+            "payload": {
+              "type": "object",
+              "required": ["version"],
+              "properties": {
+                "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+                "capabilities": {
+                  "type": "array",
+                  "items": { "type": "string" }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+
+    "connectionAuth": {
+      "allOf": [
+        { "$ref": "#/$defs/baseMessage" },
+        {
+          "properties": {
+            "type": { "const": "CONNECTION_AUTH" },
+            "payload": {
+              "type": "object",
+              "required": ["token"],
+              "properties": {
+                "token": { "type": "string", "minLength": 1 },
+                "userId": { "type": "string" }
+              }
+            }
+          }
+        }
+      ]
+    },
+
+    "connectionAck": {
+      "allOf": [
+        { "$ref": "#/$defs/baseMessage" },
+        {
+          "properties": {
+            "type": { "const": "CONNECTION_ACK" },
+            "payload": {
+              "type": "object",
+              "properties": {
+                "sessionId": { "type": "string" },
+                "serverVersion": { "type": "string" },
+                "capabilities": {
+                  "type": "array",
+                  "items": { "type": "string" }
+                },
+                "heartbeatIntervalMs": { "type": "integer", "minimum": 1000 }
+              }
+            }
+          }
+        }
+      ]
+    },
+
+    "ping": {
+      "type": "object",
+      "required": ["type", "timestamp", "serverTime", "sequence"],
+      "properties": {
+        "type": { "const": "PING" },
+        "timestamp": { "$ref": "#/$defs/timestamp" },
+        "serverTime": { "type": "integer" },
+        "sequence": { "type": "integer" }
+      }
+    },
+
+    "pong": {
+      "type": "object",
+      "required": ["type", "timestamp", "echoTime", "clientTime", "sequence"],
+      "properties": {
+        "type": { "const": "PONG" },
+        "timestamp": { "$ref": "#/$defs/timestamp" },
+        "echoTime": { "type": "integer" },
+        "clientTime": { "type": "integer" },
+        "sequence": { "type": "integer" }
+      }
+    },
+
+    "subscribe": {
+      "allOf": [
+        { "$ref": "#/$defs/baseMessage" },
+        {
+          "properties": {
+            "type": { "const": "SUBSCRIBE" },
+            "payload": {
+              "type": "object",
+              "required": ["stream"],
+              "properties": {
+                "stream": {
+                  "type": "string",
+                  "enum": ["browser", "terminal", "file", "agent", "task", "all"]
+                },
+                "filter": {
+                  "type": "object",
+                  "properties": {
+                    "agentId": { "type": "string" },
+                    "taskId": { "type": "string" },
+                    "sessionId": { "type": "string" }
+                  }
+                },
+                "events": {
+                  "type": "array",
+                  "items": { "type": "string" }
+                },
+                "throttleMs": { "type": "integer", "minimum": 0, "default": 0 },
+                "includeHistory": { "type": "boolean", "default": false },
+                "historyDurationMs": { "type": "integer", "minimum": 0, "default": 60000 }
+              }
+            }
+          }
+        }
+      ]
+    },
+
+    "browserScreenshot": {
+      "allOf": [
+        { "$ref": "#/$defs/baseMessage" },
+        {
+          "properties": {
+            "type": { "const": "BROWSER_SCREENSHOT" },
+            "payload": {
+              "type": "object",
+              "required": ["id", "capturedAt", "url", "title", "imageData", "format", "dimensions", "viewport", "sizeBytes"],
+              "properties": {
+                "id": { "$ref": "#/$defs/uuid" },
+                "capturedAt": { "$ref": "#/$defs/timestamp" },
+                "url": { "type": "string", "format": "uri" },
+                "title": { "type": "string" },
+                "imageData": { "type": "string" },
+                "format": { "type": "string", "enum": ["png", "jpeg", "webp"] },
+                "dimensions": {
+                  "type": "object",
+                  "required": ["width", "height", "devicePixelRatio"],
+                  "properties": {
+                    "width": { "type": "integer", "minimum": 1 },
+                    "height": { "type": "integer", "minimum": 1 },
+                    "devicePixelRatio": { "type": "number", "minimum": 0.5 }
+                  }
+                },
+                "viewport": {
+                  "type": "object",
+                  "required": ["width", "height", "scrollX", "scrollY", "pageWidth", "pageHeight"],
+                  "properties": {
+                    "width": { "type": "integer" },
+                    "height": { "type": "integer" },
+                    "scrollX": { "type": "number" },
+                    "scrollY": { "type": "number" },
+                    "pageWidth": { "type": "integer" },
+                    "pageHeight": { "type": "integer" }
+                  }
+                },
+                "sizeBytes": { "type": "integer", "minimum": 0 },
+                "isDelta": { "type": "boolean", "default": false },
+                "deltaFrom": { "$ref": "#/$defs/uuid" },
+                "changedRegions": {
+                  "type": "array",
+                  "items": { "$ref": "#/$defs/bounds" }
+                },
+                "cursor": {
+                  "type": "object",
+                  "properties": {
+                    "x": { "type": "number" },
+                    "y": { "type": "number" },
+                    "visible": { "type": "boolean" }
+                  }
+                },
+                "activeElement": {
+                  "type": "object",
+                  "properties": {
+                    "tagName": { "type": "string" },
+                    "id": { "type": "string" },
+                    "className": { "type": "string" },
+                    "bounds": { "$ref": "#/$defs/bounds" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+
+    "browserDomChange": {
+      "allOf": [
+        { "$ref": "#/$defs/baseMessage" },
+        {
+          "properties": {
+            "type": { "const": "BROWSER_DOM_CHANGE" },
+            "payload": {
+              "type": "object",
+              "required": ["id", "changeType", "targetSelector", "targetXPath", "tagName"],
+              "properties": {
+                "id": { "$ref": "#/$defs/uuid" },
+                "changeType": {
+                  "type": "string",
+                  "enum": ["attribute", "characterData", "childList", "subtree"]
+                },
+                "targetSelector": { "type": "string" },
+                "targetXPath": { "type": "string" },
+                "tagName": { "type": "string" },
+                "elementId": { "type": "string" },
+                "elementClasses": {
+                  "type": "array",
+                  "items": { "type": "string" }
+                },
+                "attributeChange": {
+                  "type": "object",
+                  "required": ["name"],
+                  "properties": {
+                    "name": { "type": "string" },
+                    "oldValue": { "type": ["string", "null"] },
+                    "newValue": { "type": ["string", "null"] }
+                  }
+                },
+                "textChange": {
+                  "type": "object",
+                  "required": ["oldValue", "newValue"],
+                  "properties": {
+                    "oldValue": { "type": "string" },
+                    "newValue": { "type": "string" }
+                  }
+                },
+                "childListChange": {
+                  "type": "object",
+                  "properties": {
+                    "addedNodes": { "type": "array" },
+                    "removedNodes": { "type": "array" }
+                  }
+                },
+                "batchSize": { "type": "integer", "minimum": 1, "default": 1 },
+                "timeSinceLastChange": { "type": "number" }
+              }
+            }
+          }
+        }
+      ]
+    },
+
+    "browserNavigation": {
+      "allOf": [
+        { "$ref": "#/$defs/baseMessage" },
+        {
+          "properties": {
+            "type": { "const": "BROWSER_NAVIGATION" },
+            "payload": {
+              "type": "object",
+              "required": ["id", "navigationType", "toUrl", "toTitle", "initiatedBy"],
+              "properties": {
+                "id": { "$ref": "#/$defs/uuid" },
+                "navigationType": {
+                  "type": "string",
+                  "enum": ["navigate", "reload", "back_forward", "form_submit", "link_click", "redirect", "push_state", "replace_state", "hash_change"]
+                },
+                "fromUrl": { "type": "string", "format": "uri" },
+                "toUrl": { "type": "string", "format": "uri" },
+                "fromTitle": { "type": "string" },
+                "toTitle": { "type": "string" },
+                "statusCode": { "type": "integer" },
+                "initiatedBy": { "type": "string", "enum": ["user", "script", "agent"] },
+                "navigationTime": { "type": "number" },
+                "referrer": { "type": "string" },
+                "frameId": { "type": "string" },
+                "isMainFrame": { "type": "boolean", "default": true }
+              }
+            }
+          }
+        }
+      ]
+    },
+
+    "browserClick": {
+      "allOf": [
+        { "$ref": "#/$defs/baseMessage" },
+        {
+          "properties": {
+            "type": { "const": "BROWSER_CLICK" },
+            "payload": {
+              "type": "object",
+              "required": ["id", "x", "y", "pageX", "pageY", "button", "clickType", "targetSelector", "targetTag", "targetBounds"],
+              "properties": {
+                "id": { "$ref": "#/$defs/uuid" },
+                "x": { "type": "number" },
+                "y": { "type": "number" },
+                "pageX": { "type": "number" },
+                "pageY": { "type": "number" },
+                "button": { "type": "string", "enum": ["left", "middle", "right"] },
+                "clickType": { "type": "string", "enum": ["single", "double", "context"] },
+                "targetSelector": { "type": "string" },
+                "targetTag": { "type": "string" },
+                "targetText": { "type": "string", "maxLength": 200 },
+                "targetBounds": { "$ref": "#/$defs/bounds" },
+                "modifiers": { "$ref": "#/$defs/modifiers" },
+                "isAgentAction": { "type": "boolean", "default": true },
+                "thumbnail": { "type": "string" },
+                "indicator": {
+                  "type": "object",
+                  "properties": {
+                    "x": { "type": "number" },
+                    "y": { "type": "number" },
+                    "radius": { "type": "number", "default": 20 }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+
+    "browserInput": {
+      "allOf": [
+        { "$ref": "#/$defs/baseMessage" },
+        {
+          "properties": {
+            "type": { "const": "BROWSER_INPUT" },
+            "payload": {
+              "type": "object",
+              "required": ["id", "inputType", "targetSelector", "targetType", "currentValue"],
+              "properties": {
+                "id": { "$ref": "#/$defs/uuid" },
+                "inputType": {
+                  "type": "string",
+                  "enum": ["keydown", "keyup", "keypress", "input", "paste", "cut", "copy"]
+                },
+                "keyCode": { "type": "string" },
+                "key": { "type": "string" },
+                "character": { "type": "string" },
+                "accumulatedText": { "type": "string" },
+                "targetSelector": { "type": "string" },
+                "targetType": {
+                  "type": "string",
+                  "enum": ["text", "password", "email", "number", "tel", "url", "search", "textarea", "contenteditable", "other"]
+                },
+                "currentValue": { "type": "string" },
+                "isMasked": { "type": "boolean", "default": false },
+                "selection": {
+                  "type": "object",
+                  "properties": {
+                    "start": { "type": "integer" },
+                    "end": { "type": "integer" }
+                  }
+                },
+                "modifiers": { "$ref": "#/$defs/modifiers" },
+                "isAgentAction": { "type": "boolean", "default": true }
+              }
+            }
+          }
+        }
+      ]
+    },
+
+    "browserFormFill": {
+      "allOf": [
+        { "$ref": "#/$defs/baseMessage" },
+        {
+          "properties": {
+            "type": { "const": "BROWSER_FORM_FILL" },
+            "payload": {
+              "type": "object",
+              "required": ["id", "formSelector", "operation"],
+              "properties": {
+                "id": { "$ref": "#/$defs/uuid" },
+                "formSelector": { "type": "string" },
+                "formAction": { "type": "string" },
+                "formMethod": { "type": "string", "enum": ["get", "post"] },
+                "formName": { "type": "string" },
+                "operation": {
+                  "type": "string",
+                  "enum": ["field_focus", "field_fill", "field_blur", "form_submit", "form_reset", "autofill"]
+                },
+                "field": { "type": "object" },
+                "allFields": { "type": "array" },
+                "progress": {
+                  "type": "object",
+                  "properties": {
+                    "currentIndex": { "type": "integer" },
+                    "totalFields": { "type": "integer" },
+                    "filledFields": { "type": "integer" },
+                    "remainingFields": { "type": "integer" }
+                  }
+                },
+                "formValidation": {
+                  "type": "object",
+                  "properties": {
+                    "valid": { "type": "boolean" },
+                    "invalidFields": { "type": "array", "items": { "type": "string" } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+
+    "browserPageState": {
+      "allOf": [
+        { "$ref": "#/$defs/baseMessage" },
+        {
+          "properties": {
+            "type": { "const": "BROWSER_PAGE_STATE" },
+            "payload": {
+              "type": "object",
+              "required": ["id", "state", "url", "title"],
+              "properties": {
+                "id": { "$ref": "#/$defs/uuid" },
+                "state": {
+                  "type": "string",
+                  "enum": ["initiated", "loading", "interactive", "complete", "networkIdle", "error"]
+                },
+                "url": { "type": "string", "format": "uri" },
+                "title": { "type": "string" },
+                "performance": { "type": "object" },
+                "resources": { "type": "object" },
+                "jsState": { "type": "object" },
+                "error": { "type": "object" }
+              }
+            }
+          }
+        }
+      ]
+    },
+
+    "terminalCommandStart": {
+      "allOf": [
+        { "$ref": "#/$defs/baseMessage" },
+        {
+          "properties": {
+            "type": { "const": "TERMINAL_COMMAND_START" },
+            "payload": {
+              "type": "object",
+              "required": ["id", "command", "parsed", "cwd", "dimensions"],
+              "properties": {
+                "id": { "$ref": "#/$defs/uuid" },
+                "command": { "type": "string" },
+                "parsed": {
+                  "type": "object",
+                  "required": ["executable", "args", "isPiped"],
+                  "properties": {
+                    "executable": { "type": "string" },
+                    "args": { "type": "array", "items": { "type": "string" } },
+                    "isPiped": { "type": "boolean" },
+                    "pipeChain": { "type": "array", "items": { "type": "string" } }
+                  }
+                },
+                "cwd": { "type": "string" },
+                "env": { "type": "object" },
+                "shell": { "type": "string" },
+                "dimensions": {
+                  "type": "object",
+                  "required": ["cols", "rows"],
+                  "properties": {
+                    "cols": { "type": "integer" },
+                    "rows": { "type": "integer" }
+                  }
+                },
+                "interactive": { "type": "boolean", "default": false },
+                "expectedDuration": { "type": "number" },
+                "background": { "type": "boolean", "default": false },
+                "pid": { "type": "integer" },
+                "context": { "$ref": "#/$defs/agentContext" }
+              }
+            }
+          }
+        }
+      ]
+    },
+
+    "terminalOutput": {
+      "allOf": [
+        { "$ref": "#/$defs/baseMessage" },
+        {
+          "properties": {
+            "type": { "enum": ["TERMINAL_STDOUT", "TERMINAL_STDERR"] },
+            "payload": {
+              "type": "object",
+              "required": ["commandId", "chunkId", "data", "plainText", "endsWithNewline", "elapsedMs", "byteOffset"],
+              "properties": {
+                "commandId": { "$ref": "#/$defs/uuid" },
+                "chunkId": { "type": "integer", "minimum": 0 },
+                "data": { "type": "string" },
+                "plainText": { "type": "string" },
+                "ansiParsed": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["text"],
+                    "properties": {
+                      "text": { "type": "string" },
+                      "style": { "$ref": "#/$defs/ansiStyle" }
+                    }
+                  }
+                },
+                "endsWithNewline": { "type": "boolean" },
+                "lineNumber": { "type": "integer" },
+                "elapsedMs": { "type": "number" },
+                "byteOffset": { "type": "integer" },
+                "isComplete": { "type": "boolean", "default": false },
+                "progress": {
+                  "type": "object",
+                  "properties": {
+                    "current": { "type": "number" },
+                    "total": { "type": "number" },
+                    "unit": { "type": "string" },
+                    "percentage": { "type": "number" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+
+    "terminalCommandEnd": {
+      "allOf": [
+        { "$ref": "#/$defs/baseMessage" },
+        {
+          "properties": {
+            "type": { "const": "TERMINAL_COMMAND_END" },
+            "payload": {
+              "type": "object",
+              "required": ["id", "exitCode", "success", "durationMs", "summary"],
+              "properties": {
+                "id": { "$ref": "#/$defs/uuid" },
+                "exitCode": { "type": "integer" },
+                "signal": { "type": "string" },
+                "success": { "type": "boolean" },
+                "durationMs": { "type": "number" },
+                "summary": {
+                  "type": "object",
+                  "properties": {
+                    "stdoutBytes": { "type": "integer" },
+                    "stderrBytes": { "type": "integer" },
+                    "totalLines": { "type": "integer" },
+                    "tailOutput": { "type": "string" }
+                  }
+                },
+                "resources": { "type": "object" },
+                "error": { "type": "object" }
+              }
+            }
+          }
+        }
+      ]
+    },
+
+    "terminalCwdChange": {
+      "allOf": [
+        { "$ref": "#/$defs/baseMessage" },
+        {
+          "properties": {
+            "type": { "const": "TERMINAL_CWD_CHANGE" },
+            "payload": {
+              "type": "object",
+              "required": ["id", "fromDir", "toDir"],
+              "properties": {
+                "id": { "$ref": "#/$defs/uuid" },
+                "fromDir": { "type": "string" },
+                "toDir": { "type": "string" },
+                "causedBy": {
+                  "type": "object",
+                  "properties": {
+                    "commandId": { "$ref": "#/$defs/uuid" },
+                    "command": { "type": "string" }
+                  }
+                },
+                "dirInfo": { "type": "object" }
+              }
+            }
+          }
+        }
+      ]
+    },
+
+    "fileCreate": {
+      "allOf": [
+        { "$ref": "#/$defs/baseMessage" },
+        {
+          "properties": {
+            "type": { "const": "FILE_CREATE" },
+            "payload": {
+              "type": "object",
+              "required": ["id", "path", "filename", "directory", "fileType", "sizeBytes"],
+              "properties": {
+                "id": { "$ref": "#/$defs/uuid" },
+                "path": { "type": "string" },
+                "filename": { "type": "string" },
+                "directory": { "type": "string" },
+                "extension": { "type": "string" },
+                "fileType": {
+                  "type": "string",
+                  "enum": ["text", "code", "image", "audio", "video", "pdf", "document", "spreadsheet", "archive", "binary", "unknown"]
+                },
+                "language": { "type": "string" },
+                "content": { "type": "string" },
+                "truncated": { "type": "boolean", "default": false },
+                "sizeBytes": { "type": "integer", "minimum": 0 },
+                "preview": { "type": "string" },
+                "mimeType": { "type": "string" },
+                "mode": { "type": "string" },
+                "context": { "$ref": "#/$defs/agentContext" },
+                "lineCount": { "type": "integer" },
+                "encoding": { "type": "string", "default": "utf-8" }
+              }
+            }
+          }
+        }
+      ]
+    },
+
+    "fileModify": {
+      "allOf": [
+        { "$ref": "#/$defs/baseMessage" },
+        {
+          "properties": {
+            "type": { "const": "FILE_MODIFY" },
+            "payload": {
+              "type": "object",
+              "required": ["id", "path", "filename", "modificationType", "previousSizeBytes", "newSizeBytes", "sizeDelta"],
+              "properties": {
+                "id": { "$ref": "#/$defs/uuid" },
+                "path": { "type": "string" },
+                "filename": { "type": "string" },
+                "modificationType": {
+                  "type": "string",
+                  "enum": ["content", "append", "truncate", "permissions", "metadata"]
+                },
+                "previousSizeBytes": { "type": "integer" },
+                "newSizeBytes": { "type": "integer" },
+                "sizeDelta": { "type": "integer" },
+                "linesAdded": { "type": "integer" },
+                "linesRemoved": { "type": "integer" },
+                "linesModified": { "type": "integer" },
+                "includeDiff": { "type": "boolean", "default": true },
+                "diffId": { "$ref": "#/$defs/uuid" },
+                "context": { "$ref": "#/$defs/agentContext" }
+              }
+            }
+          }
+        }
+      ]
+    },
+
+    "fileDelete": {
+      "allOf": [
+        { "$ref": "#/$defs/baseMessage" },
+        {
+          "properties": {
+            "type": { "const": "FILE_DELETE" },
+            "payload": {
+              "type": "object",
+              "required": ["id", "path", "filename", "sizeBytes"],
+              "properties": {
+                "id": { "$ref": "#/$defs/uuid" },
+                "path": { "type": "string" },
+                "filename": { "type": "string" },
+                "sizeBytes": { "type": "integer" },
+                "backedUp": { "type": "boolean", "default": false },
+                "backupPath": { "type": "string" },
+                "contentHash": { "type": "string" },
+                "context": { "$ref": "#/$defs/agentContext" }
+              }
+            }
+          }
+        }
+      ]
+    },
+
+    "fileDiff": {
+      "allOf": [
+        { "$ref": "#/$defs/baseMessage" },
+        {
+          "properties": {
+            "type": { "const": "FILE_DIFF" },
+            "payload": {
+              "type": "object",
+              "required": ["id", "path", "format", "newHash", "hunks", "rawDiff", "stats"],
+              "properties": {
+                "id": { "$ref": "#/$defs/uuid" },
+                "path": { "type": "string" },
+                "format": { "type": "string", "enum": ["unified", "split", "inline"], "default": "unified" },
+                "oldHash": { "type": "string" },
+                "newHash": { "type": "string" },
+                "hunks": {
+                  "type": "array",
+                  "items": { "$ref": "#/$defs/diffHunk" }
+                },
+                "rawDiff": { "type": "string" },
+                "stats": {
+                  "type": "object",
+                  "required": ["additions", "deletions", "changes"],
+                  "properties": {
+                    "additions": { "type": "integer" },
+                    "deletions": { "type": "integer" },
+                    "changes": { "type": "integer" }
+                  }
+                },
+                "truncated": { "type": "boolean", "default": false },
+                "totalHunks": { "type": "integer" },
+                "summary": { "type": "string" },
+                "modifyEventId": { "$ref": "#/$defs/uuid" }
+              }
+            }
+          }
+        }
+      ]
+    },
+
+    "fileBinary": {
+      "allOf": [
+        { "$ref": "#/$defs/baseMessage" },
+        {
+          "properties": {
+            "type": { "const": "FILE_BINARY" },
+            "payload": {
+              "type": "object",
+              "required": ["id", "path", "filename", "operation", "fileType", "mimeType", "sizeBytes", "sizeHuman", "hash"],
+              "properties": {
+                "id": { "$ref": "#/$defs/uuid" },
+                "path": { "type": "string" },
+                "filename": { "type": "string" },
+                "operation": { "type": "string", "enum": ["create", "modify", "delete", "rename", "copy", "move"] },
+                "fileType": {
+                  "type": "string",
+                  "enum": ["image", "audio", "video", "pdf", "archive", "executable", "font", "model", "data", "unknown"]
+                },
+                "mimeType": { "type": "string" },
+                "sizeBytes": { "type": "integer" },
+                "sizeHuman": { "type": "string" },
+                "hash": { "type": "string" },
+                "imageDimensions": {
+                  "type": "object",
+                  "properties": {
+                    "width": { "type": "integer" },
+                    "height": { "type": "integer" }
+                  }
+                },
+                "thumbnail": { "type": "string" },
+                "duration": { "type": "number" },
+                "pageCount": { "type": "integer" },
+                "containedFiles": { "type": "integer" },
+                "metadata": { "type": "object" },
+                "context": { "$ref": "#/$defs/agentContext" }
+              }
+            }
+          }
+        }
+      ]
+    },
+
+    "directoryTree": {
+      "allOf": [
+        { "$ref": "#/$defs/baseMessage" },
+        {
+          "properties": {
+            "type": { "const": "DIRECTORY_TREE" },
+            "payload": {
+              "type": "object",
+              "required": ["id", "rootPath", "tree", "stats"],
+              "properties": {
+                "id": { "$ref": "#/$defs/uuid" },
+                "rootPath": { "type": "string" },
+                "tree": { "$ref": "#/$defs/directoryTreeNode" },
+                "isDelta": { "type": "boolean", "default": false },
+                "changedPaths": { "type": "array", "items": { "type": "string" } },
+                "stats": {
+                  "type": "object",
+                  "required": ["totalFiles", "totalDirectories", "totalSizeBytes", "maxDepth"],
+                  "properties": {
+                    "totalFiles": { "type": "integer" },
+                    "totalDirectories": { "type": "integer" },
+                    "totalSizeBytes": { "type": "integer" },
+                    "maxDepth": { "type": "integer" }
+                  }
+                },
+                "ignorePatterns": { "type": "array", "items": { "type": "string" } }
+              }
+            }
+          }
+        }
+      ]
+    },
+
+    "agentStateChange": {
+      "allOf": [
+        { "$ref": "#/$defs/baseMessage" },
+        {
+          "properties": {
+            "type": { "const": "AGENT_STATE_CHANGE" },
+            "payload": {
+              "type": "object",
+              "required": ["agentId", "agentName", "agentType", "fromState", "toState", "reason"],
+              "properties": {
+                "agentId": { "type": "string" },
+                "agentName": { "type": "string" },
+                "agentType": { "type": "string" },
+                "fromState": { "$ref": "#/$defs/agentState" },
+                "toState": { "$ref": "#/$defs/agentState" },
+                "reason": { "type": "string" },
+                "taskId": { "type": "string" },
+                "durationInPreviousState": { "type": "number" },
+                "activity": { "type": "string" },
+                "expectedDuration": { "type": "number" },
+                "resources": { "type": "object" }
+              }
+            }
+          }
+        }
+      ]
+    },
+
+    "agentToolInvoke": {
+      "allOf": [
+        { "$ref": "#/$defs/baseMessage" },
+        {
+          "properties": {
+            "type": { "const": "AGENT_TOOL_INVOKE" },
+            "payload": {
+              "type": "object",
+              "required": ["id", "agentId", "toolName", "toolCategory", "input", "reasoning", "invokedAt"],
+              "properties": {
+                "id": { "$ref": "#/$defs/uuid" },
+                "agentId": { "type": "string" },
+                "toolName": { "type": "string" },
+                "toolCategory": {
+                  "type": "string",
+                  "enum": ["browser", "terminal", "file", "search", "api", "llm", "memory", "communication", "analysis", "other"]
+                },
+                "input": { "type": "object" },
+                "inputSanitized": { "type": "object" },
+                "reasoning": { "type": "string" },
+                "expectedOutcome": { "type": "string" },
+                "isRetry": { "type": "boolean", "default": false },
+                "retryCount": { "type": "integer" },
+                "taskId": { "type": "string" },
+                "invokedAt": { "$ref": "#/$defs/timestamp" }
+              }
+            }
+          }
+        }
+      ]
+    },
+
+    "agentToolResult": {
+      "allOf": [
+        { "$ref": "#/$defs/baseMessage" },
+        {
+          "properties": {
+            "type": { "const": "AGENT_TOOL_RESULT" },
+            "payload": {
+              "type": "object",
+              "required": ["invocationId", "agentId", "toolName", "success", "summary", "durationMs"],
+              "properties": {
+                "invocationId": { "$ref": "#/$defs/uuid" },
+                "agentId": { "type": "string" },
+                "toolName": { "type": "string" },
+                "success": { "type": "boolean" },
+                "output": { "type": "object" },
+                "outputSanitized": { "type": "object" },
+                "summary": { "type": "string" },
+                "error": {
+                  "type": "object",
+                  "properties": {
+                    "type": { "type": "string" },
+                    "message": { "type": "string" },
+                    "code": { "type": "string" },
+                    "recoverable": { "type": "boolean" }
+                  }
+                },
+                "durationMs": { "type": "number" },
+                "resources": { "type": "object" },
+                "triggeredActions": { "type": "array", "items": { "type": "string" } }
+              }
+            }
+          }
+        }
+      ]
+    },
+
+    "agentReasoning": {
+      "allOf": [
+        { "$ref": "#/$defs/baseMessage" },
+        {
+          "properties": {
+            "type": { "const": "AGENT_REASONING" },
+            "payload": {
+              "type": "object",
+              "required": ["id", "agentId", "thoughtType", "content"],
+              "properties": {
+                "id": { "$ref": "#/$defs/uuid" },
+                "agentId": { "type": "string" },
+                "thoughtType": { "$ref": "#/$defs/thoughtType" },
+                "content": { "type": "string" },
+                "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+                "parentThoughtId": { "$ref": "#/$defs/uuid" },
+                "depth": { "type": "integer", "minimum": 0, "default": 0 },
+                "entities": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["type", "value", "relevance"],
+                    "properties": {
+                      "type": { "type": "string" },
+                      "value": { "type": "string" },
+                      "relevance": { "type": "number", "minimum": 0, "maximum": 1 }
+                    }
+                  }
+                },
+                "ledToAction": { "type": "boolean", "default": false },
+                "action": { "type": "string" },
+                "taskId": { "type": "string" },
+                "tokensUsed": { "type": "integer" },
+                "visibility": { "type": "string", "enum": ["internal", "user"], "default": "user" }
+              }
+            }
+          }
+        }
+      ]
+    },
+
+    "agentProgress": {
+      "allOf": [
+        { "$ref": "#/$defs/baseMessage" },
+        {
+          "properties": {
+            "type": { "const": "AGENT_PROGRESS" },
+            "payload": {
+              "type": "object",
+              "required": ["id", "agentId", "taskId", "percentage", "phase", "phaseNumber", "totalPhases", "currentStep", "stepNumber", "totalSteps"],
+              "properties": {
+                "id": { "$ref": "#/$defs/uuid" },
+                "agentId": { "type": "string" },
+                "taskId": { "type": "string" },
+                "percentage": { "type": "number", "minimum": 0, "maximum": 100 },
+                "phase": { "type": "string" },
+                "phaseNumber": { "type": "integer", "minimum": 1 },
+                "totalPhases": { "type": "integer", "minimum": 1 },
+                "currentStep": { "type": "string" },
+                "stepNumber": { "type": "integer", "minimum": 1 },
+                "totalSteps": { "type": "integer", "minimum": 1 },
+                "estimatedRemainingMs": { "type": "number" },
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "processed": { "type": "integer" },
+                    "total": { "type": "integer" },
+                    "unit": { "type": "string" }
+                  }
+                },
+                "subtasks": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["id", "name", "percentage", "status"],
+                    "properties": {
+                      "id": { "type": "string" },
+                      "name": { "type": "string" },
+                      "percentage": { "type": "number", "minimum": 0, "maximum": 100 },
+                      "status": { "type": "string", "enum": ["pending", "active", "completed", "failed"] }
+                    }
+                  }
+                },
+                "milestones": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["id", "name", "achievedAt"],
+                    "properties": {
+                      "id": { "type": "string" },
+                      "name": { "type": "string" },
+                      "achievedAt": { "$ref": "#/$defs/timestamp" }
+                    }
+                  }
+                },
+                "visualizationType": {
+                  "type": "string",
+                  "enum": ["linear", "phased", "tree", "circular", "steps"],
+                  "default": "linear"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+
+    "agentCollaboration": {
+      "allOf": [
+        { "$ref": "#/$defs/baseMessage" },
+        {
+          "properties": {
+            "type": { "const": "AGENT_COLLABORATION" },
+            "payload": {
+              "type": "object",
+              "required": ["id", "collaborationType", "sourceAgent", "targetAgents", "parentTaskId", "message"],
+              "properties": {
+                "id": { "$ref": "#/$defs/uuid" },
+                "collaborationType": {
+                  "type": "string",
+                  "enum": ["delegation", "request", "response", "handoff", "sync", "broadcast", "completion"]
+                },
+                "sourceAgent": {
+                  "type": "object",
+                  "required": ["id", "name", "type"],
+                  "properties": {
+                    "id": { "type": "string" },
+                    "name": { "type": "string" },
+                    "type": { "type": "string" }
+                  }
+                },
+                "targetAgents": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["id", "name", "type"],
+                    "properties": {
+                      "id": { "type": "string" },
+                      "name": { "type": "string" },
+                      "type": { "type": "string" }
+                    }
+                  }
+                },
+                "parentTaskId": { "type": "string" },
+                "subtask": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "string" },
+                    "title": { "type": "string" },
+                    "description": { "type": "string" }
+                  }
+                },
+                "message": { "type": "string" },
+                "sharedData": { "type": "object" },
+                "priority": { "$ref": "#/$defs/priority" },
+                "expectedResponseMs": { "type": "number" },
+                "requiresResponse": { "type": "boolean", "default": false },
+                "dependencies": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["from", "to", "type"],
+                    "properties": {
+                      "from": { "type": "string" },
+                      "to": { "type": "string" },
+                      "type": { "type": "string", "enum": ["blocks", "informs", "requires"] }
+                    }
+                  }
+                },
+                "parallelStatus": {
+                  "type": "object",
+                  "properties": {
+                    "activeAgents": { "type": "integer" },
+                    "completedAgents": { "type": "integer" },
+                    "totalAgents": { "type": "integer" },
+                    "blockedAgents": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
