@@ -1,10 +1,11 @@
-import { useState, useRef, useEffect } from 'react'
-import { Send, Paperclip, Mic, StopCircle, PanelRight, Sparkles, Code2, Eye } from 'lucide-react'
+import { useState, useRef, useEffect, useCallback } from 'react'
+import { Send, Paperclip, Mic, MicOff, StopCircle, PanelRight, Sparkles, Code2, Eye } from 'lucide-react'
 import { useAppStore } from '@/stores/appStore'
 import ChatMessage from './ChatMessage'
 import aiService from '@/services/ai'
 import codeBuilder from '@/services/codeBuilder'
 import { KASA_LOGO_BASE64 } from '@/constants/kasaLogo'
+import { voiceService } from '@/services/voiceService'
 
 // Function to inject logo into generated code
 function injectLogoIntoCode(code: string): string {
@@ -41,6 +42,8 @@ function extractAndProcessCode(content: string): { code: string | null; hasCode:
 
 export default function ChatPanel() {
   const [input, setInput] = useState('')
+  const [isListening, setIsListening] = useState(false)
+  const [interimTranscript, setInterimTranscript] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
@@ -174,6 +177,50 @@ export default function ChatPanel() {
     }, 100)
   }
 
+  // Voice input handlers
+  const startVoiceInput = useCallback(() => {
+    if (!voiceService.isSpeechRecognitionSupported()) {
+      alert('Speech recognition is not supported in your browser. Try Chrome or Edge.')
+      return
+    }
+
+    setInterimTranscript('')
+
+    const success = voiceService.startListening(
+      (transcript, isFinal) => {
+        if (isFinal) {
+          setInput(prev => prev + (prev ? ' ' : '') + transcript)
+          setInterimTranscript('')
+        } else {
+          setInterimTranscript(transcript)
+        }
+      },
+      (error) => {
+        console.error('Voice input error:', error)
+        setIsListening(false)
+        setInterimTranscript('')
+      }
+    )
+
+    if (success) {
+      setIsListening(true)
+    }
+  }, [])
+
+  const stopVoiceInput = useCallback(() => {
+    voiceService.stopListening()
+    setIsListening(false)
+    setInterimTranscript('')
+  }, [])
+
+  const toggleVoiceInput = useCallback(() => {
+    if (isListening) {
+      stopVoiceInput()
+    } else {
+      startVoiceInput()
+    }
+  }, [isListening, startVoiceInput, stopVoiceInput])
+
   return (
     <div className="h-full flex flex-col bg-dark-400">
       {/* Header */}
@@ -266,16 +313,21 @@ export default function ChatPanel() {
       <div className="p-4 border-t border-white/10">
         <form onSubmit={handleSubmit} className="relative">
           <div className="morphic-panel p-3">
-            <textarea
-              ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Describe what you want to build..."
-              rows={1}
-              className="w-full bg-transparent text-white placeholder-white/40 resize-none outline-none text-sm"
-              style={{ minHeight: '24px', maxHeight: '200px' }}
-            />
+            <div className="relative">
+              <textarea
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={isListening ? 'Listening... Speak now' : 'Describe what you want to build...'}
+                rows={1}
+                className="w-full bg-transparent text-white placeholder-white/40 resize-none outline-none text-sm"
+                style={{ minHeight: '24px', maxHeight: '200px' }}
+              />
+              {interimTranscript && (
+                <span className="text-white/40 italic text-sm">{interimTranscript}</span>
+              )}
+            </div>
             <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/10">
               <div className="flex items-center gap-2">
                 <button
@@ -286,9 +338,15 @@ export default function ChatPanel() {
                 </button>
                 <button
                   type="button"
-                  className="p-2 rounded-lg text-white/40 hover:text-white hover:bg-white/5 transition-colors"
+                  onClick={toggleVoiceInput}
+                  className={`p-2 rounded-lg transition-colors ${
+                    isListening
+                      ? 'text-red-400 bg-red-400/20 animate-pulse'
+                      : 'text-white/40 hover:text-white hover:bg-white/5'
+                  }`}
+                  title={isListening ? 'Stop listening' : 'Start voice input'}
                 >
-                  <Mic className="w-4 h-4" />
+                  {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
                 </button>
               </div>
               <button

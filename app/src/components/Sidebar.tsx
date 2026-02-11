@@ -1,4 +1,4 @@
-import { MessageSquare, Plus, FolderOpen, Settings, ChevronLeft, ChevronRight, Rocket, LayoutDashboard, Brain, Zap, Flame, Search, Shield, Wallet } from 'lucide-react'
+import { MessageSquare, Plus, FolderOpen, Settings, ChevronLeft, ChevronRight, Rocket, LayoutDashboard, Brain, Zap, Flame, Search, Shield, Wallet, Palette, Mic, BarChart3, ShieldCheck, Plug } from 'lucide-react'
 import { useAppStore } from '@/stores/appStore'
 import AgentsPanel from './AgentsPanel'
 
@@ -176,6 +176,78 @@ export default function Sidebar() {
               NEW
             </span>
           </button>
+          <button
+            onClick={() => setView('creative-studio')}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group ${
+              currentView === 'creative-studio'
+                ? 'bg-gradient-to-r from-pink-500/20 to-purple-600/20 text-pink-400 border border-pink-400/30 shadow-glow-sm'
+                : 'text-white/70 hover:bg-white/5 hover:text-white'
+            }`}
+          >
+            <Palette className={`w-4 h-4 ${currentView === 'creative-studio' ? 'animate-pulse text-pink-400' : ''}`} />
+            <span className="text-sm">Creative Studio</span>
+            <span className={`ml-auto text-[10px] px-1.5 py-0.5 rounded-full ${
+              currentView === 'creative-studio'
+                ? 'bg-pink-500/30 text-pink-300'
+                : 'bg-pink-400/20 text-pink-400 opacity-0 group-hover:opacity-100'
+            } transition-opacity`}>
+              NEW
+            </span>
+          </button>
+          <button
+            onClick={() => setView('data-analyst')}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group ${
+              currentView === 'data-analyst'
+                ? 'bg-gradient-to-r from-cyan-500/20 to-blue-600/20 text-cyan-400 border border-cyan-400/30 shadow-glow-sm'
+                : 'text-white/70 hover:bg-white/5 hover:text-white'
+            }`}
+          >
+            <BarChart3 className={`w-4 h-4 ${currentView === 'data-analyst' ? 'animate-pulse text-cyan-400' : ''}`} />
+            <span className="text-sm">Data Analyst</span>
+            <span className={`ml-auto text-[10px] px-1.5 py-0.5 rounded-full ${
+              currentView === 'data-analyst'
+                ? 'bg-cyan-500/30 text-cyan-300'
+                : 'bg-cyan-400/20 text-cyan-400 opacity-0 group-hover:opacity-100'
+            } transition-opacity`}>
+              NEW
+            </span>
+          </button>
+          <button
+            onClick={() => setView('voice-interface')}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group ${
+              currentView === 'voice-interface'
+                ? 'bg-gradient-to-r from-teal-500/20 to-cyan-600/20 text-teal-400 border border-teal-400/30 shadow-glow-sm'
+                : 'text-white/70 hover:bg-white/5 hover:text-white'
+            }`}
+          >
+            <Mic className={`w-4 h-4 ${currentView === 'voice-interface' ? 'animate-pulse text-teal-400' : ''}`} />
+            <span className="text-sm">Voice Interface</span>
+            <span className={`ml-auto text-[10px] px-1.5 py-0.5 rounded-full ${
+              currentView === 'voice-interface'
+                ? 'bg-teal-500/30 text-teal-300'
+                : 'bg-teal-400/20 text-teal-400 opacity-0 group-hover:opacity-100'
+            } transition-opacity`}>
+              NEW
+            </span>
+          </button>
+          <button
+            onClick={() => setView('trust-architect')}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group ${
+              currentView === 'trust-architect'
+                ? 'bg-gradient-to-r from-cyan-500/20 to-cyan-600/20 text-cyan-400 border border-cyan-400/30 shadow-glow-sm'
+                : 'text-white/70 hover:bg-white/5 hover:text-white'
+            }`}
+          >
+            <ShieldCheck className={`w-4 h-4 ${currentView === 'trust-architect' ? 'animate-pulse text-cyan-400' : ''}`} />
+            <span className="text-sm">Trust Architect</span>
+            <span className={`ml-auto text-[10px] px-1.5 py-0.5 rounded-full ${
+              currentView === 'trust-architect'
+                ? 'bg-cyan-500/30 text-cyan-300'
+                : 'bg-cyan-400/20 text-cyan-400 opacity-0 group-hover:opacity-100'
+            } transition-opacity`}>
+              NEW
+            </span>
+          </button>
         </div>
       </div>
 
@@ -235,15 +307,38 @@ export default function Sidebar() {
       {/* AI Agents Section */}
       <AgentsPanel />
 
-      {/* Footer */}
+      {/* System Section */}
       <div className="border-t border-white/10 p-3">
-        <button
-          onClick={toggleSettings}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-white/70 hover:bg-white/5 hover:text-white transition-colors"
-        >
-          <Settings className="w-4 h-4" />
-          <span className="text-sm">Settings</span>
-        </button>
+        <div className="text-xs font-medium text-white/40 uppercase tracking-wider px-2 py-2">
+          System
+        </div>
+        <div className="space-y-1">
+          <button
+            onClick={() => setView('integration-hub')}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group ${
+              currentView === 'integration-hub'
+                ? 'bg-gradient-to-r from-cyan-500/20 to-blue-600/20 text-cyan-400 border border-cyan-400/30 shadow-glow-sm'
+                : 'text-white/70 hover:bg-white/5 hover:text-white'
+            }`}
+          >
+            <Plug className={`w-4 h-4 ${currentView === 'integration-hub' ? 'animate-pulse text-cyan-400' : ''}`} />
+            <span className="text-sm">Integration Hub</span>
+            <span className={`ml-auto text-[10px] px-1.5 py-0.5 rounded-full ${
+              currentView === 'integration-hub'
+                ? 'bg-cyan-500/30 text-cyan-300'
+                : 'bg-cyan-400/20 text-cyan-400 opacity-0 group-hover:opacity-100'
+            } transition-opacity`}>
+              NEW
+            </span>
+          </button>
+          <button
+            onClick={toggleSettings}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-white/70 hover:bg-white/5 hover:text-white transition-colors"
+          >
+            <Settings className="w-4 h-4" />
+            <span className="text-sm">Settings</span>
+          </button>
+        </div>
       </div>
     </div>
   )

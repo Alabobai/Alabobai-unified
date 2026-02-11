@@ -9,6 +9,11 @@ import SelfAnnealingAgentView from './components/SelfAnnealingAgentView'
 import DeepResearchView from './components/DeepResearchView'
 import PrivacyFortressView from './components/PrivacyFortressView'
 import FinancialGuardianView from './components/FinancialGuardianView'
+import CreativeStudioView from './components/CreativeStudioView'
+import VoiceInterfaceView from './components/VoiceInterfaceView'
+import DataAnalystView from './components/DataAnalystView'
+import TrustArchitectView from './components/TrustArchitectView'
+import IntegrationHubView from './components/IntegrationHubView'
 import SettingsModal from './components/SettingsModal'
 import { useAppStore } from './stores/appStore'
 import { aiService } from './services/ai'
@@ -106,6 +111,71 @@ function App() {
         <Sidebar />
         <div className="flex-1 overflow-hidden">
           <FinancialGuardianView />
+        </div>
+        <SettingsModal isOpen={settingsOpen} onClose={toggleSettings} />
+      </div>
+    )
+  }
+
+  // Render Creative Studio (full screen)
+  if (currentView === 'creative-studio') {
+    return (
+      <div className="h-screen w-screen flex bg-black overflow-hidden">
+        <Sidebar />
+        <div className="flex-1 overflow-hidden">
+          <CreativeStudioView />
+        </div>
+        <SettingsModal isOpen={settingsOpen} onClose={toggleSettings} />
+      </div>
+    )
+  }
+
+  // Render Voice Interface (full screen)
+  if (currentView === 'voice-interface') {
+    return (
+      <div className="h-screen w-screen flex bg-black overflow-hidden">
+        <Sidebar />
+        <div className="flex-1 overflow-hidden">
+          <VoiceInterfaceView />
+        </div>
+        <SettingsModal isOpen={settingsOpen} onClose={toggleSettings} />
+      </div>
+    )
+  }
+
+  // Render Data Analyst (full screen)
+  if (currentView === 'data-analyst') {
+    return (
+      <div className="h-screen w-screen flex bg-black overflow-hidden">
+        <Sidebar />
+        <div className="flex-1 overflow-hidden">
+          <DataAnalystView />
+        </div>
+        <SettingsModal isOpen={settingsOpen} onClose={toggleSettings} />
+      </div>
+    )
+  }
+
+  // Render Trust Architect (full screen)
+  if (currentView === 'trust-architect') {
+    return (
+      <div className="h-screen w-screen flex bg-black overflow-hidden">
+        <Sidebar />
+        <div className="flex-1 overflow-hidden">
+          <TrustArchitectView />
+        </div>
+        <SettingsModal isOpen={settingsOpen} onClose={toggleSettings} />
+      </div>
+    )
+  }
+
+  // Render Integration Hub (full screen)
+  if (currentView === 'integration-hub') {
+    return (
+      <div className="h-screen w-screen flex bg-black overflow-hidden">
+        <Sidebar />
+        <div className="flex-1 overflow-hidden">
+          <IntegrationHubView />
         </div>
         <SettingsModal isOpen={settingsOpen} onClose={toggleSettings} />
       </div>
