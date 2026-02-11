@@ -230,7 +230,7 @@ export default function CompanyWizard() {
         {step === 1 && (
           <div className="animate-fade-in">
             <div className="text-center mb-8">
-              <h1 className="text-4xl font-bold text-white mb-3">What type of company do you want to build?</h1>
+              <h1 className="text-4xl font-bold text-white mb-3">What kind of company will you build?</h1>
               <p className="text-white/60">Choose your business model and we'll set up the right AI departments</p>
             </div>
 
