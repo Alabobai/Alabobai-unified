@@ -1,1 +1,1 @@
-# Alabobai App
+# Alabobai v2.0 - AI Agent Platform
