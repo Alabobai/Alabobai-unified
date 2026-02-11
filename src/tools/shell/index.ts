@@ -67,7 +67,7 @@ const DANGEROUS_PATTERNS = [
   /rm\s+(-rf?|--recursive)?\s*\/(?!\w)/,  // rm -rf /
   /mkfs/,
   /dd\s+if=/,
-  /:(){ :\|:& };:/,  // Fork bomb
+  /:\(\)\s*\{.*:\s*\|.*&\s*\}.*;.*:/,  // Fork bomb variants
   />\s*\/dev\/sd[a-z]/,
   /chmod\s+777\s+\//,
   /chown\s+-R\s+.*\s+\//,

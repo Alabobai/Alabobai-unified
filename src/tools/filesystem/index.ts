@@ -15,7 +15,7 @@ import * as fs from 'fs/promises';
 import * as fsSync from 'fs';
 import * as path from 'path';
 // @ts-ignore - glob types may not be available
-import { glob } from 'glob';
+import { sync as globSync } from 'glob';
 import { EventEmitter } from 'events';
 
 // ============================================================================
@@ -260,12 +260,11 @@ export class FileSystemTool extends EventEmitter {
 
     if (options?.recursive) {
       const pattern = options.includeHidden ? '**/*' : '**/[!.]*';
-      const matches = await glob(pattern, {
+      return globSync(pattern, {
         cwd: fullPath,
         dot: options.includeHidden,
         nodir: options.filesOnly,
       });
-      return matches;
     }
 
     const entries = await fs.readdir(fullPath, { withFileTypes: true });
@@ -339,10 +338,14 @@ export class FileSystemTool extends EventEmitter {
   }): Promise<string[]> {
     const cwd = options?.cwd ? this.resolvePath(options.cwd) : this.config.baseDir;
 
-    return glob(pattern, {
-      cwd,
-      ignore: options?.ignore ?? ['**/node_modules/**', '**/.git/**'],
-    });
+    try {
+      return globSync(pattern, {
+        cwd,
+        ignore: options?.ignore ?? ['**/node_modules/**', '**/.git/**'],
+      });
+    } catch {
+      return [];
+    }
   }
 
   /**
@@ -357,11 +360,16 @@ export class FileSystemTool extends EventEmitter {
     const filePattern = options?.filePattern ?? '**/*';
     const maxResults = options?.maxResults ?? 100;
 
-    const files = await glob(filePattern, {
-      cwd,
-      nodir: true,
-      ignore: ['**/node_modules/**', '**/.git/**', '**/*.min.*'],
-    });
+    let files: string[] = [];
+    try {
+      files = globSync(filePattern, {
+        cwd,
+        nodir: true,
+        ignore: ['**/node_modules/**', '**/.git/**', '**/*.min.*'],
+      });
+    } catch {
+      files = [];
+    }
 
     const results: SearchResult[] = [];
     const regex = typeof pattern === 'string' ? new RegExp(pattern, 'gi') : pattern;
@@ -416,7 +424,7 @@ export class FileSystemTool extends EventEmitter {
     const filePattern = options?.filePattern ?? '**/*';
     const dryRun = options?.dryRun ?? false;
 
-    const files = await glob(filePattern, {
+    const files = globSync(filePattern, {
       cwd,
       nodir: true,
       ignore: ['**/node_modules/**', '**/.git/**'],
