@@ -3,7 +3,7 @@ import { useAppStore } from '@/stores/appStore'
 import AgentsPanel from './AgentsPanel'
 
 export default function Sidebar() {
-  const { sidebarOpen, toggleSidebar, chats, activeChat, setActiveChat, createChat, currentView, setView } = useAppStore()
+  const { sidebarOpen, toggleSidebar, chats, activeChat, setActiveChat, createChat, currentView, setView, toggleSettings } = useAppStore()
 
   if (!sidebarOpen) {
     return (
@@ -183,7 +183,10 @@ export default function Sidebar() {
 
       {/* Footer */}
       <div className="border-t border-white/10 p-3">
-        <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-white/70 hover:bg-white/5 hover:text-white transition-colors">
+        <button
+          onClick={toggleSettings}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-white/70 hover:bg-white/5 hover:text-white transition-colors"
+        >
           <Settings className="w-4 h-4" />
           <span className="text-sm">Settings</span>
         </button>

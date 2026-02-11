@@ -59,6 +59,7 @@ interface AppState {
   // UI State
   sidebarOpen: boolean
   workspaceOpen: boolean
+  settingsOpen: boolean
   activeTab: 'browser' | 'tasks' | 'preview' | 'code' | 'terminal' | 'files'
   currentView: AppView
 
@@ -83,6 +84,7 @@ interface AppState {
   // Actions
   toggleSidebar: () => void
   toggleWorkspace: () => void
+  toggleSettings: () => void
   setActiveTab: (tab: 'browser' | 'tasks' | 'preview' | 'code' | 'terminal' | 'files') => void
   setView: (view: AppView) => void
 
@@ -118,6 +120,7 @@ export const useAppStore = create<AppState>()(
     // Initial State
     sidebarOpen: true,
     workspaceOpen: true,
+    settingsOpen: false,
     activeTab: 'browser',
     currentView: 'chat',
 
@@ -138,6 +141,7 @@ export const useAppStore = create<AppState>()(
     // UI Actions
     toggleSidebar: () => set(state => { state.sidebarOpen = !state.sidebarOpen }),
     toggleWorkspace: () => set(state => { state.workspaceOpen = !state.workspaceOpen }),
+    toggleSettings: () => set(state => { state.settingsOpen = !state.settingsOpen }),
     setActiveTab: (tab) => set(state => { state.activeTab = tab }),
     setView: (view) => set(state => { state.currentView = view }),
 

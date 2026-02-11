@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import Sidebar from './components/Sidebar'
 import ChatPanel from './components/ChatPanel'
 import WorkspacePanel from './components/WorkspacePanel'
@@ -5,10 +6,17 @@ import CompanyWizard from './components/CompanyWizard'
 import CompanyDashboard from './components/CompanyDashboard'
 import AutonomousAgentView from './components/AutonomousAgentView'
 import SelfAnnealingAgentView from './components/SelfAnnealingAgentView'
+import SettingsModal from './components/SettingsModal'
 import { useAppStore } from './stores/appStore'
+import { aiService } from './services/ai'
 
 function App() {
-  const { workspaceOpen, currentView } = useAppStore()
+  const { workspaceOpen, currentView, settingsOpen, toggleSettings } = useAppStore()
+
+  // Initialize AI service on mount
+  useEffect(() => {
+    aiService.initialize().catch(console.error)
+  }, [])
 
   // Render Company Wizard (full screen)
   if (currentView === 'company-wizard') {
@@ -18,6 +26,7 @@ function App() {
         <div className="flex-1 overflow-auto">
           <CompanyWizard />
         </div>
+        <SettingsModal isOpen={settingsOpen} onClose={toggleSettings} />
       </div>
     )
   }
@@ -30,6 +39,7 @@ function App() {
         <div className="flex-1 overflow-hidden">
           <CompanyDashboard />
         </div>
+        <SettingsModal isOpen={settingsOpen} onClose={toggleSettings} />
       </div>
     )
   }
@@ -42,6 +52,7 @@ function App() {
         <div className="flex-1 overflow-hidden">
           <AutonomousAgentView />
         </div>
+        <SettingsModal isOpen={settingsOpen} onClose={toggleSettings} />
       </div>
     )
   }
@@ -54,6 +65,7 @@ function App() {
         <div className="flex-1 overflow-hidden">
           <SelfAnnealingAgentView />
         </div>
+        <SettingsModal isOpen={settingsOpen} onClose={toggleSettings} />
       </div>
     )
   }
@@ -78,6 +90,9 @@ function App() {
           </div>
         )}
       </div>
+
+      {/* Settings Modal */}
+      <SettingsModal isOpen={settingsOpen} onClose={toggleSettings} />
     </div>
   )
 }

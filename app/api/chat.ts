@@ -1,12 +1,23 @@
-import Anthropic from '@anthropic-ai/sdk';
+import Groq from 'groq-sdk';
 
 export const config = {
   runtime: 'edge',
 };
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY || '',
+const groq = new Groq({
+  apiKey: process.env.GROQ_API_KEY || '',
 });
+
+const SYSTEM_PROMPT = `You are Alabobai, an advanced AI agent platform. You can:
+- Build complete web applications and landing pages
+- Write production-ready code in any language
+- Navigate the web and extract information
+- Execute complex multi-step workflows
+- Analyze data and create visualizations
+
+When asked to build something, provide complete, working code. Use modern best practices and beautiful UI/UX.
+For web pages, use Tailwind CSS and include all necessary HTML/CSS/JS in a single file.
+Always wrap code in appropriate markdown code blocks with language tags.`;
 
 export default async function handler(req: Request) {
   if (req.method === 'OPTIONS') {
@@ -26,32 +37,30 @@ export default async function handler(req: Request) {
   try {
     const { messages, stream = true } = await req.json();
 
+    // Format messages for Groq
+    const formattedMessages = [
+      { role: 'system' as const, content: SYSTEM_PROMPT },
+      ...messages.map((m: { role: string; content: string }) => ({
+        role: m.role as 'user' | 'assistant',
+        content: m.content,
+      })),
+    ];
+
     if (stream) {
-      const response = await anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514',
+      const response = await groq.chat.completions.create({
+        model: 'llama-3.3-70b-versatile',
         max_tokens: 8192,
         stream: true,
-        system: `You are Alabobai, an advanced AI agent platform. You can:
-- Build complete web applications and landing pages
-- Write production-ready code in any language
-- Navigate the web and extract information
-- Execute complex multi-step workflows
-- Analyze data and create visualizations
-
-When asked to build something, provide complete, working code. Use modern best practices and beautiful UI/UX.
-For web pages, use Tailwind CSS and include all necessary HTML/CSS/JS in a single file.`,
-        messages: messages.map((m: { role: string; content: string }) => ({
-          role: m.role as 'user' | 'assistant',
-          content: m.content,
-        })),
+        messages: formattedMessages,
       });
 
       const encoder = new TextEncoder();
       const readable = new ReadableStream({
         async start(controller) {
-          for await (const event of response) {
-            if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ token: event.delta.text })}\n\n`));
+          for await (const chunk of response) {
+            const content = chunk.choices[0]?.delta?.content;
+            if (content) {
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ token: content })}\n\n`));
             }
           }
           controller.enqueue(encoder.encode('data: [DONE]\n\n'));
@@ -68,18 +77,13 @@ For web pages, use Tailwind CSS and include all necessary HTML/CSS/JS in a singl
         },
       });
     } else {
-      const response = await anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514',
+      const response = await groq.chat.completions.create({
+        model: 'llama-3.3-70b-versatile',
         max_tokens: 8192,
-        system: `You are Alabobai, an advanced AI agent platform.`,
-        messages: messages.map((m: { role: string; content: string }) => ({
-          role: m.role as 'user' | 'assistant',
-          content: m.content,
-        })),
+        messages: formattedMessages,
       });
 
-      const content = response.content[0];
-      const text = content.type === 'text' ? content.text : '';
+      const text = response.choices[0]?.message?.content || '';
 
       return new Response(JSON.stringify({ content: text }), {
         headers: {
@@ -89,8 +93,11 @@ For web pages, use Tailwind CSS and include all necessary HTML/CSS/JS in a singl
       });
     }
   } catch (error) {
-    console.error('API Error:', error);
-    return new Response(JSON.stringify({ error: 'Internal server error' }), {
+    console.error('Groq API Error:', error);
+    return new Response(JSON.stringify({
+      error: 'Failed to process chat request',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }), {
       status: 500,
       headers: {
         'Content-Type': 'application/json',

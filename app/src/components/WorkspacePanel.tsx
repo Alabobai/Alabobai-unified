@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Eye, Code2, Terminal, FolderTree, Undo2, Redo2,
   Play, RefreshCw, ExternalLink, X, ChevronRight,
@@ -330,18 +330,33 @@ function PreviewTab() {
 }
 
 function CodeTab() {
-  const { files, activeFile } = useAppStore()
+  const { files, activeFile, generatedCode } = useAppStore()
+  const [MonacoEditor, setMonacoEditor] = useState<any>(null)
 
   const currentFile = activeFile ? findFile(files, activeFile) : null
+
+  // Lazy load Monaco
+  useEffect(() => {
+    import('./MonacoEditor').then(mod => setMonacoEditor(() => mod.default))
+  }, [])
+
+  const content = currentFile?.content || generatedCode || ''
 
   return (
     <div className="h-full flex flex-col">
       {/* File tabs */}
-      {activeFile && (
+      {(activeFile || generatedCode) && (
         <div className="flex items-center gap-1 px-2 py-1.5 bg-dark-300 border-b border-white/10 overflow-x-auto">
           <div className="flex items-center gap-2 px-3 py-1 rounded bg-dark-200 border border-white/10 text-xs">
             <FileCode className="w-3.5 h-3.5 text-rose-gold-400" />
-            <span className="text-white/80">{activeFile.split('/').pop()}</span>
+            <span className="text-white/80">
+              {activeFile ? activeFile.split('/').pop() : 'Generated Code'}
+            </span>
+            {generatedCode && !activeFile && (
+              <span className="px-1.5 py-0.5 rounded bg-rose-gold-400/20 text-rose-gold-400 text-[10px]">
+                AI
+              </span>
+            )}
             <button className="text-white/40 hover:text-white">
               <X className="w-3 h-3" />
             </button>
@@ -350,17 +365,19 @@ function CodeTab() {
       )}
 
       {/* Code editor */}
-      <div className="flex-1 overflow-auto morphic-scrollbar p-4 font-mono text-sm">
-        {currentFile?.content ? (
-          <pre className="text-white/80 whitespace-pre-wrap">
-            {currentFile.content}
-          </pre>
+      <div className="flex-1 overflow-hidden">
+        {content && MonacoEditor ? (
+          <MonacoEditor value={content} readOnly />
+        ) : content ? (
+          <div className="h-full overflow-auto morphic-scrollbar p-4 font-mono text-sm bg-dark-400">
+            <pre className="text-white/80 whitespace-pre-wrap">{content}</pre>
+          </div>
         ) : (
-          <div className="h-full flex items-center justify-center text-white/30">
+          <div className="h-full flex items-center justify-center text-white/30 bg-dark-400">
             <div className="text-center">
               <Code2 className="w-12 h-12 mx-auto mb-3 opacity-50" />
               <p className="text-sm">No file selected</p>
-              <p className="text-xs mt-1">Select a file from the Files tab</p>
+              <p className="text-xs mt-1">Ask AI to build something or select a file</p>
             </div>
           </div>
         )}
@@ -370,36 +387,22 @@ function CodeTab() {
 }
 
 function TerminalTab() {
-  const [output, _setOutput] = useState<string[]>([
-    '$ alabobai init',
-    'Initializing Alabobai workspace...',
-    '✓ Connected to AI agents',
-    '✓ Browser automation ready',
-    '✓ Task execution engine online',
-    '',
-    'Ready for commands.',
-    ''
-  ])
+  const [TerminalComponent, setTerminalComponent] = useState<any>(null)
 
-  return (
-    <div className="h-full flex flex-col bg-black">
-      <div className="flex-1 overflow-auto morphic-scrollbar p-4 font-mono text-sm">
-        {output.map((line, i) => (
-          <div key={i} className={`${
-            line.startsWith('$') ? 'text-rose-gold-400' :
-            line.startsWith('✓') ? 'text-green-400' :
-            'text-white/70'
-          }`}>
-            {line || '\u00A0'}
-          </div>
-        ))}
-        <div className="flex items-center text-white/70">
-          <span className="text-rose-gold-400">$</span>
-          <span className="ml-2 w-2 h-4 bg-white/70 animate-pulse" />
-        </div>
+  // Lazy load Terminal
+  useEffect(() => {
+    import('./TerminalComponent').then(mod => setTerminalComponent(() => mod.default))
+  }, [])
+
+  if (!TerminalComponent) {
+    return (
+      <div className="h-full flex items-center justify-center bg-black text-white/50">
+        Loading terminal...
       </div>
-    </div>
-  )
+    )
+  }
+
+  return <TerminalComponent />
 }
 
 function FilesTab() {
