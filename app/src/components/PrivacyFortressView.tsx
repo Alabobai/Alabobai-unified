@@ -9,7 +9,7 @@ import {
   CheckCircle2, AlertTriangle, AlertCircle, Copy, ExternalLink,
   Key, User, Mail, Globe, Database, Cookie, HardDrive,
   FileText, Settings, Zap, ChevronRight, ChevronDown,
-  Search, ClipboardCheck, Info, X, Check
+  Search, ClipboardCheck, Info, Check
 } from 'lucide-react'
 
 // ============== Types ==============

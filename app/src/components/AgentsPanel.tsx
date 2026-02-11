@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import {
-  Search, Brain, Code2, Shield, Lock, Fingerprint,
+  Search, Brain, Code2, Lock, Fingerprint,
   Monitor, Mic, Plug, RefreshCw, Palette, BarChart3,
   Cloud, ChevronRight, Activity, Wallet
 } from 'lucide-react'

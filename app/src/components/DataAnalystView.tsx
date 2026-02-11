@@ -3,12 +3,12 @@
  * Provides comprehensive data analysis capabilities with CSS-based visualizations
  */
 
-import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
+import { useState, useRef, useCallback, useMemo } from 'react'
 import {
   BarChart3, Upload, FileText, Table, PieChart, TrendingUp,
   Download, Copy, Sparkles, AlertCircle, CheckCircle2,
-  Loader2, RefreshCw, ChevronDown, ChevronUp, Search,
-  Database, Brain, Filter, SortAsc, SortDesc, Trash2
+  Loader2, ChevronDown, ChevronUp, Search,
+  Database, Brain, SortAsc, SortDesc, Trash2
 } from 'lucide-react'
 
 // Types
@@ -229,7 +229,7 @@ export default function DataAnalystView() {
       return 'string'
     }))
 
-    if (types.size === 1) return types.values().next().value
+    if (types.size === 1) return types.values().next().value || 'mixed'
     return 'mixed'
   }
 
@@ -403,8 +403,8 @@ export default function DataAnalystView() {
         const aVal = a[sortColumn]
         const bVal = b[sortColumn]
         if (aVal === bVal) return 0
-        if (aVal === null) return 1
-        if (bVal === null) return -1
+        if (aVal === null || aVal === undefined) return 1
+        if (bVal === null || bVal === undefined) return -1
         const cmp = aVal < bVal ? -1 : 1
         return sortDirection === 'asc' ? cmp : -cmp
       })

@@ -63,8 +63,6 @@ class VoiceService {
   private isListening: boolean = false
   private transcriptCallback: TranscriptCallback | null = null
   private errorCallback: ErrorCallback | null = null
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  private _speechEndCallback: SpeechEndCallback | null = null
 
   private config: VoiceServiceConfig = {
     language: 'en-US',

@@ -1029,7 +1029,7 @@ function ExecutePanel({
   agent: SelfAnnealingAgent
   result: TaskResult | null
   logs: Array<{ message: string; type: string; timestamp: Date }>
-  logsEndRef: React.RefObject<HTMLDivElement>
+  logsEndRef: React.RefObject<HTMLDivElement | null>
 }) {
   const [showResult, setShowResult] = useState(true)
 

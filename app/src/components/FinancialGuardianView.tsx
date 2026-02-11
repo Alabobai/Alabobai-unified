@@ -3,10 +3,10 @@
  * A fully functional financial management tool with AI-powered analysis
  */
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import {
-  Shield, Plus, Trash2, Edit3, Save, X, DollarSign,
-  TrendingUp, TrendingDown, PieChart, Calendar, Target,
+  Shield, Plus, Trash2, Edit3, X, DollarSign,
+  TrendingUp, TrendingDown, PieChart, Target,
   AlertTriangle, Download, Upload, FileText, Brain,
   Loader2, CheckCircle2, Clock, ArrowRight, Sparkles,
   BarChart2, Wallet, CreditCard, Home, Zap, Car, ShoppingBag,
