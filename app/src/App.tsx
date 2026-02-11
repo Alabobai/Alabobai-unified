@@ -6,6 +6,9 @@ import CompanyWizard from './components/CompanyWizard'
 import CompanyDashboard from './components/CompanyDashboard'
 import AutonomousAgentView from './components/AutonomousAgentView'
 import SelfAnnealingAgentView from './components/SelfAnnealingAgentView'
+import DeepResearchView from './components/DeepResearchView'
+import PrivacyFortressView from './components/PrivacyFortressView'
+import FinancialGuardianView from './components/FinancialGuardianView'
 import SettingsModal from './components/SettingsModal'
 import { useAppStore } from './stores/appStore'
 import { aiService } from './services/ai'
@@ -64,6 +67,45 @@ function App() {
         <Sidebar />
         <div className="flex-1 overflow-hidden">
           <SelfAnnealingAgentView />
+        </div>
+        <SettingsModal isOpen={settingsOpen} onClose={toggleSettings} />
+      </div>
+    )
+  }
+
+  // Render Deep Research (full screen)
+  if (currentView === 'deep-research') {
+    return (
+      <div className="h-screen w-screen flex bg-black overflow-hidden">
+        <Sidebar />
+        <div className="flex-1 overflow-hidden">
+          <DeepResearchView />
+        </div>
+        <SettingsModal isOpen={settingsOpen} onClose={toggleSettings} />
+      </div>
+    )
+  }
+
+  // Render Privacy Fortress (full screen)
+  if (currentView === 'privacy-fortress') {
+    return (
+      <div className="h-screen w-screen flex bg-black overflow-hidden">
+        <Sidebar />
+        <div className="flex-1 overflow-hidden">
+          <PrivacyFortressView />
+        </div>
+        <SettingsModal isOpen={settingsOpen} onClose={toggleSettings} />
+      </div>
+    )
+  }
+
+  // Render Financial Guardian (full screen)
+  if (currentView === 'financial-guardian') {
+    return (
+      <div className="h-screen w-screen flex bg-black overflow-hidden">
+        <Sidebar />
+        <div className="flex-1 overflow-hidden">
+          <FinancialGuardianView />
         </div>
         <SettingsModal isOpen={settingsOpen} onClose={toggleSettings} />
       </div>

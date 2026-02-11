@@ -27,6 +27,7 @@ export default defineConfig({
     sourcemap: true,
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
+      external: ['@mlc-ai/web-llm'], // Optional dependency - not required for core functionality
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom'],

@@ -1,4 +1,4 @@
-import { MessageSquare, Plus, FolderOpen, Settings, ChevronLeft, ChevronRight, Rocket, LayoutDashboard, Brain, Zap, Flame } from 'lucide-react'
+import { MessageSquare, Plus, FolderOpen, Settings, ChevronLeft, ChevronRight, Rocket, LayoutDashboard, Brain, Zap, Flame, Search, Shield, Wallet } from 'lucide-react'
 import { useAppStore } from '@/stores/appStore'
 import AgentsPanel from './AgentsPanel'
 
@@ -120,6 +120,60 @@ export default function Sidebar() {
                 : 'bg-rose-gold-400/20 text-rose-gold-400 opacity-0 group-hover:opacity-100'
             } transition-opacity`}>
               AI+
+            </span>
+          </button>
+          <button
+            onClick={() => setView('deep-research')}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group ${
+              currentView === 'deep-research'
+                ? 'bg-gradient-to-r from-purple-500/20 to-purple-600/20 text-purple-400 border border-purple-400/30 shadow-glow-sm'
+                : 'text-white/70 hover:bg-white/5 hover:text-white'
+            }`}
+          >
+            <Search className={`w-4 h-4 ${currentView === 'deep-research' ? 'animate-pulse text-purple-400' : ''}`} />
+            <span className="text-sm">Deep Research</span>
+            <span className={`ml-auto text-[10px] px-1.5 py-0.5 rounded-full ${
+              currentView === 'deep-research'
+                ? 'bg-purple-500/30 text-purple-300'
+                : 'bg-purple-400/20 text-purple-400 opacity-0 group-hover:opacity-100'
+            } transition-opacity`}>
+              NEW
+            </span>
+          </button>
+          <button
+            onClick={() => setView('privacy-fortress')}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group ${
+              currentView === 'privacy-fortress'
+                ? 'bg-gradient-to-r from-emerald-500/20 to-emerald-600/20 text-emerald-400 border border-emerald-400/30 shadow-glow-sm'
+                : 'text-white/70 hover:bg-white/5 hover:text-white'
+            }`}
+          >
+            <Shield className={`w-4 h-4 ${currentView === 'privacy-fortress' ? 'animate-pulse text-emerald-400' : ''}`} />
+            <span className="text-sm">Privacy Fortress</span>
+            <span className={`ml-auto text-[10px] px-1.5 py-0.5 rounded-full ${
+              currentView === 'privacy-fortress'
+                ? 'bg-emerald-500/30 text-emerald-300'
+                : 'bg-emerald-400/20 text-emerald-400 opacity-0 group-hover:opacity-100'
+            } transition-opacity`}>
+              NEW
+            </span>
+          </button>
+          <button
+            onClick={() => setView('financial-guardian')}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group ${
+              currentView === 'financial-guardian'
+                ? 'bg-gradient-to-r from-green-500/20 to-emerald-600/20 text-green-400 border border-green-400/30 shadow-glow-sm'
+                : 'text-white/70 hover:bg-white/5 hover:text-white'
+            }`}
+          >
+            <Wallet className={`w-4 h-4 ${currentView === 'financial-guardian' ? 'animate-pulse text-green-400' : ''}`} />
+            <span className="text-sm">Financial Guardian</span>
+            <span className={`ml-auto text-[10px] px-1.5 py-0.5 rounded-full ${
+              currentView === 'financial-guardian'
+                ? 'bg-green-500/30 text-green-300'
+                : 'bg-green-400/20 text-green-400 opacity-0 group-hover:opacity-100'
+            } transition-opacity`}>
+              NEW
             </span>
           </button>
         </div>

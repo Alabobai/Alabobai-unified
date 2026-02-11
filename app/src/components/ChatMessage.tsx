@@ -1,19 +1,164 @@
-import { User, Bot, Copy, Check } from 'lucide-react'
-import { useState } from 'react'
+import React from 'react'
+import { User, Bot, Copy, Check, Eye, Code2 } from 'lucide-react'
+import { useState, useMemo } from 'react'
 import type { Message } from '@/stores/appStore'
+import { useAppStore } from '@/stores/appStore'
+import codeBuilder from '@/services/codeBuilder'
 
 interface ChatMessageProps {
   message: Message
 }
 
+// Parse message content and extract code blocks
+function parseContent(content: string): Array<{ type: 'text' | 'code'; content: string; language?: string }> {
+  const parts: Array<{ type: 'text' | 'code'; content: string; language?: string }> = []
+  const codeBlockRegex = /```(\w+)?\s*\n([\s\S]*?)```/g
+  let lastIndex = 0
+  let match
+
+  while ((match = codeBlockRegex.exec(content)) !== null) {
+    // Add text before this code block
+    if (match.index > lastIndex) {
+      const text = content.slice(lastIndex, match.index).trim()
+      if (text) {
+        parts.push({ type: 'text', content: text })
+      }
+    }
+
+    // Add the code block
+    parts.push({
+      type: 'code',
+      content: match[2].trim(),
+      language: match[1]?.toLowerCase() || 'text'
+    })
+
+    lastIndex = match.index + match[0].length
+  }
+
+  // Add remaining text
+  if (lastIndex < content.length) {
+    const text = content.slice(lastIndex).trim()
+    if (text) {
+      parts.push({ type: 'text', content: text })
+    }
+  }
+
+  // If no code blocks found, return the whole content as text
+  if (parts.length === 0) {
+    parts.push({ type: 'text', content })
+  }
+
+  return parts
+}
+
+// Simple syntax highlighting for code blocks
+function highlightCode(code: string, language: string): React.ReactElement {
+  // Basic syntax highlighting patterns
+  const patterns: { pattern: RegExp; className: string }[] = []
+
+  if (language === 'html' || language === 'xml') {
+    patterns.push(
+      { pattern: /(&lt;[\/]?[\w-]+)/g, className: 'text-rose-gold-400' }, // Tags
+      { pattern: /([\w-]+)=/g, className: 'text-yellow-400' }, // Attributes
+      { pattern: /"([^"]*)"/g, className: 'text-green-400' }, // Strings
+      { pattern: /(&lt;!--[\s\S]*?--&gt;)/g, className: 'text-white/40 italic' }, // Comments
+    )
+  } else if (language === 'javascript' || language === 'typescript' || language === 'jsx' || language === 'tsx') {
+    patterns.push(
+      { pattern: /\b(const|let|var|function|return|if|else|for|while|import|export|from|default|async|await|class|extends|new|this|try|catch|throw)\b/g, className: 'text-purple-400' }, // Keywords
+      { pattern: /\b(true|false|null|undefined)\b/g, className: 'text-orange-400' }, // Literals
+      { pattern: /"([^"]*)"|'([^']*)'/g, className: 'text-green-400' }, // Strings
+      { pattern: /\b(\d+\.?\d*)\b/g, className: 'text-orange-400' }, // Numbers
+      { pattern: /(\/\/.*$)/gm, className: 'text-white/40 italic' }, // Comments
+    )
+  } else if (language === 'python') {
+    patterns.push(
+      { pattern: /\b(def|class|return|if|elif|else|for|while|import|from|as|try|except|finally|with|lambda|and|or|not|in|is|True|False|None)\b/g, className: 'text-purple-400' }, // Keywords
+      { pattern: /"([^"]*)"|'([^']*)'/g, className: 'text-green-400' }, // Strings
+      { pattern: /\b(\d+\.?\d*)\b/g, className: 'text-orange-400' }, // Numbers
+      { pattern: /(#.*$)/gm, className: 'text-white/40 italic' }, // Comments
+    )
+  } else if (language === 'css') {
+    patterns.push(
+      { pattern: /([\w-]+):/g, className: 'text-cyan-400' }, // Properties
+      { pattern: /\.([\w-]+)/g, className: 'text-green-400' }, // Classes
+      { pattern: /#([\w-]+)/g, className: 'text-yellow-400' }, // IDs
+    )
+  }
+
+  // For now, just escape HTML and wrap in a pre
+  const escaped = code
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+
+  return (
+    <code dangerouslySetInnerHTML={{ __html: escaped }} />
+  )
+}
+
 export default function ChatMessage({ message }: ChatMessageProps) {
   const [copied, setCopied] = useState(false)
+  const [copiedCode, setCopiedCode] = useState<string | null>(null)
+  const { setGeneratedCode, setActiveTab, workspaceOpen, toggleWorkspace } = useAppStore()
   const isUser = message.role === 'user'
+
+  // Parse content into text and code parts
+  const contentParts = useMemo(() => {
+    if (message.status === 'streaming') {
+      // Don't parse while streaming - just show raw content
+      return [{ type: 'text' as const, content: message.content }]
+    }
+    return parseContent(message.content)
+  }, [message.content, message.status])
+
+  // Check if message contains previewable code
+  const hasPreviewableCode = useMemo(() => {
+    if (message.status === 'streaming') return false
+    const blocks = codeBuilder.extractCodeBlocks(message.content)
+    return blocks.some(b =>
+      b.language === 'html' ||
+      b.language === 'javascript' ||
+      b.language === 'typescript' ||
+      b.language === 'jsx' ||
+      b.language === 'tsx'
+    )
+  }, [message.content, message.status])
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(message.content)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  const handleCopyCode = async (code: string) => {
+    await navigator.clipboard.writeText(code)
+    setCopiedCode(code)
+    setTimeout(() => setCopiedCode(null), 2000)
+  }
+
+  const handlePreview = () => {
+    const blocks = codeBuilder.extractCodeBlocks(message.content)
+    const previewHtml = codeBuilder.makePreviewable(blocks)
+    if (previewHtml) {
+      setGeneratedCode(previewHtml)
+      if (!workspaceOpen) {
+        toggleWorkspace()
+      }
+      setActiveTab('preview')
+    }
+  }
+
+  const handleViewCode = () => {
+    const blocks = codeBuilder.extractCodeBlocks(message.content)
+    if (blocks.length > 0) {
+      const previewHtml = codeBuilder.makePreviewable(blocks) || blocks[0].code
+      setGeneratedCode(previewHtml)
+      if (!workspaceOpen) {
+        toggleWorkspace()
+      }
+      setActiveTab('code')
+    }
   }
 
   return (
@@ -32,16 +177,59 @@ export default function ChatMessage({ message }: ChatMessageProps) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <span className="text-sm font-medium text-white">
-              {isUser ? 'You' : 'Alabobai'}
+              {isUser ? 'You' : 'Code Builder'}
             </span>
             <span className="text-xs text-white/30">
               {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </span>
           </div>
 
-          {/* Message Content */}
-          <div className="text-sm text-white/80 whitespace-pre-wrap">
-            {message.content}
+          {/* Message Content with Code Blocks */}
+          <div className="text-sm text-white/80">
+            {contentParts.map((part, index) => {
+              if (part.type === 'code') {
+                return (
+                  <div key={index} className="my-3 rounded-lg overflow-hidden border border-white/10">
+                    {/* Code Header */}
+                    <div className="flex items-center justify-between px-3 py-2 bg-dark-200 border-b border-white/10">
+                      <span className="text-xs text-white/50 font-mono">
+                        {part.language?.toUpperCase() || 'CODE'}
+                      </span>
+                      <button
+                        onClick={() => handleCopyCode(part.content)}
+                        className="flex items-center gap-1 text-xs text-white/40 hover:text-white transition-colors"
+                      >
+                        {copiedCode === part.content ? (
+                          <>
+                            <Check className="w-3 h-3 text-green-400" />
+                            <span>Copied</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3 h-3" />
+                            <span>Copy</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                    {/* Code Content */}
+                    <div className="p-4 bg-dark-300 overflow-x-auto morphic-scrollbar">
+                      <pre className="text-xs font-mono leading-relaxed">
+                        {highlightCode(part.content, part.language || 'text')}
+                      </pre>
+                    </div>
+                  </div>
+                )
+              }
+
+              // Text content
+              return (
+                <div key={index} className="whitespace-pre-wrap">
+                  {part.content}
+                </div>
+              )
+            })}
+
             {message.status === 'streaming' && (
               <span className="inline-block w-2 h-4 bg-rose-gold-400 ml-1 animate-pulse" />
             )}
@@ -75,6 +263,24 @@ export default function ChatMessage({ message }: ChatMessageProps) {
           {/* Actions */}
           {!isUser && message.status === 'complete' && (
             <div className="flex items-center gap-2 mt-3">
+              {hasPreviewableCode && (
+                <>
+                  <button
+                    onClick={handlePreview}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-rose-gold-400/20 text-rose-gold-400 hover:bg-rose-gold-400/30 transition-colors"
+                  >
+                    <Eye className="w-3 h-3" />
+                    <span>Preview</span>
+                  </button>
+                  <button
+                    onClick={handleViewCode}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-white/5 text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+                  >
+                    <Code2 className="w-3 h-3" />
+                    <span>View in Editor</span>
+                  </button>
+                </>
+              )}
               <button
                 onClick={handleCopy}
                 className="flex items-center gap-1.5 px-2 py-1 rounded text-xs text-white/40 hover:text-white hover:bg-white/5 transition-colors"
@@ -87,7 +293,7 @@ export default function ChatMessage({ message }: ChatMessageProps) {
                 ) : (
                   <>
                     <Copy className="w-3 h-3" />
-                    <span>Copy</span>
+                    <span>Copy All</span>
                   </>
                 )}
               </button>

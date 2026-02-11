@@ -6,10 +6,12 @@
  * - Step-by-step execution
  * - Source attribution
  * - Real-time progress updates
+ * - Real browser automation integration
  */
 
 import type { ExecutionStep, TaskExecution, Source } from '@/components/TaskExecutionPanel'
 import type { BrowserState } from '@/components/BrowserPreview'
+import browserAutomation from './browserAutomation'
 
 export interface TaskRunnerCallbacks {
   onStepStart: (step: ExecutionStep) => void
@@ -24,6 +26,7 @@ export interface TaskRunnerCallbacks {
 class TaskRunner {
   private currentExecution: TaskExecution | null = null
   private browserState: BrowserState | null = null
+  private useRealBrowser: boolean = true // Enable real browser automation
 
   // Create a new task execution plan based on user request
   createExecutionPlan(request: string): TaskExecution {
@@ -222,6 +225,13 @@ class TaskRunner {
   private async executeStep(step: ExecutionStep, callbacks: Partial<TaskRunnerCallbacks>): Promise<void> {
     const baseDelay = 800
 
+    // Use real browser automation if enabled
+    if (this.useRealBrowser) {
+      await this.executeStepWithRealBrowser(step, callbacks)
+      return
+    }
+
+    // Fallback to simulation
     switch (step.type) {
       case 'navigate':
         // Simulate navigation
@@ -296,6 +306,68 @@ class TaskRunner {
         await this.delay(baseDelay)
         break
     }
+  }
+
+  private async executeStepWithRealBrowser(step: ExecutionStep, callbacks: Partial<TaskRunnerCallbacks>): Promise<void> {
+    // Set up callback to forward browser state updates
+    browserAutomation.setCallbacks({
+      onStateChange: (state) => {
+        this.browserState = state
+        callbacks.onBrowserUpdate?.(state)
+      },
+      onError: (error) => {
+        callbacks.onError?.(error)
+      }
+    })
+
+    switch (step.type) {
+      case 'navigate':
+        const navResult = await browserAutomation.navigate(step.url || 'https://example.com')
+        step.result = navResult.success ? `Navigated to ${navResult.title}` : navResult.error
+        break
+
+      case 'type':
+        const typeText = step.description.match(/"([^"]+)"/)?.[1] || 'search query'
+        await browserAutomation.simulateType(typeText)
+        step.result = `Typed: ${typeText}`
+        break
+
+      case 'click':
+        await browserAutomation.simulateClick(step.description)
+        step.result = 'Click performed'
+        break
+
+      case 'scrape':
+        const content = await browserAutomation.extractContent()
+        if (content) {
+          step.result = `Extracted: ${content.title} (${content.text.slice(0, 100)}...)`
+        } else {
+          step.result = 'Content extraction attempted'
+        }
+        break
+
+      case 'screenshot':
+        const screenshot = await browserAutomation.takeScreenshot()
+        step.result = screenshot ? 'Screenshot captured' : 'Screenshot unavailable'
+        break
+
+      case 'analyze':
+        // Analysis is done on the client side, just mark as complete
+        step.result = 'Analysis complete'
+        await this.delay(500)
+        break
+
+      case 'search':
+        // For search, navigate to a search engine with the query
+        const query = step.description.replace(/search|for|about/gi, '').trim()
+        await browserAutomation.navigate(`https://duckduckgo.com/?q=${encodeURIComponent(query)}`)
+        step.result = `Searched for: ${query}`
+        break
+    }
+  }
+
+  setUseRealBrowser(value: boolean): void {
+    this.useRealBrowser = value
   }
 
   private generateSources(_step: ExecutionStep): Source[] {

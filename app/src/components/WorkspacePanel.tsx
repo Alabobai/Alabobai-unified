@@ -1,14 +1,16 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   Eye, Code2, Terminal, FolderTree, Undo2, Redo2,
   Play, RefreshCw, ExternalLink, X, ChevronRight,
   File, Folder, FileCode, FileJson, FileText,
-  Globe, Zap
+  Globe, Zap, Loader2, StopCircle, Copy, Check,
+  Download, Maximize2, Minimize2
 } from 'lucide-react'
 import { useAppStore } from '@/stores/appStore'
-import TaskExecutionPanel, { type TaskExecution } from './TaskExecutionPanel'
+import TaskExecutionPanel, { type TaskExecution, type Source } from './TaskExecutionPanel'
 import BrowserPreview, { type BrowserState } from './BrowserPreview'
 import taskRunner from '@/services/taskRunner'
+import browserAutomation from '@/services/browserAutomation'
 
 const fileIcons: Record<string, typeof File> = {
   tsx: FileCode,
@@ -33,48 +35,153 @@ export default function WorkspacePanel() {
 
   const [currentExecution, setCurrentExecution] = useState<TaskExecution | null>(null)
   const [browserState, setBrowserState] = useState<BrowserState | null>(null)
+  const [isDemoRunning, setIsDemoRunning] = useState(false)
+  const [demoStep, setDemoStep] = useState('')
 
-  // Extended tabs with Browser and Tasks
+  // Extended tabs - Preview and Code first for Code Builder focus
   const tabs = [
-    { id: 'browser', label: 'Browser', icon: Globe },
-    { id: 'tasks', label: 'Tasks', icon: Zap },
     { id: 'preview', label: 'Preview', icon: Eye },
     { id: 'code', label: 'Code', icon: Code2 },
+    { id: 'browser', label: 'Browser', icon: Globe },
+    { id: 'tasks', label: 'Tasks', icon: Zap },
     { id: 'terminal', label: 'Terminal', icon: Terminal },
     { id: 'files', label: 'Files', icon: FolderTree },
   ] as const
 
-  // Demo: Start a sample task execution when tasks tab is active
-  const startDemoExecution = async () => {
-    const execution = taskRunner.createExecutionPlan('Search for latest AI developments and summarize findings')
-    setCurrentExecution(execution)
-
-    // Switch to browser tab to show the action
-    setActiveTab('browser' as any)
-
-    await taskRunner.executeTask(execution, {
-      onStepStart: (_step) => {
-        setCurrentExecution(prev => prev ? { ...prev } : null)
-      },
-      onStepComplete: (_step) => {
-        setCurrentExecution(prev => prev ? { ...prev } : null)
-      },
-      onSourceFound: (source) => {
-        setCurrentExecution(prev => {
-          if (!prev) return null
-          return { ...prev, sources: [...prev.sources, source] }
-        })
-      },
-      onBrowserUpdate: (state) => {
+  // Set up browser automation callbacks
+  useEffect(() => {
+    browserAutomation.setCallbacks({
+      onStateChange: (state) => {
         setBrowserState(state)
       },
-      onProgress: (exec) => {
-        setCurrentExecution({ ...exec })
-      },
-      onComplete: (exec) => {
-        setCurrentExecution({ ...exec })
-      },
+      onError: (error) => {
+        console.error('Browser automation error:', error)
+      }
     })
+  }, [])
+
+  // Real demo task that actually navigates to websites
+  const startRealDemoTask = useCallback(async () => {
+    setIsDemoRunning(true)
+    setActiveTab('browser' as unknown as 'browser')
+
+    // Create execution plan for tracking
+    const execution: TaskExecution = {
+      id: crypto.randomUUID(),
+      title: 'Browse Wikipedia and extract AI information',
+      status: 'running',
+      steps: [
+        { id: '1', type: 'navigate', description: 'Navigate to Wikipedia', status: 'pending' },
+        { id: '2', type: 'type', description: 'Search for Artificial Intelligence', status: 'pending' },
+        { id: '3', type: 'click', description: 'Click search button', status: 'pending' },
+        { id: '4', type: 'navigate', description: 'Load article page', status: 'pending' },
+        { id: '5', type: 'scrape', description: 'Extract page content', status: 'pending' },
+      ],
+      currentStep: 0,
+      sources: [],
+      startTime: new Date(),
+    }
+    setCurrentExecution(execution)
+
+    try {
+      // Step 1: Navigate to Wikipedia
+      execution.steps[0].status = 'running'
+      setCurrentExecution({ ...execution })
+      setDemoStep('Navigating to Wikipedia...')
+
+      await browserAutomation.navigate('https://en.wikipedia.org')
+      await delay(1000)
+
+      execution.steps[0].status = 'complete'
+      execution.steps[0].duration = 1000
+      execution.currentStep = 1
+      setCurrentExecution({ ...execution })
+
+      // Step 2: Type search query
+      execution.steps[1].status = 'running'
+      setCurrentExecution({ ...execution })
+      setDemoStep('Typing search query...')
+
+      await browserAutomation.simulateType('Artificial Intelligence', 'Search box')
+      await delay(800)
+
+      execution.steps[1].status = 'complete'
+      execution.steps[1].duration = 800
+      execution.currentStep = 2
+      setCurrentExecution({ ...execution })
+
+      // Step 3: Click search
+      execution.steps[2].status = 'running'
+      setCurrentExecution({ ...execution })
+      setDemoStep('Clicking search button...')
+
+      await browserAutomation.simulateClick('Search button')
+      await delay(500)
+
+      execution.steps[2].status = 'complete'
+      execution.steps[2].duration = 500
+      execution.currentStep = 3
+      setCurrentExecution({ ...execution })
+
+      // Step 4: Navigate to article
+      execution.steps[3].status = 'running'
+      setCurrentExecution({ ...execution })
+      setDemoStep('Loading article page...')
+
+      await browserAutomation.navigate('https://en.wikipedia.org/wiki/Artificial_intelligence')
+      await delay(1200)
+
+      execution.steps[3].status = 'complete'
+      execution.steps[3].duration = 1200
+      execution.currentStep = 4
+      setCurrentExecution({ ...execution })
+
+      // Step 5: Extract content
+      execution.steps[4].status = 'running'
+      setCurrentExecution({ ...execution })
+      setDemoStep('Extracting page content...')
+
+      const content = await browserAutomation.extractContent()
+      await delay(500)
+
+      execution.steps[4].status = 'complete'
+      execution.steps[4].duration = 500
+      execution.steps[4].result = content ? `Extracted: ${content.title}` : 'Content extracted'
+
+      // Add sources
+      const sources: Source[] = [
+        {
+          id: crypto.randomUUID(),
+          title: 'Artificial intelligence - Wikipedia',
+          url: 'https://en.wikipedia.org/wiki/Artificial_intelligence',
+          type: 'web',
+          snippet: content?.description || 'Article about artificial intelligence from Wikipedia',
+          timestamp: new Date(),
+        }
+      ]
+      execution.sources = sources
+
+      // Complete execution
+      execution.status = 'complete'
+      setCurrentExecution({ ...execution })
+      setDemoStep('Demo completed!')
+
+    } catch (error) {
+      console.error('Demo task error:', error)
+      execution.status = 'error' as TaskExecution['status']
+      setCurrentExecution({ ...execution })
+      setDemoStep('Demo failed')
+    } finally {
+      setIsDemoRunning(false)
+    }
+  }, [setActiveTab])
+
+  const stopDemo = () => {
+    setIsDemoRunning(false)
+    if (currentExecution) {
+      currentExecution.status = 'paused'
+      setCurrentExecution({ ...currentExecution })
+    }
   }
 
   return (
@@ -122,7 +229,10 @@ export default function WorkspacePanel() {
           <BrowserTab
             browserState={browserState}
             execution={currentExecution}
-            onStartDemo={startDemoExecution}
+            onStartDemo={startRealDemoTask}
+            onStopDemo={stopDemo}
+            isDemoRunning={isDemoRunning}
+            demoStep={demoStep}
           />
         )}
         {activeTab === 'tasks' && (
@@ -176,35 +286,59 @@ interface BrowserTabProps {
   browserState: BrowserState | null
   execution: TaskExecution | null
   onStartDemo: () => void
+  onStopDemo: () => void
+  isDemoRunning: boolean
+  demoStep: string
 }
 
-function BrowserTab({ browserState, execution, onStartDemo }: BrowserTabProps) {
+function BrowserTab({ browserState, execution, onStartDemo, onStopDemo, isDemoRunning, demoStep }: BrowserTabProps) {
   return (
     <div className="h-full flex flex-col">
       {/* Browser Preview */}
       <div className="flex-1">
         <BrowserPreview
           state={browserState}
-          isLive={execution?.status === 'running'}
+          isLive={execution?.status === 'running' || isDemoRunning}
         />
       </div>
 
-      {/* Quick Actions */}
-      {!browserState && !execution && (
+      {/* Quick Actions - Show when no browser state and not running */}
+      {!browserState && !execution && !isDemoRunning && (
         <div className="p-4 border-t border-white/10 bg-dark-300">
-          <p className="text-xs text-white/40 mb-3">Start an AI task to see live browser actions</p>
+          <p className="text-xs text-white/40 mb-3">
+            Start an AI task to see live browser actions, or enter a URL above
+          </p>
           <button
             onClick={onStartDemo}
             className="w-full py-2 px-4 rounded-lg bg-rose-gold-400/20 text-rose-gold-400 text-sm font-medium hover:bg-rose-gold-400/30 transition-colors flex items-center justify-center gap-2"
           >
             <Play className="w-4 h-4" />
-            Run Demo Task
+            Run Demo Task (Real Navigation)
           </button>
         </div>
       )}
 
+      {/* Demo Running Status */}
+      {isDemoRunning && (
+        <div className="p-3 border-t border-white/10 bg-dark-300">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Loader2 className="w-4 h-4 text-rose-gold-400 animate-spin" />
+              <span className="text-xs text-white/70">{demoStep || 'Running demo...'}</span>
+            </div>
+            <button
+              onClick={onStopDemo}
+              className="flex items-center gap-1 px-2 py-1 rounded bg-red-500/20 text-red-400 text-xs hover:bg-red-500/30 transition-colors"
+            >
+              <StopCircle className="w-3 h-3" />
+              Stop
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Execution Mini Status */}
-      {execution && (
+      {execution && !isDemoRunning && (
         <div className="p-3 border-t border-white/10 bg-dark-300">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -223,9 +357,19 @@ function BrowserTab({ browserState, execution, onStartDemo }: BrowserTabProps) {
                   : 'Task paused'}
               </span>
             </div>
-            <span className="text-xs text-white/40">
-              {execution.sources.length} sources
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-white/40">
+                {execution.sources.length} sources
+              </span>
+              {execution.status === 'complete' && (
+                <button
+                  onClick={onStartDemo}
+                  className="text-xs text-rose-gold-400 hover:underline"
+                >
+                  Run Again
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -233,9 +377,17 @@ function BrowserTab({ browserState, execution, onStartDemo }: BrowserTabProps) {
   )
 }
 
+// Helper function for delays
+function delay(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
 function PreviewTab() {
-  const { previewUrl, generatedCode, setGeneratedCode } = useAppStore()
+  const { previewUrl, generatedCode, setGeneratedCode, setActiveTab } = useAppStore()
   const [key, setKey] = useState(0) // For forcing iframe refresh
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const [copied, setCopied] = useState(false)
+  const iframeRef = useRef<HTMLIFrameElement>(null)
 
   const handleRefresh = () => {
     setKey(k => k + 1)
@@ -256,14 +408,40 @@ function PreviewTab() {
     setGeneratedCode(null)
   }
 
+  const handleCopy = async () => {
+    if (generatedCode) {
+      await navigator.clipboard.writeText(generatedCode)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
+  const handleDownload = () => {
+    if (generatedCode) {
+      const blob = new Blob([generatedCode], { type: 'text/html' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'generated-page.html'
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    }
+  }
+
   const hasContent = generatedCode || previewUrl
 
   return (
-    <div className="h-full flex flex-col">
+    <div className={`h-full flex flex-col ${isFullscreen ? 'fixed inset-0 z-50 bg-dark-400' : ''}`}>
       {/* Browser Chrome */}
       <div className="flex items-center gap-2 px-4 py-2 bg-dark-300 border-b border-white/10">
         <div className="flex gap-1.5">
-          <span className="w-3 h-3 rounded-full bg-red-500/80 cursor-pointer" onClick={handleClear} title="Clear preview" />
+          <span
+            className="w-3 h-3 rounded-full bg-red-500/80 cursor-pointer hover:bg-red-500 transition-colors"
+            onClick={handleClear}
+            title="Clear preview"
+          />
           <span className="w-3 h-3 rounded-full bg-yellow-500/80" />
           <span className="w-3 h-3 rounded-full bg-green-500/80" />
         </div>
@@ -288,12 +466,35 @@ function PreviewTab() {
             <RefreshCw className="w-4 h-4" />
           </button>
           <button
+            onClick={handleCopy}
+            disabled={!generatedCode}
+            className="p-1.5 rounded text-white/40 hover:text-white hover:bg-white/5 transition-colors disabled:opacity-30"
+            title="Copy HTML"
+          >
+            {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+          </button>
+          <button
+            onClick={handleDownload}
+            disabled={!generatedCode}
+            className="p-1.5 rounded text-white/40 hover:text-white hover:bg-white/5 transition-colors disabled:opacity-30"
+            title="Download HTML"
+          >
+            <Download className="w-4 h-4" />
+          </button>
+          <button
             onClick={handleOpenExternal}
             disabled={!hasContent}
             className="p-1.5 rounded text-white/40 hover:text-white hover:bg-white/5 transition-colors disabled:opacity-30"
             title="Open in new tab"
           >
             <ExternalLink className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => setIsFullscreen(!isFullscreen)}
+            className="p-1.5 rounded text-white/40 hover:text-white hover:bg-white/5 transition-colors"
+            title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+          >
+            {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
           </button>
         </div>
       </div>
@@ -302,11 +503,12 @@ function PreviewTab() {
       <div className="flex-1 bg-white overflow-hidden">
         {generatedCode ? (
           <iframe
+            ref={iframeRef}
             key={key}
             srcDoc={generatedCode}
             className="w-full h-full border-0"
             title="Generated Preview"
-            sandbox="allow-scripts allow-same-origin"
+            sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
           />
         ) : previewUrl ? (
           <iframe
@@ -325,13 +527,31 @@ function PreviewTab() {
           </div>
         )}
       </div>
+
+      {/* Quick Actions Bar */}
+      {generatedCode && (
+        <div className="flex items-center justify-between px-4 py-2 bg-dark-300 border-t border-white/10">
+          <button
+            onClick={() => setActiveTab('code')}
+            className="text-xs text-rose-gold-400 hover:underline flex items-center gap-1"
+          >
+            <Code2 className="w-3 h-3" />
+            Edit Code
+          </button>
+          <span className="text-xs text-white/40">
+            {generatedCode.length.toLocaleString()} characters
+          </span>
+        </div>
+      )}
     </div>
   )
 }
 
 function CodeTab() {
-  const { files, activeFile, generatedCode } = useAppStore()
+  const { files, activeFile, generatedCode, setGeneratedCode, setActiveTab } = useAppStore()
   const [MonacoEditor, setMonacoEditor] = useState<any>(null)
+  const [editableCode, setEditableCode] = useState<string>('')
+  const [hasChanges, setHasChanges] = useState(false)
 
   const currentFile = activeFile ? findFile(files, activeFile) : null
 
@@ -340,13 +560,41 @@ function CodeTab() {
     import('./MonacoEditor').then(mod => setMonacoEditor(() => mod.default))
   }, [])
 
-  const content = currentFile?.content || generatedCode || ''
+  // Sync editable code with generated code
+  useEffect(() => {
+    const content = currentFile?.content || generatedCode || ''
+    setEditableCode(content)
+    setHasChanges(false)
+  }, [currentFile?.content, generatedCode])
+
+  const handleCodeChange = useCallback((value: string) => {
+    setEditableCode(value)
+    setHasChanges(value !== (currentFile?.content || generatedCode || ''))
+  }, [currentFile?.content, generatedCode])
+
+  const handleApplyChanges = () => {
+    if (editableCode) {
+      setGeneratedCode(editableCode)
+      setHasChanges(false)
+      setActiveTab('preview')
+    }
+  }
+
+  const content = editableCode || currentFile?.content || generatedCode || ''
+
+  // Detect language
+  const detectLanguage = (code: string): string => {
+    if (code.includes('<!DOCTYPE') || code.includes('<html')) return 'html'
+    if (code.includes('import React') || code.includes('useState')) return 'typescript'
+    if (code.includes('def ') && code.includes(':')) return 'python'
+    return 'typescript'
+  }
 
   return (
     <div className="h-full flex flex-col">
       {/* File tabs */}
-      {(activeFile || generatedCode) && (
-        <div className="flex items-center gap-1 px-2 py-1.5 bg-dark-300 border-b border-white/10 overflow-x-auto">
+      {(activeFile || generatedCode || editableCode) && (
+        <div className="flex items-center justify-between px-2 py-1.5 bg-dark-300 border-b border-white/10">
           <div className="flex items-center gap-2 px-3 py-1 rounded bg-dark-200 border border-white/10 text-xs">
             <FileCode className="w-3.5 h-3.5 text-rose-gold-400" />
             <span className="text-white/80">
@@ -357,17 +605,36 @@ function CodeTab() {
                 AI
               </span>
             )}
-            <button className="text-white/40 hover:text-white">
+            {hasChanges && (
+              <span className="px-1.5 py-0.5 rounded bg-yellow-500/20 text-yellow-400 text-[10px]">
+                MODIFIED
+              </span>
+            )}
+            <button className="text-white/40 hover:text-white ml-1">
               <X className="w-3 h-3" />
             </button>
           </div>
+          {hasChanges && (
+            <button
+              onClick={handleApplyChanges}
+              className="flex items-center gap-1.5 px-3 py-1 rounded bg-rose-gold-400/20 text-rose-gold-400 text-xs hover:bg-rose-gold-400/30 transition-colors"
+            >
+              <Play className="w-3 h-3" />
+              Apply & Preview
+            </button>
+          )}
         </div>
       )}
 
       {/* Code editor */}
       <div className="flex-1 overflow-hidden">
         {content && MonacoEditor ? (
-          <MonacoEditor value={content} readOnly />
+          <MonacoEditor
+            value={editableCode}
+            language={detectLanguage(content)}
+            onChange={handleCodeChange}
+            readOnly={false}
+          />
         ) : content ? (
           <div className="h-full overflow-auto morphic-scrollbar p-4 font-mono text-sm bg-dark-400">
             <pre className="text-white/80 whitespace-pre-wrap">{content}</pre>
@@ -376,12 +643,20 @@ function CodeTab() {
           <div className="h-full flex items-center justify-center text-white/30 bg-dark-400">
             <div className="text-center">
               <Code2 className="w-12 h-12 mx-auto mb-3 opacity-50" />
-              <p className="text-sm">No file selected</p>
+              <p className="text-sm">No code to display</p>
               <p className="text-xs mt-1">Ask AI to build something or select a file</p>
             </div>
           </div>
         )}
       </div>
+
+      {/* Status bar */}
+      {content && (
+        <div className="flex items-center justify-between px-4 py-2 bg-dark-300 border-t border-white/10 text-xs text-white/40">
+          <span>{detectLanguage(content).toUpperCase()}</span>
+          <span>{content.split('\n').length} lines</span>
+        </div>
+      )}
     </div>
   )
 }

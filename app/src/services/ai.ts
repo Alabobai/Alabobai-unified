@@ -1,7 +1,9 @@
 /**
  * Alabobai AI Service
- * Multi-provider AI with Groq API and WebLLM fallback
+ * Multi-provider AI with Groq API, Ollama, and WebLLM fallback
  */
+
+import { OllamaProvider } from './ollama'
 
 export interface Message {
   role: 'user' | 'assistant' | 'system'
@@ -147,6 +149,7 @@ export class WebLLMProvider implements AIProvider {
   private async _doInitialize(): Promise<void> {
     try {
       // Dynamic import to avoid loading WebLLM until needed
+      // @ts-ignore - WebLLM may not be installed in all environments
       const webllm = await import('@mlc-ai/web-llm')
 
       this.engine = await webllm.CreateMLCEngine(this.model, {
@@ -426,6 +429,7 @@ class AIService {
     this.currentProvider = new MockProvider()
     this.providers = [
       new GroqAPIProvider(),
+      new OllamaProvider(),
       new WebLLMProvider(),
       new MockProvider()
     ]
@@ -438,7 +442,7 @@ class AIService {
   }
 
   private async _doInitialize(): Promise<void> {
-    // Try Groq API first (fastest)
+    // Try Groq API first (fastest, cloud-based)
     const groqProvider = this.providers.find(p => p.name === 'Groq')
     if (groqProvider) {
       await groqProvider.initialize?.()
@@ -449,8 +453,19 @@ class AIService {
       }
     }
 
-    // Try WebLLM (slower but works offline)
-    console.log('[AI Service] Groq not available, WebLLM available as fallback')
+    // Try Ollama second (local, fast if running)
+    const ollamaProvider = this.providers.find(p => p.name === 'Ollama')
+    if (ollamaProvider) {
+      await ollamaProvider.initialize?.()
+      if (ollamaProvider.isReady()) {
+        console.log(`[AI Service] Using Ollama (${ollamaProvider.model})`)
+        this.currentProvider = ollamaProvider
+        return
+      }
+    }
+
+    // Try WebLLM (slower but works offline in browser)
+    console.log('[AI Service] Groq and Ollama not available, WebLLM available as fallback')
     // Don't initialize WebLLM yet - it's slow. Initialize on first use.
 
     // Fall back to mock for now
@@ -479,6 +494,51 @@ class AIService {
       }
     }
     return false
+  }
+
+  async switchToOllama(callbacks?: StreamCallbacks): Promise<boolean> {
+    const ollamaProvider = this.providers.find(p => p.name === 'Ollama')
+    if (ollamaProvider) {
+      try {
+        callbacks?.onStatus?.('Connecting to Ollama...')
+        await ollamaProvider.initialize?.()
+        if (ollamaProvider.isReady()) {
+          this.currentProvider = ollamaProvider
+          console.log(`[AI Service] Switched to Ollama (${ollamaProvider.model})`)
+          return true
+        }
+        callbacks?.onStatus?.('Ollama not available')
+        return false
+      } catch (error) {
+        console.error('[AI Service] Failed to connect to Ollama:', error)
+        return false
+      }
+    }
+    return false
+  }
+
+  /**
+   * Get the Ollama provider for advanced operations
+   */
+  getOllamaProvider(): OllamaProvider | null {
+    const provider = this.providers.find(p => p.name === 'Ollama')
+    return provider as OllamaProvider | null
+  }
+
+  /**
+   * List all available providers and their status
+   */
+  async getProviderStatus(): Promise<Array<{ name: string; model: string; ready: boolean }>> {
+    const status = []
+    for (const provider of this.providers) {
+      await provider.initialize?.()
+      status.push({
+        name: provider.name,
+        model: provider.model,
+        ready: provider.isReady()
+      })
+    }
+    return status
   }
 
   async chat(messages: Message[], callbacks: StreamCallbacks): Promise<void> {

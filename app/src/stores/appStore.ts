@@ -53,7 +53,7 @@ export interface HistoryEntry {
   undone?: boolean
 }
 
-type AppView = 'chat' | 'company-wizard' | 'company-dashboard' | 'autonomous-agents' | 'self-annealing'
+type AppView = 'chat' | 'company-wizard' | 'company-dashboard' | 'autonomous-agents' | 'self-annealing' | 'deep-research' | 'privacy-fortress' | 'financial-guardian'
 
 interface AppState {
   // UI State

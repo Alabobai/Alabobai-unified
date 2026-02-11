@@ -47,6 +47,41 @@ const createBuildSteps = (): BuildStep[] => [
   { id: 'launch', name: 'Going live!', department: 'Launch', icon: Rocket, status: 'pending', description: 'Deploying your company...' },
 ]
 
+// Logo style variations for Pollinations.ai
+interface LogoVariation {
+  id: string
+  style: string
+  prompt: string
+  url: string
+}
+
+function generateLogoVariations(companyName: string, companyType: string): LogoVariation[] {
+  const basePrompts = [
+    {
+      id: 'minimal',
+      style: 'Minimalist',
+      promptTemplate: `Professional minimalist logo for ${companyName}, a ${companyType} company, clean vector design, simple geometric shapes, modern branding, white background, no text, single color accent`
+    },
+    {
+      id: 'gradient',
+      style: 'Modern Gradient',
+      promptTemplate: `Modern gradient logo for ${companyName}, a ${companyType} company, vibrant colors, contemporary design, sleek professional look, white background, no text, tech startup style`
+    },
+    {
+      id: 'abstract',
+      style: 'Abstract',
+      promptTemplate: `Abstract artistic logo for ${companyName}, a ${companyType} company, creative unique design, bold shapes, professional branding, white background, no text, innovative concept`
+    }
+  ]
+
+  return basePrompts.map(item => ({
+    id: item.id,
+    style: item.style,
+    prompt: item.promptTemplate,
+    url: `https://image.pollinations.ai/prompt/${encodeURIComponent(item.promptTemplate)}?width=512&height=512&nologo=true&seed=${Date.now()}`
+  }))
+}
+
 export default function CompanyWizard() {
   const { setView } = useAppStore()
 
@@ -55,13 +90,17 @@ export default function CompanyWizard() {
   const [companyIdea, setCompanyIdea] = useState('')
   const [companyName, setCompanyName] = useState('')
   const [suggestedNames, setSuggestedNames] = useState<string[]>([])
+  const [logoVariations, setLogoVariations] = useState<LogoVariation[]>([])
+  const [selectedLogoId, setSelectedLogoId] = useState<string | null>(null)
   const [logoUrl, setLogoUrl] = useState<string | null>(null)
   const [isGeneratingNames, setIsGeneratingNames] = useState(false)
-  const [isGeneratingLogo, setIsGeneratingLogo] = useState(false)
+  const [isGeneratingLogos, setIsGeneratingLogos] = useState(false)
+  const [logosLoaded, setLogosLoaded] = useState<Record<string, boolean>>({})
+  const [logoErrors, setLogoErrors] = useState<Record<string, boolean>>({})
   const [isBuilding, setIsBuilding] = useState(false)
   const [buildSteps, setBuildSteps] = useState<BuildStep[]>([])
   const [error, setError] = useState<string | null>(null)
-  const [companyData, setCompanyData] = useState<any>(null)
+  const [_companyData, setCompanyData] = useState<any>(null)
 
   // Generate company name suggestions using AI
   const generateNames = useCallback(async () => {
@@ -82,18 +121,27 @@ export default function CompanyWizard() {
         }),
       })
 
-      if (!response.ok) throw new Error('Failed to generate names')
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || 'Failed to generate names')
+      }
 
       const data = await response.json()
-      setSuggestedNames(data.names || [])
+      if (data.names && Array.isArray(data.names) && data.names.length > 0) {
+        setSuggestedNames(data.names)
+      } else {
+        throw new Error('No names returned')
+      }
     } catch (err) {
       console.error('Name generation error:', err)
-      // Fallback names
+      // Fallback names based on company idea
+      const words = companyIdea.split(' ').filter(w => w.length > 3)
+      const firstWord = words[0] || 'Next'
       setSuggestedNames([
-        `${companyIdea.split(' ')[0]}Hub`,
-        `${companyType}Flow`,
-        'NextGen Solutions',
-        'Innovate Labs',
+        `${firstWord}Hub`,
+        `${firstWord}io`,
+        `${firstWord}Labs`,
+        'Innovate Pro',
         'Peak Ventures'
       ])
     } finally {
@@ -101,37 +149,65 @@ export default function CompanyWizard() {
     }
   }, [companyType, companyIdea])
 
-  // Generate logo using Pollinations.ai
-  const generateLogo = useCallback(async () => {
-    if (!companyName) return
+  // Generate 3 logo variations using Pollinations.ai
+  const generateLogos = useCallback(() => {
+    if (!companyName || !companyType) return
 
-    setIsGeneratingLogo(true)
+    setIsGeneratingLogos(true)
+    setLogosLoaded({})
+    setLogoErrors({})
+    setSelectedLogoId(null)
+    setLogoUrl(null)
     setError(null)
 
-    try {
-      const response = await fetch('/api/company', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'generate-logo',
-          name: companyName,
-          companyType,
-        }),
-      })
+    // Generate the 3 logo variations with different styles
+    const variations = generateLogoVariations(companyName, companyType)
+    setLogoVariations(variations)
 
-      if (!response.ok) throw new Error('Failed to generate logo')
-
-      const data = await response.json()
-      setLogoUrl(data.logoUrl)
-    } catch (err) {
-      console.error('Logo generation error:', err)
-      // Fallback to direct Pollinations URL
-      const prompt = encodeURIComponent(`Professional minimalist logo for ${companyName} ${companyType} company, clean design, white background`)
-      setLogoUrl(`https://image.pollinations.ai/prompt/${prompt}?width=512&height=512&nologo=true`)
-    } finally {
-      setIsGeneratingLogo(false)
-    }
+    // Mark as not generating immediately since URLs are ready
+    // The actual loading happens when images render
+    setTimeout(() => {
+      setIsGeneratingLogos(false)
+    }, 500)
   }, [companyName, companyType])
+
+  // Handle logo image load
+  const handleLogoLoad = (logoId: string) => {
+    setLogosLoaded(prev => ({ ...prev, [logoId]: true }))
+  }
+
+  // Handle logo image error
+  const handleLogoError = (logoId: string) => {
+    setLogoErrors(prev => ({ ...prev, [logoId]: true }))
+    setLogosLoaded(prev => ({ ...prev, [logoId]: true })) // Mark as loaded to stop spinner
+  }
+
+  // Select a logo
+  const selectLogo = (variation: LogoVariation) => {
+    setSelectedLogoId(variation.id)
+    setLogoUrl(variation.url)
+  }
+
+  // Regenerate a single logo variation
+  const regenerateLogo = (index: number) => {
+    if (!companyName || !companyType) return
+
+    const newVariations = [...logoVariations]
+    const currentVariation = newVariations[index]
+
+    // Create new URL with different seed
+    const newUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(currentVariation.prompt)}?width=512&height=512&nologo=true&seed=${Date.now()}`
+    newVariations[index] = { ...currentVariation, url: newUrl }
+
+    setLogoVariations(newVariations)
+    setLogosLoaded(prev => ({ ...prev, [currentVariation.id]: false }))
+    setLogoErrors(prev => ({ ...prev, [currentVariation.id]: false }))
+
+    // If this was the selected logo, update the URL
+    if (selectedLogoId === currentVariation.id) {
+      setLogoUrl(newUrl)
+    }
+  }
 
   // Start building the company
   const startBuilding = async () => {
@@ -163,7 +239,7 @@ export default function CompanyWizard() {
         })))
       }
 
-      // Create the company
+      // Create the company with the selected logo
       const response = await fetch('/api/company', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -172,12 +248,28 @@ export default function CompanyWizard() {
           name: companyName,
           companyType,
           description: companyIdea,
+          logoUrl: logoUrl, // Pass the selected logo URL
         }),
       })
 
       if (response.ok) {
         const data = await response.json()
+        // Override the logo with user's selection if available
+        if (logoUrl && data.company) {
+          data.company.logo = logoUrl
+        }
         setCompanyData(data.company)
+      } else {
+        // Create company data locally if API fails
+        setCompanyData({
+          id: crypto.randomUUID(),
+          name: companyName,
+          type: companyType,
+          description: companyIdea,
+          logo: logoUrl || `https://image.pollinations.ai/prompt/${encodeURIComponent(`Logo for ${companyName}`)}&width=512&height=512&nologo=true`,
+          createdAt: new Date().toISOString(),
+          status: 'active',
+        })
       }
 
       setIsBuilding(false)
@@ -189,7 +281,7 @@ export default function CompanyWizard() {
   }
 
   const completedSteps = buildSteps.filter(s => s.status === 'complete').length
-  const progress = (completedSteps / buildSteps.length) * 100
+  const progress = buildSteps.length > 0 ? (completedSteps / buildSteps.length) * 100 : 0
 
   return (
     <div className="min-h-screen bg-dark-500 flex items-center justify-center p-6">
@@ -365,7 +457,7 @@ export default function CompanyWizard() {
                 <ArrowLeft className="w-5 h-5" /> Back
               </button>
               <button
-                onClick={() => { setStep(4); generateLogo(); }}
+                onClick={() => { setStep(4); generateLogos(); }}
                 disabled={!companyName}
                 className="px-8 py-3 rounded-xl bg-rose-gold-400 text-dark-500 font-semibold flex items-center gap-2 hover:bg-rose-gold-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -375,49 +467,131 @@ export default function CompanyWizard() {
           </div>
         )}
 
-        {/* Step 4: Logo & Brand */}
+        {/* Step 4: Brand Identity - Logo Selection */}
         {step === 4 && (
           <div className="animate-fade-in">
             <div className="text-center mb-8">
-              <h1 className="text-4xl font-bold text-white mb-3">Your company logo</h1>
-              <p className="text-white/60">AI-generated logo for {companyName}</p>
+              <h1 className="text-4xl font-bold text-white mb-3">Brand Identity</h1>
+              <p className="text-white/60">Choose a logo style for {companyName}</p>
             </div>
 
-            <div className="flex justify-center mb-8">
-              <div className="relative">
-                {isGeneratingLogo ? (
-                  <div className="w-64 h-64 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center">
-                    <div className="text-center">
-                      <Loader2 className="w-12 h-12 text-rose-gold-400 animate-spin mx-auto mb-3" />
-                      <p className="text-white/50">Generating logo...</p>
-                    </div>
-                  </div>
-                ) : logoUrl ? (
-                  <div className="relative">
-                    <img
-                      src={logoUrl}
-                      alt={`${companyName} logo`}
-                      className="w-64 h-64 rounded-3xl object-cover border-2 border-rose-gold-400/30"
-                      onError={(e) => {
-                        // Fallback if image fails to load
-                        (e.target as HTMLImageElement).src = `https://via.placeholder.com/512/1a1a1a/d9a07a?text=${encodeURIComponent(companyName.charAt(0))}`
-                      }}
-                    />
-                    <button
-                      onClick={generateLogo}
-                      className="absolute -bottom-3 -right-3 p-3 rounded-full bg-rose-gold-400 text-dark-500 hover:bg-rose-gold-300 transition-colors"
-                    >
-                      <RefreshCw className="w-5 h-5" />
-                    </button>
-                  </div>
-                ) : (
-                  <div className="w-64 h-64 rounded-3xl bg-gradient-to-br from-rose-gold-400 to-rose-gold-600 flex items-center justify-center">
-                    <span className="text-8xl font-bold text-white">{companyName.charAt(0)}</span>
-                  </div>
-                )}
+            {/* Generate Logo Options Button */}
+            {logoVariations.length === 0 && !isGeneratingLogos && (
+              <div className="flex justify-center mb-8">
+                <button
+                  onClick={generateLogos}
+                  className="px-8 py-4 rounded-xl bg-gradient-to-r from-rose-gold-400 to-rose-gold-600 text-dark-500 font-semibold flex items-center gap-3 hover:from-rose-gold-300 hover:to-rose-gold-500 transition-all shadow-glow"
+                >
+                  <Sparkles className="w-5 h-5" />
+                  Generate Logo Options
+                </button>
               </div>
-            </div>
+            )}
 
+            {/* Loading State */}
+            {isGeneratingLogos && (
+              <div className="flex flex-col items-center justify-center py-12">
+                <Loader2 className="w-12 h-12 text-rose-gold-400 animate-spin mb-4" />
+                <p className="text-white/60">Generating AI logo variations...</p>
+              </div>
+            )}
+
+            {/* Logo Variations Grid */}
+            {logoVariations.length > 0 && !isGeneratingLogos && (
+              <>
+                <div className="grid grid-cols-3 gap-6 mb-8">
+                  {logoVariations.map((variation, index) => (
+                    <div
+                      key={variation.id}
+                      className={`relative rounded-2xl border-2 overflow-hidden transition-all cursor-pointer ${
+                        selectedLogoId === variation.id
+                          ? 'border-rose-gold-400 ring-2 ring-rose-gold-400/30'
+                          : 'border-white/10 hover:border-white/30'
+                      }`}
+                      onClick={() => !logoErrors[variation.id] && selectLogo(variation)}
+                    >
+                      {/* Style Label */}
+                      <div className="absolute top-3 left-3 z-10">
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                          selectedLogoId === variation.id
+                            ? 'bg-rose-gold-400 text-dark-500'
+                            : 'bg-black/50 text-white backdrop-blur-sm'
+                        }`}>
+                          {variation.style}
+                        </span>
+                      </div>
+
+                      {/* Regenerate Button */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          regenerateLogo(index)
+                        }}
+                        className="absolute top-3 right-3 z-10 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 backdrop-blur-sm transition-colors"
+                        title="Regenerate this logo"
+                      >
+                        <RefreshCw className="w-4 h-4" />
+                      </button>
+
+                      {/* Selected Indicator */}
+                      {selectedLogoId === variation.id && (
+                        <div className="absolute bottom-3 right-3 z-10 w-8 h-8 rounded-full bg-rose-gold-400 flex items-center justify-center">
+                          <Check className="w-5 h-5 text-dark-500" />
+                        </div>
+                      )}
+
+                      {/* Logo Image Container */}
+                      <div className="aspect-square bg-white/5 flex items-center justify-center">
+                        {!logosLoaded[variation.id] && !logoErrors[variation.id] && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-white/5">
+                            <Loader2 className="w-8 h-8 text-rose-gold-400 animate-spin" />
+                          </div>
+                        )}
+
+                        {logoErrors[variation.id] ? (
+                          <div className="flex flex-col items-center justify-center text-white/40 p-4">
+                            <AlertCircle className="w-8 h-8 mb-2" />
+                            <p className="text-sm text-center">Failed to load</p>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                regenerateLogo(index)
+                              }}
+                              className="mt-2 text-xs text-rose-gold-400 hover:text-rose-gold-300"
+                            >
+                              Try again
+                            </button>
+                          </div>
+                        ) : (
+                          <img
+                            src={variation.url}
+                            alt={`${variation.style} logo for ${companyName}`}
+                            className={`w-full h-full object-cover transition-opacity ${
+                              logosLoaded[variation.id] ? 'opacity-100' : 'opacity-0'
+                            }`}
+                            onLoad={() => handleLogoLoad(variation.id)}
+                            onError={() => handleLogoError(variation.id)}
+                          />
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Regenerate All Button */}
+                <div className="flex justify-center mb-8">
+                  <button
+                    onClick={generateLogos}
+                    className="px-6 py-2 rounded-lg border border-white/20 text-white/70 text-sm flex items-center gap-2 hover:bg-white/5 transition-colors"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                    Generate New Options
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* Company Summary */}
             <div className="bg-white/5 rounded-2xl p-6 mb-8">
               <h3 className="text-lg font-semibold text-white mb-4">Company Summary</h3>
               <div className="grid grid-cols-2 gap-4 text-sm">
@@ -433,6 +607,14 @@ export default function CompanyWizard() {
                   <p className="text-white/50">Description</p>
                   <p className="text-white">{companyIdea}</p>
                 </div>
+                {selectedLogoId && (
+                  <div className="col-span-2">
+                    <p className="text-white/50">Selected Logo Style</p>
+                    <p className="text-rose-gold-400 font-medium">
+                      {logoVariations.find(v => v.id === selectedLogoId)?.style}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -445,7 +627,8 @@ export default function CompanyWizard() {
               </button>
               <button
                 onClick={startBuilding}
-                className="px-8 py-3 rounded-xl bg-gradient-to-r from-rose-gold-400 to-rose-gold-600 text-dark-500 font-semibold flex items-center gap-2 hover:from-rose-gold-300 hover:to-rose-gold-500 transition-all shadow-glow-lg"
+                disabled={!selectedLogoId && logoVariations.length > 0}
+                className="px-8 py-3 rounded-xl bg-gradient-to-r from-rose-gold-400 to-rose-gold-600 text-dark-500 font-semibold flex items-center gap-2 hover:from-rose-gold-300 hover:to-rose-gold-500 transition-all shadow-glow-lg disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Wand2 className="w-5 h-5" /> Build My Company
               </button>
@@ -457,11 +640,17 @@ export default function CompanyWizard() {
         {step === 5 && (
           <div className="animate-fade-in">
             <div className="text-center mb-8">
-              <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-rose-gold-400 to-rose-gold-600 flex items-center justify-center">
-                {isBuilding ? (
-                  <Loader2 className="w-10 h-10 text-white animate-spin" />
+              <div className="w-20 h-20 mx-auto mb-4 rounded-2xl overflow-hidden">
+                {logoUrl ? (
+                  <img src={logoUrl} alt={companyName} className="w-full h-full object-cover" />
                 ) : (
-                  <Sparkles className="w-10 h-10 text-white" />
+                  <div className="w-full h-full bg-gradient-to-br from-rose-gold-400 to-rose-gold-600 flex items-center justify-center">
+                    {isBuilding ? (
+                      <Loader2 className="w-10 h-10 text-white animate-spin" />
+                    ) : (
+                      <Sparkles className="w-10 h-10 text-white" />
+                    )}
+                  </div>
                 )}
               </div>
               <h1 className="text-4xl font-bold text-white mb-3">

@@ -2,7 +2,9 @@ import { useState, useEffect, useRef } from 'react'
 import {
   Play, Pause, Square, Zap, Brain,
   CheckCircle2, Circle, Loader2, ArrowRight, Sparkles,
-  Target, Code2, Palette, Megaphone, Search, BarChart3
+  Target, Code2, Palette, Megaphone, Search, BarChart3,
+  FileCode, Globe, FileText, Database, Copy, ExternalLink,
+  ChevronDown, ChevronRight, AlertCircle
 } from 'lucide-react'
 import {
   AutonomousOrchestrator,
@@ -10,6 +12,7 @@ import {
   type Agent,
   type AgentMessage
 } from '@/services/autonomousAgents'
+import type { AgentOutput } from '@/services/agentEngine'
 
 const agentIcons: Record<string, typeof Brain> = {
   orchestrator: Target,
@@ -28,6 +31,7 @@ export default function AutonomousAgentView({ onClose: _onClose }: AutonomousAge
   const [execution, setExecution] = useState<AgentExecution | null>(null)
   const [goal, setGoal] = useState('')
   const [isStarted, setIsStarted] = useState(false)
+  const [selectedOutput, setSelectedOutput] = useState<AgentOutput | null>(null)
   const orchestratorRef = useRef<AutonomousOrchestrator | null>(null)
   const logsEndRef = useRef<HTMLDivElement>(null)
 
@@ -39,10 +43,18 @@ export default function AutonomousAgentView({ onClose: _onClose }: AutonomousAge
     logsEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [execution?.logs])
 
+  // Auto-select first output when available
+  useEffect(() => {
+    if (execution?.outputs && execution.outputs.length > 0 && !selectedOutput) {
+      setSelectedOutput(execution.outputs[0])
+    }
+  }, [execution?.outputs, selectedOutput])
+
   const startExecution = async () => {
     if (!goal.trim() || !orchestratorRef.current) return
 
     setIsStarted(true)
+    setSelectedOutput(null)
     await orchestratorRef.current.startExecution(goal, setExecution)
   }
 
@@ -58,6 +70,10 @@ export default function AutonomousAgentView({ onClose: _onClose }: AutonomousAge
     orchestratorRef.current?.stop()
   }
 
+  const copyOutput = (content: string) => {
+    navigator.clipboard.writeText(content)
+  }
+
   return (
     <div className="h-full flex flex-col bg-dark-500 overflow-hidden">
       {/* Header */}
@@ -69,7 +85,7 @@ export default function AutonomousAgentView({ onClose: _onClose }: AutonomousAge
             </div>
             <div>
               <h2 className="text-lg font-bold text-white">Autonomous Agents</h2>
-              <p className="text-xs text-white/50">AI agents working together until perfect</p>
+              <p className="text-xs text-white/50">Real AI agents executing real tasks</p>
             </div>
           </div>
 
@@ -79,6 +95,7 @@ export default function AutonomousAgentView({ onClose: _onClose }: AutonomousAge
                 <button
                   onClick={pauseExecution}
                   className="glass-btn-secondary p-2"
+                  title="Pause"
                 >
                   <Pause className="w-4 h-4" />
                 </button>
@@ -86,14 +103,16 @@ export default function AutonomousAgentView({ onClose: _onClose }: AutonomousAge
                 <button
                   onClick={resumeExecution}
                   className="glass-btn-primary p-2"
+                  title="Resume"
                 >
                   <Play className="w-4 h-4" />
                 </button>
               ) : null}
-              {execution.status !== 'complete' && (
+              {execution.status !== 'complete' && execution.status !== 'failed' && (
                 <button
                   onClick={stopExecution}
                   className="glass-btn-danger p-2"
+                  title="Stop"
                 >
                   <Square className="w-4 h-4" />
                 </button>
@@ -124,7 +143,7 @@ export default function AutonomousAgentView({ onClose: _onClose }: AutonomousAge
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">
         {/* Left: Agent Grid */}
-        <div className="w-80 border-r border-white/10 p-4 overflow-y-auto morphic-scrollbar">
+        <div className="w-72 border-r border-white/10 p-4 overflow-y-auto morphic-scrollbar">
           <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3">
             Agent Crew
           </h3>
@@ -159,7 +178,7 @@ export default function AutonomousAgentView({ onClose: _onClose }: AutonomousAge
         </div>
 
         {/* Center: Activity Feed */}
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col overflow-hidden min-w-0">
           {!isStarted ? (
             <div className="flex-1 flex items-center justify-center p-8">
               <div className="max-w-lg w-full">
@@ -171,7 +190,7 @@ export default function AutonomousAgentView({ onClose: _onClose }: AutonomousAge
                     What do you want to build?
                   </h2>
                   <p className="text-white/50">
-                    Our AI agents will work together autonomously until everything is perfect
+                    Our AI agents will work together autonomously using real tools
                   </p>
                 </div>
 
@@ -179,7 +198,7 @@ export default function AutonomousAgentView({ onClose: _onClose }: AutonomousAge
                   <textarea
                     value={goal}
                     onChange={(e) => setGoal(e.target.value)}
-                    placeholder="Describe your goal... e.g., Build a beautiful dashboard with real-time analytics, dark mode support, and smooth animations"
+                    placeholder="Describe your goal... e.g., Research the latest trends in AI agents and create a landing page"
                     className="w-full h-32 p-4 bg-transparent text-white placeholder-white/30 resize-none focus:outline-none"
                   />
                 </div>
@@ -198,10 +217,10 @@ export default function AutonomousAgentView({ onClose: _onClose }: AutonomousAge
 
                 <div className="mt-6 grid grid-cols-2 gap-3">
                   {[
-                    'Build a SaaS landing page',
-                    'Create a component library',
-                    'Design a mobile app UI',
-                    'Build an analytics dashboard'
+                    'Research AI agents and build a landing page',
+                    'Search for SaaS trends and create a dashboard',
+                    'Analyze competitors and generate a report',
+                    'Build an analytics dashboard component'
                   ].map((suggestion) => (
                     <button
                       key={suggestion}
@@ -232,13 +251,22 @@ export default function AutonomousAgentView({ onClose: _onClose }: AutonomousAge
                 <div className="flex items-center gap-4">
                   <StatusIndicator status={execution.status} />
                   <span className="text-sm text-white/70">
-                    {execution.logs.length} actions completed
+                    {execution.tasks.filter(t => t.status === 'complete').length}/{execution.tasks.length} tasks
+                  </span>
+                  <span className="text-sm text-white/50">
+                    {execution.outputs?.length || 0} outputs
                   </span>
                 </div>
                 {execution.status === 'complete' && (
                   <div className="flex items-center gap-2 text-green-400">
                     <CheckCircle2 className="w-5 h-5" />
-                    <span className="text-sm font-medium">All tasks completed successfully</span>
+                    <span className="text-sm font-medium">Execution complete!</span>
+                  </div>
+                )}
+                {execution.status === 'failed' && (
+                  <div className="flex items-center gap-2 text-red-400">
+                    <AlertCircle className="w-5 h-5" />
+                    <span className="text-sm font-medium">Execution stopped</span>
                   </div>
                 )}
               </div>
@@ -246,16 +274,21 @@ export default function AutonomousAgentView({ onClose: _onClose }: AutonomousAge
           )}
         </div>
 
-        {/* Right: Live Preview */}
+        {/* Right: Live Output Preview */}
         {execution && (
-          <div className="w-96 border-l border-white/10 flex flex-col">
+          <div className="w-[400px] border-l border-white/10 flex flex-col">
             <div className="p-4 border-b border-white/10">
               <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider">
-                Live Output Preview
+                Real Outputs
               </h3>
             </div>
-            <div className="flex-1 p-4 overflow-y-auto morphic-scrollbar">
-              <LivePreview execution={execution} />
+            <div className="flex-1 overflow-y-auto morphic-scrollbar">
+              <LiveOutputPanel
+                execution={execution}
+                selectedOutput={selectedOutput}
+                onSelectOutput={setSelectedOutput}
+                onCopy={copyOutput}
+              />
             </div>
           </div>
         )}
@@ -310,7 +343,7 @@ function AgentCard({ agent, index }: { agent: Agent; index: number }) {
           <p className="text-xs text-white/40">{agent.role}</p>
           {latestMessage && (
             <p className="text-xs text-white/60 mt-1 truncate">
-              {latestMessage.content.slice(0, 50)}...
+              {latestMessage.content.slice(0, 40)}...
             </p>
           )}
         </div>
@@ -341,20 +374,30 @@ function AgentCard({ agent, index }: { agent: Agent; index: number }) {
 
 function LogEntry({ log, agents }: { log: AgentMessage; agents: Agent[] }) {
   const agent = agents.find(a => a.id === log.agentId)
+  const [isExpanded, setIsExpanded] = useState(false)
+  const isLong = log.content.length > 150
 
   const typeStyles: Record<string, { icon: typeof Brain; color: string }> = {
     thought: { icon: Brain, color: 'text-purple-400' },
     action: { icon: Zap, color: 'text-rose-gold-400' },
     result: { icon: CheckCircle2, color: 'text-green-400' },
     delegation: { icon: ArrowRight, color: 'text-blue-400' },
-    error: { icon: Circle, color: 'text-red-400' }
+    error: { icon: AlertCircle, color: 'text-red-400' }
   }
 
   const style = typeStyles[log.type] || typeStyles.action
   const Icon = style.icon
 
+  const displayContent = isExpanded || !isLong
+    ? log.content
+    : log.content.slice(0, 150) + '...'
+
   return (
-    <div className="log-entry flex items-start gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors animate-slide-in">
+    <div
+      className={`log-entry flex items-start gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors animate-slide-in ${
+        log.type === 'error' ? 'bg-red-500/5' : ''
+      }`}
+    >
       <div
         className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
         style={{ backgroundColor: `${agent?.color || '#fff'}15` }}
@@ -366,11 +409,38 @@ function LogEntry({ log, agents }: { log: AgentMessage; agents: Agent[] }) {
           <span className="text-sm font-medium" style={{ color: agent?.color }}>
             {agent?.name || 'System'}
           </span>
+          <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+            log.type === 'error' ? 'bg-red-500/20 text-red-400' :
+            log.type === 'result' ? 'bg-green-500/20 text-green-400' :
+            'bg-white/10 text-white/40'
+          }`}>
+            {log.type}
+          </span>
           <span className="text-xs text-white/30">
             {log.timestamp.toLocaleTimeString()}
           </span>
         </div>
-        <p className="text-sm text-white/70 mt-0.5">{log.content}</p>
+        <p className="text-sm text-white/70 mt-0.5 whitespace-pre-wrap break-words">
+          {displayContent}
+        </p>
+        {isLong && (
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="text-xs text-rose-gold-400 hover:text-rose-gold-300 mt-1 flex items-center gap-1"
+          >
+            {isExpanded ? (
+              <>
+                <ChevronDown className="w-3 h-3" />
+                Show less
+              </>
+            ) : (
+              <>
+                <ChevronRight className="w-3 h-3" />
+                Show more
+              </>
+            )}
+          </button>
+        )}
       </div>
     </div>
   )
@@ -381,7 +451,7 @@ function StatusIndicator({ status }: { status: AgentExecution['status'] }) {
     running: { color: 'bg-rose-gold-400', label: 'Running' },
     paused: { color: 'bg-yellow-400', label: 'Paused' },
     complete: { color: 'bg-green-400', label: 'Complete' },
-    failed: { color: 'bg-red-400', label: 'Failed' }
+    failed: { color: 'bg-red-400', label: 'Stopped' }
   }
 
   const config = configs[status]
@@ -394,82 +464,169 @@ function StatusIndicator({ status }: { status: AgentExecution['status'] }) {
   )
 }
 
-function LivePreview({ execution }: { execution: AgentExecution }) {
-  const completedTasks = execution.logs.filter(l => l.type === 'result').length
+function LiveOutputPanel({
+  execution,
+  selectedOutput,
+  onSelectOutput,
+  onCopy
+}: {
+  execution: AgentExecution
+  selectedOutput: AgentOutput | null
+  onSelectOutput: (output: AgentOutput) => void
+  onCopy: (content: string) => void
+}) {
+  const outputs = execution.outputs || []
 
-  return (
-    <div className="space-y-4">
-      {/* Mini Dashboard Preview */}
-      <div className="glass-card p-4 rounded-xl">
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-xs text-white/40">Preview</span>
-          <span className="text-xs text-green-400">{completedTasks} outputs</span>
-        </div>
+  const getOutputIcon = (type: string) => {
+    switch (type) {
+      case 'code': return FileCode
+      case 'search_results': return Search
+      case 'web_content': return Globe
+      case 'data': return Database
+      default: return FileText
+    }
+  }
 
-        {/* Simulated UI Preview */}
-        <div className="space-y-2">
-          <div className="h-8 bg-gradient-to-r from-rose-gold-400/20 to-transparent rounded-lg animate-pulse" />
-          <div className="grid grid-cols-3 gap-2">
-            {[1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="h-16 bg-white/5 rounded-lg"
-                style={{ animationDelay: `${i * 100}ms` }}
-              />
-            ))}
+  const getOutputColor = (type: string) => {
+    switch (type) {
+      case 'code': return 'text-blue-400'
+      case 'search_results': return 'text-purple-400'
+      case 'web_content': return 'text-green-400'
+      case 'data': return 'text-yellow-400'
+      default: return 'text-white/60'
+    }
+  }
+
+  if (outputs.length === 0) {
+    return (
+      <div className="p-4">
+        <div className="glass-card p-6 rounded-xl text-center">
+          <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center mx-auto mb-3">
+            <Loader2 className="w-6 h-6 text-white/30 animate-spin" />
           </div>
-          <div className="h-24 bg-white/5 rounded-lg" />
-          <div className="grid grid-cols-2 gap-2">
-            <div className="h-12 bg-white/5 rounded-lg" />
-            <div className="h-12 bg-rose-gold-400/10 rounded-lg" />
+          <p className="text-sm text-white/50">
+            {execution.status === 'running'
+              ? 'Agents are working... outputs will appear here'
+              : 'No outputs generated yet'}
+          </p>
+        </div>
+
+        {/* Execution Metrics */}
+        <div className="mt-4 glass-card p-4 rounded-xl">
+          <h4 className="text-xs text-white/40 mb-3">Execution Metrics</h4>
+          <div className="grid grid-cols-2 gap-3">
+            <MetricCard label="Tasks" value={execution.tasks.length.toString()} />
+            <MetricCard label="Logs" value={execution.logs.length.toString()} />
+            <MetricCard label="Progress" value={`${execution.progress}%`} />
+            <MetricCard
+              label="Duration"
+              value={`${Math.floor((Date.now() - execution.startTime.getTime()) / 1000)}s`}
+            />
           </div>
         </div>
       </div>
-
-      {/* Generated Assets */}
-      <div className="glass-card p-4 rounded-xl">
-        <h4 className="text-xs text-white/40 mb-3">Generated Assets</h4>
-        <div className="space-y-2">
-          {execution.currentPhase !== 'Planning' && (
-            <>
-              <AssetItem name="design_system.fig" type="design" />
-              <AssetItem name="components.tsx" type="code" />
-              <AssetItem name="styles.css" type="style" />
-              <AssetItem name="animations.ts" type="code" />
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Metrics */}
-      <div className="glass-card p-4 rounded-xl">
-        <h4 className="text-xs text-white/40 mb-3">Execution Metrics</h4>
-        <div className="grid grid-cols-2 gap-3">
-          <MetricCard label="Tasks" value={execution.tasks.length.toString()} />
-          <MetricCard label="Actions" value={execution.logs.length.toString()} />
-          <MetricCard label="Progress" value={`${execution.progress}%`} />
-          <MetricCard
-            label="Duration"
-            value={`${Math.floor((Date.now() - execution.startTime.getTime()) / 1000)}s`}
-          />
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function AssetItem({ name, type }: { name: string; type: string }) {
-  const typeColors: Record<string, string> = {
-    design: 'text-pink-400',
-    code: 'text-blue-400',
-    style: 'text-purple-400'
+    )
   }
 
   return (
-    <div className="flex items-center gap-2 p-2 rounded-lg bg-white/5">
-      <div className={`w-2 h-2 rounded-full ${typeColors[type]?.replace('text-', 'bg-') || 'bg-white/40'}`} />
-      <span className="text-xs text-white/70">{name}</span>
-      <CheckCircle2 className="w-3 h-3 text-green-400 ml-auto" />
+    <div className="flex flex-col h-full">
+      {/* Output List */}
+      <div className="p-4 border-b border-white/10">
+        <div className="space-y-2">
+          {outputs.map((output) => {
+            const OutputIcon = getOutputIcon(output.type)
+            const isSelected = selectedOutput?.id === output.id
+            return (
+              <button
+                key={output.id}
+                onClick={() => onSelectOutput(output)}
+                className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all text-left ${
+                  isSelected
+                    ? 'bg-rose-gold-400/20 border border-rose-gold-400/30'
+                    : 'glass-card hover:bg-white/5'
+                }`}
+              >
+                <OutputIcon className={`w-4 h-4 flex-shrink-0 ${getOutputColor(output.type)}`} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-white truncate">{output.title}</p>
+                  <p className="text-xs text-white/40">{output.type}</p>
+                </div>
+                <CheckCircle2 className="w-4 h-4 text-green-400 flex-shrink-0" />
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Selected Output Preview */}
+      {selectedOutput && (
+        <div className="flex-1 p-4 overflow-hidden flex flex-col">
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="text-sm font-medium text-white">{selectedOutput.title}</h4>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => onCopy(selectedOutput.content)}
+                className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                title="Copy to clipboard"
+              >
+                <Copy className="w-4 h-4 text-white/60" />
+              </button>
+              {typeof selectedOutput.metadata?.url === 'string' && (
+                <a
+                  href={selectedOutput.metadata.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                  title="Open source"
+                >
+                  <ExternalLink className="w-4 h-4 text-white/60" />
+                </a>
+              )}
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-auto rounded-lg bg-black/30 border border-white/10">
+            {selectedOutput.type === 'code' ? (
+              <pre className="p-4 text-sm text-white/80 font-mono overflow-x-auto whitespace-pre-wrap break-words">
+                {selectedOutput.content}
+              </pre>
+            ) : (
+              <div className="p-4 text-sm text-white/70 whitespace-pre-wrap break-words">
+                {selectedOutput.content}
+              </div>
+            )}
+          </div>
+
+          {selectedOutput.metadata && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {Object.entries(selectedOutput.metadata).map(([key, value]) => (
+                <span
+                  key={key}
+                  className="text-xs px-2 py-1 rounded bg-white/5 text-white/50"
+                >
+                  {key}: {typeof value === 'string' || typeof value === 'number' ? String(value).slice(0, 30) : JSON.stringify(value).slice(0, 30)}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Metrics */}
+      <div className="p-4 border-t border-white/10">
+        <div className="grid grid-cols-2 gap-2">
+          <div className="p-2 rounded-lg bg-white/5 text-center">
+            <p className="text-lg font-bold text-white">{outputs.length}</p>
+            <p className="text-xs text-white/40">Outputs</p>
+          </div>
+          <div className="p-2 rounded-lg bg-white/5 text-center">
+            <p className="text-lg font-bold text-white">
+              {Math.floor((Date.now() - execution.startTime.getTime()) / 1000)}s
+            </p>
+            <p className="text-xs text-white/40">Duration</p>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

@@ -2,14 +2,15 @@ import { useState } from 'react'
 import {
   Search, Brain, Code2, Shield, Lock, Fingerprint,
   Monitor, Mic, Plug, RefreshCw, Palette, BarChart3,
-  Cloud, ChevronRight, Activity
+  Cloud, ChevronRight, Activity, Wallet
 } from 'lucide-react'
 import { DEPARTMENT_AGENTS, type Agent } from '@/services/orchestrator'
+import { useAppStore } from '@/stores/appStore'
 
 const agentIcons: Record<string, typeof Brain> = {
   'deep-research': Search,
   'code-builder': Code2,
-  'financial-guardian': Shield,
+  'financial-guardian': Wallet,
   'privacy-fortress': Lock,
   'trust-architect': Fingerprint,
   'computer-control': Monitor,
@@ -28,10 +29,26 @@ interface AgentsPanelProps {
 export default function AgentsPanel({ onSelectAgent }: AgentsPanelProps) {
   const [expanded, setExpanded] = useState(true)
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null)
+  const setView = useAppStore(state => state.setView)
 
   const handleAgentClick = (agent: Agent) => {
     setSelectedAgent(agent.id)
     onSelectAgent?.(agent)
+
+    // Navigate to Deep Research view if that agent is selected
+    if (agent.id === 'deep-research') {
+      setView('deep-research')
+    }
+
+    // Navigate to Privacy Fortress view if that agent is selected
+    if (agent.id === 'privacy-fortress') {
+      setView('privacy-fortress')
+    }
+
+    // Navigate to Financial Guardian view if that agent is selected
+    if (agent.id === 'financial-guardian') {
+      setView('financial-guardian')
+    }
   }
 
   return (

@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from 'react'
-import { Send, Paperclip, Mic, StopCircle, PanelRight, Sparkles } from 'lucide-react'
+import { Send, Paperclip, Mic, StopCircle, PanelRight, Sparkles, Code2, Eye } from 'lucide-react'
 import { useAppStore } from '@/stores/appStore'
 import ChatMessage from './ChatMessage'
 import aiService from '@/services/ai'
+import codeBuilder from '@/services/codeBuilder'
 import { KASA_LOGO_BASE64 } from '@/constants/kasaLogo'
 
 // Function to inject logo into generated code
@@ -15,115 +16,27 @@ function injectLogoIntoCode(code: string): string {
     .replace(/src=["']\/kasa-logo-small\.png["']/gi, `src="${KASA_LOGO_BASE64}"`)
 }
 
-// Extract code blocks from markdown content
-function extractCodeFromResponse(content: string): string | null {
-  // First, try to find code blocks with triple backticks
-  const codeBlockRegex = /```(?:html|tsx|jsx|react)?\s*\n([\s\S]*?)```/g
-  const matches: string[] = []
-  let match
+// Extract code blocks from markdown content and convert to previewable HTML
+function extractAndProcessCode(content: string): { code: string | null; hasCode: boolean } {
+  const blocks = codeBuilder.extractCodeBlocks(content)
 
-  while ((match = codeBlockRegex.exec(content)) !== null) {
-    matches.push(match[1].trim())
-  }
-
-  // If no code blocks found, try to extract raw HTML from response
-  if (matches.length === 0) {
-    // Look for complete HTML document
+  if (blocks.length === 0) {
+    // Try to find raw HTML in response
     const htmlDocMatch = content.match(/<!DOCTYPE html[\s\S]*<\/html>/i)
     if (htmlDocMatch) {
-      return injectLogoIntoCode(htmlDocMatch[0])
+      return { code: injectLogoIntoCode(htmlDocMatch[0]), hasCode: true }
     }
-
-    // Look for substantial HTML content (body content without full document)
-    const htmlContentMatch = content.match(/<(?:div|section|nav|header|main|body)[^>]*>[\s\S]{500,}<\/(?:div|section|nav|header|main|body)>/i)
-    if (htmlContentMatch) {
-      matches.push(htmlContentMatch[0])
-    }
+    return { code: null, hasCode: false }
   }
 
-  if (matches.length === 0) return null
-
-  // Find the largest code block (likely the main content)
-  const code = matches.reduce((a, b) => a.length > b.length ? a : b)
-
-  // If it's already a complete HTML document, inject logo and return
-  if (code.includes('<!DOCTYPE') || code.includes('<html')) {
-    return injectLogoIntoCode(code)
+  // Generate previewable HTML
+  const previewHtml = codeBuilder.makePreviewable(blocks)
+  if (previewHtml) {
+    return { code: injectLogoIntoCode(previewHtml), hasCode: true }
   }
 
-  // If it contains substantial HTML elements, wrap in premium template
-  if (code.includes('<') && code.includes('>') && code.length > 100) {
-    return injectLogoIntoCode(`<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Alabobai Preview</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: { sans: ['Inter', 'sans-serif'] },
-          colors: {
-            primary: { 50: '#fdf4ff', 100: '#fae8ff', 200: '#f5d0fe', 300: '#f0abfc', 400: '#e879f9', 500: '#d946ef', 600: '#c026d3', 700: '#a21caf', 800: '#86198f', 900: '#701a75' },
-          }
-        }
-      }
-    }
-  </script>
-  <style>
-    body { font-family: 'Inter', sans-serif; margin: 0; min-height: 100vh; }
-    .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-    .glass { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); }
-    .glow { box-shadow: 0 0 40px rgba(102, 126, 234, 0.3); }
-    .text-gradient { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-    .animate-float { animation: float 3s ease-in-out infinite; }
-  </style>
-</head>
-<body class="antialiased">
-  ${code}
-</body>
-</html>`)
-  }
-
-  // If it's React/JSX code, wrap with React runtime
-  if (code.includes('export default') || code.includes('function ') && code.includes('return (')) {
-    return injectLogoIntoCode(`<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Alabobai Preview</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <script>
-    tailwind.config = {
-      theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] } } }
-    }
-  </script>
-  <style>
-    body { font-family: 'Inter', sans-serif; margin: 0; min-height: 100vh; }
-  </style>
-</head>
-<body class="antialiased">
-  <div id="root"></div>
-  <script type="text/babel">
-    ${code.replace(/export default /g, 'window.App = ')}
-
-    const App = window.App || (() => <div className="p-8 text-center">Preview Ready</div>);
-    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
-  </script>
-</body>
-</html>`)
-  }
-
-  return null
+  // If we have code blocks but can't make them previewable, still mark as having code
+  return { code: null, hasCode: blocks.length > 0 }
 }
 
 export default function ChatPanel() {
@@ -140,7 +53,8 @@ export default function ChatPanel() {
     createChat,
     toggleWorkspace,
     workspaceOpen,
-    setGeneratedCode
+    setGeneratedCode,
+    setActiveTab
   } = useAppStore()
 
   const currentChat = chats.find(c => c.id === activeChat)
@@ -212,9 +126,17 @@ export default function ChatPanel() {
           })
 
           // Extract code from the response and set it for preview
-          const generatedCode = extractCodeFromResponse(lastMessage.content)
-          if (generatedCode) {
-            setGeneratedCode(generatedCode)
+          const { code, hasCode } = extractAndProcessCode(lastMessage.content)
+          if (code) {
+            setGeneratedCode(code)
+            // Open workspace and switch to preview tab
+            if (!workspaceOpen) {
+              toggleWorkspace()
+            }
+            setActiveTab('preview')
+          } else if (hasCode) {
+            // Has code blocks but not previewable - show in code tab
+            setActiveTab('code')
           }
         }
         setStreaming(false)
@@ -241,6 +163,17 @@ export default function ChatPanel() {
     }
   }
 
+  const handleSuggestionClick = (suggestion: string) => {
+    setInput(suggestion)
+    // Auto-submit after setting input
+    setTimeout(() => {
+      const form = document.querySelector('form')
+      if (form) {
+        form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
+      }
+    }, 100)
+  }
+
   return (
     <div className="h-full flex flex-col bg-dark-400">
       {/* Header */}
@@ -250,22 +183,44 @@ export default function ChatPanel() {
             <Sparkles className="w-5 h-5 text-dark-500" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-white">Alabobai</h2>
+            <h2 className="text-lg font-semibold text-white">Code Builder</h2>
             <p className="text-xs text-white/40">
-              {isStreaming ? 'Thinking...' : 'Ready to execute'}
+              {isStreaming ? 'Generating...' : 'Ready to build'}
             </p>
           </div>
         </div>
-        <button
-          onClick={toggleWorkspace}
-          className={`p-2 rounded-lg transition-colors ${
-            workspaceOpen
-              ? 'text-rose-gold-400 bg-rose-gold-400/10'
-              : 'text-white/60 hover:text-white hover:bg-white/5'
-          }`}
-        >
-          <PanelRight className="w-5 h-5" />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              if (!workspaceOpen) toggleWorkspace()
+              setActiveTab('code')
+            }}
+            className="p-2 rounded-lg text-white/60 hover:text-white hover:bg-white/5 transition-colors"
+            title="View Code"
+          >
+            <Code2 className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => {
+              if (!workspaceOpen) toggleWorkspace()
+              setActiveTab('preview')
+            }}
+            className="p-2 rounded-lg text-white/60 hover:text-white hover:bg-white/5 transition-colors"
+            title="View Preview"
+          >
+            <Eye className="w-5 h-5" />
+          </button>
+          <button
+            onClick={toggleWorkspace}
+            className={`p-2 rounded-lg transition-colors ${
+              workspaceOpen
+                ? 'text-rose-gold-400 bg-rose-gold-400/10'
+                : 'text-white/60 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <PanelRight className="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
       {/* Messages */}
@@ -273,33 +228,24 @@ export default function ChatPanel() {
         {!currentChat || currentChat.messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center">
             <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-rose-gold-300 to-rose-gold-600 flex items-center justify-center mb-6 shadow-glow-lg">
-              <Sparkles className="w-10 h-10 text-dark-500" />
+              <Code2 className="w-10 h-10 text-dark-500" />
             </div>
-            <h3 className="text-2xl font-semibold text-white mb-2">Welcome to Alabobai</h3>
+            <h3 className="text-2xl font-semibold text-white mb-2">Code Builder</h3>
             <p className="text-white/50 text-center max-w-md mb-8">
-              Your AI agent platform. I can build apps, write code, browse the web,
-              and execute complex workflows autonomously.
+              Describe what you want to build and watch it come to life.
+              I'll generate complete, working code with live preview.
             </p>
             <div className="grid grid-cols-2 gap-3 max-w-lg">
               {[
-                'Build me a landing page',
-                'Create a React dashboard',
-                'Help me with an API',
-                'Research a topic',
+                'Build me a landing page for a SaaS product',
+                'Create a React dashboard with charts',
+                'Make a contact form with validation',
+                'Design a pricing page with 3 tiers',
               ].map((suggestion, i) => (
                 <button
                   key={i}
-                  onClick={() => {
-                    setInput(suggestion)
-                    // Auto-submit after setting input
-                    setTimeout(() => {
-                      const form = document.querySelector('form')
-                      if (form) {
-                        form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
-                      }
-                    }, 100)
-                  }}
-                  className="morphic-card text-left text-sm text-white/70 hover:text-white p-4"
+                  onClick={() => handleSuggestionClick(suggestion)}
+                  className="morphic-card text-left text-sm text-white/70 hover:text-white p-4 hover:border-rose-gold-400/30 transition-colors"
                 >
                   {suggestion}
                 </button>
@@ -325,7 +271,7 @@ export default function ChatPanel() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Ask Alabobai anything..."
+              placeholder="Describe what you want to build..."
               rows={1}
               className="w-full bg-transparent text-white placeholder-white/40 resize-none outline-none text-sm"
               style={{ minHeight: '24px', maxHeight: '200px' }}
@@ -358,7 +304,7 @@ export default function ChatPanel() {
                 ) : (
                   <>
                     <Send className="w-4 h-4" />
-                    <span>Send</span>
+                    <span>Generate</span>
                   </>
                 )}
               </button>

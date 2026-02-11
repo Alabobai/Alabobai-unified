@@ -8,6 +8,7 @@ interface CompanyRequest {
   description?: string;
   name?: string;
   industry?: string;
+  logoUrl?: string; // User-selected logo URL from wizard
 }
 
 const BUSINESS_PROMPT = `You are a business strategist and startup advisor. Generate detailed, actionable business plans.
@@ -80,7 +81,7 @@ export default async function handler(req: Request) {
 
   try {
     const body: CompanyRequest = await req.json();
-    const { action, companyType, description, name, industry } = body;
+    const { action, companyType, description, name, industry, logoUrl } = body;
 
     switch (action) {
       case 'generate-name': {
@@ -157,16 +158,13 @@ Only return valid JSON.`;
         // Create the company (in a real app, this would save to a database)
         const companyId = crypto.randomUUID();
 
-        // Generate all company assets
-        const [planResult, logoResult] = await Promise.all([
-          generateWithAI(`Create a brief business plan JSON for ${name}, a ${companyType} company: ${description}. Include: mission, vision, departments (array), revenue_model. Return only valid JSON.`),
-          Promise.resolve({
-            url: `https://image.pollinations.ai/prompt/${encodeURIComponent(`Professional logo for ${name} ${companyType}`)}&width=512&height=512&nologo=true`
-          }),
-        ]);
+        // Use the user-selected logo URL if provided, otherwise generate one
+        const finalLogoUrl = logoUrl || `https://image.pollinations.ai/prompt/${encodeURIComponent(`Professional logo for ${name} ${companyType}`)}&width=512&height=512&nologo=true`;
 
+        // Generate business plan
         let plan;
         try {
+          const planResult = await generateWithAI(`Create a brief business plan JSON for ${name}, a ${companyType} company: ${description}. Include: mission, vision, departments (array), revenue_model. Return only valid JSON.`);
           plan = JSON.parse(planResult.replace(/```json\n?|\n?```/g, '').trim());
         } catch {
           plan = { mission: description, vision: `Leading ${companyType} company`, departments: [] };
@@ -177,7 +175,7 @@ Only return valid JSON.`;
           name,
           type: companyType,
           description,
-          logo: logoResult.url,
+          logo: finalLogoUrl,
           plan,
           createdAt: new Date().toISOString(),
           status: 'active',
