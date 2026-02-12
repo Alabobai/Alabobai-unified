@@ -136,8 +136,10 @@ export class WebLLMProvider implements AIProvider {
   private async _doInitialize(): Promise<void> {
     try {
       // Dynamic import to avoid loading WebLLM until needed
+      // Use a variable to prevent Vite from analyzing the import
+      const moduleName = '@mlc-ai/web-llm'
       // @ts-ignore - WebLLM may not be installed in all environments
-      const webllm = await import('@mlc-ai/web-llm')
+      const webllm = await import(/* @vite-ignore */ moduleName)
 
       this.engine = await webllm.CreateMLCEngine(this.model, {
         initProgressCallback: (progress: any) => {
