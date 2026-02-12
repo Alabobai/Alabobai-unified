@@ -26,37 +26,24 @@ export interface AIProvider {
   chat: (messages: Message[], callbacks?: StreamCallbacks) => Promise<string>
 }
 
-// Groq API Provider (via Vercel Edge Function)
-export class GroqAPIProvider implements AIProvider {
-  name = 'Groq'
-  model = 'llama-3.3-70b-versatile'
-  private apiAvailable = false
+// Cloud API Provider (via Vercel Edge Function - Gemini/Groq/Pollinations)
+export class CloudAPIProvider implements AIProvider {
+  name = 'Cloud AI'
+  model = 'gemini/groq/pollinations'
+  private apiAvailable = true // Always try the API first
 
   isReady(): boolean {
     return this.apiAvailable
   }
 
   async initialize(): Promise<void> {
-    try {
-      // Test the API endpoint
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: [{ role: 'user', content: 'test' }],
-          stream: false
-        }),
-        signal: AbortSignal.timeout(5000)
-      })
-      this.apiAvailable = response.ok
-    } catch {
-      this.apiAvailable = false
-    }
+    // API is always available - it has fallbacks built in
+    this.apiAvailable = true
   }
 
   async streamChat(messages: Message[], callbacks: StreamCallbacks): Promise<void> {
     try {
-      callbacks.onStatus?.('Connecting to Groq...')
+      callbacks.onStatus?.('Connecting to AI...')
 
       const response = await fetch('/api/chat', {
         method: 'POST',
@@ -425,10 +412,10 @@ class AIService {
   private initPromise: Promise<void> | null = null
 
   constructor() {
-    // Initialize with mock provider, then try to upgrade
-    this.currentProvider = new MockProvider()
+    // Initialize with CloudAPI provider (has built-in fallbacks)
+    this.currentProvider = new CloudAPIProvider()
     this.providers = [
-      new GroqAPIProvider(),
+      new CloudAPIProvider(),
       new OllamaProvider(),
       new WebLLMProvider(),
       new MockProvider()
@@ -442,18 +429,16 @@ class AIService {
   }
 
   private async _doInitialize(): Promise<void> {
-    // Try Groq API first (fastest, cloud-based)
-    const groqProvider = this.providers.find(p => p.name === 'Groq')
-    if (groqProvider) {
-      await groqProvider.initialize?.()
-      if (groqProvider.isReady()) {
-        console.log('[AI Service] Using Groq API')
-        this.currentProvider = groqProvider
-        return
-      }
+    // Always use CloudAPI first - it has built-in fallbacks (Gemini → Groq → Pollinations)
+    const cloudProvider = this.providers.find(p => p.name === 'Cloud AI')
+    if (cloudProvider) {
+      await cloudProvider.initialize?.()
+      console.log('[AI Service] Using Cloud AI (Gemini/Groq/Pollinations)')
+      this.currentProvider = cloudProvider
+      return
     }
 
-    // Try Ollama second (local, fast if running)
+    // Try Ollama as local backup
     const ollamaProvider = this.providers.find(p => p.name === 'Ollama')
     if (ollamaProvider) {
       await ollamaProvider.initialize?.()
@@ -464,12 +449,9 @@ class AIService {
       }
     }
 
-    // Try WebLLM (slower but works offline in browser)
-    console.log('[AI Service] Groq and Ollama not available, WebLLM available as fallback')
-    // Don't initialize WebLLM yet - it's slow. Initialize on first use.
-
-    // Fall back to mock for now
-    console.log('[AI Service] Using offline mode until model loads')
+    // Fall back to mock only if everything else fails
+    console.log('[AI Service] Using offline mode')
+    this.currentProvider = new MockProvider()
   }
 
   getProvider(): AIProvider {
