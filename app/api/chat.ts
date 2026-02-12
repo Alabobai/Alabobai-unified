@@ -16,7 +16,28 @@ For web pages, use Tailwind CSS and include all necessary HTML/CSS/JS in a singl
 Always wrap code in appropriate markdown code blocks with language tags.
 Be helpful, detailed, and proactive in suggesting improvements.`;
 
-// Try Gemini first (free tier: 60 req/min), then Groq, then fallback
+// Free AI via Pollinations.ai text API (no API key needed)
+async function callPollinationsAI(messages: any[]): Promise<string> {
+  const lastUserMessage = messages.filter((m: any) => m.role === 'user').pop()?.content || '';
+  const conversationHistory = messages.map((m: any) => `${m.role}: ${m.content}`).join('\n');
+
+  const prompt = `${SYSTEM_PROMPT}\n\nConversation:\n${conversationHistory}\n\nAssistant:`;
+
+  const response = await fetch('https://text.pollinations.ai/' + encodeURIComponent(prompt), {
+    method: 'GET',
+    headers: {
+      'Accept': 'text/plain',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Pollinations API error: ${response.status}`);
+  }
+
+  return await response.text();
+}
+
+// Try Gemini (free tier: 60 req/min)
 async function callGemini(messages: any[], apiKey: string) {
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`,
@@ -45,6 +66,7 @@ async function callGemini(messages: any[], apiKey: string) {
   return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
 }
 
+// Groq API
 async function callGroq(messages: any[], apiKey: string, stream: boolean) {
   const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
@@ -70,6 +92,33 @@ async function callGroq(messages: any[], apiKey: string, stream: boolean) {
   return response;
 }
 
+// Helper to create streaming response
+function createStreamingResponse(content: string) {
+  const encoder = new TextEncoder();
+  const readable = new ReadableStream({
+    async start(controller) {
+      // Stream word by word for smooth UX
+      const words = content.split(' ');
+      for (let i = 0; i < words.length; i++) {
+        const chunk = (i === 0 ? '' : ' ') + words[i];
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ token: chunk })}\n\n`));
+        await new Promise(r => setTimeout(r, 15));
+      }
+      controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+      controller.close();
+    },
+  });
+
+  return new Response(readable, {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+      'Access-Control-Allow-Origin': '*',
+    },
+  });
+}
+
 export default async function handler(req: Request) {
   if (req.method === 'OPTIONS') {
     return new Response(null, {
@@ -91,21 +140,57 @@ export default async function handler(req: Request) {
     const geminiKey = process.env.GEMINI_API_KEY;
     const groqKey = process.env.GROQ_API_KEY;
 
-    // Try Gemini first (non-streaming for simplicity, then simulate streaming)
+    // 1. Try Gemini first (best quality, free tier)
     if (geminiKey) {
       try {
         const content = await callGemini(messages, geminiKey);
-
         if (stream) {
-          // Simulate streaming for consistent UX
+          return createStreamingResponse(content);
+        }
+        return new Response(JSON.stringify({ content }), {
+          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+        });
+      } catch (e) {
+        console.log('Gemini failed:', e);
+      }
+    }
+
+    // 2. Try Groq (fast, free tier)
+    if (groqKey) {
+      try {
+        if (stream) {
+          const response = await callGroq(messages, groqKey, true);
           const encoder = new TextEncoder();
+          const decoder = new TextDecoder();
+          const reader = response.body?.getReader();
+
           const readable = new ReadableStream({
             async start(controller) {
-              const words = content.split(' ');
-              for (let i = 0; i < words.length; i++) {
-                const chunk = (i === 0 ? '' : ' ') + words[i];
-                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ token: chunk })}\n\n`));
-                await new Promise(r => setTimeout(r, 20));
+              if (!reader) {
+                controller.close();
+                return;
+              }
+
+              let buffer = '';
+              while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n');
+                buffer = lines.pop() || '';
+
+                for (const line of lines) {
+                  if (line.startsWith('data: ') && line !== 'data: [DONE]') {
+                    try {
+                      const data = JSON.parse(line.slice(6));
+                      const token = data.choices?.[0]?.delta?.content;
+                      if (token) {
+                        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ token })}\n\n`));
+                      }
+                    } catch {}
+                  }
+                }
               }
               controller.enqueue(encoder.encode('data: [DONE]\n\n'));
               controller.close();
@@ -121,92 +206,39 @@ export default async function handler(req: Request) {
             },
           });
         } else {
+          const response = await callGroq(messages, groqKey, false);
+          const data = await response.json();
+          const content = data.choices?.[0]?.message?.content || '';
           return new Response(JSON.stringify({ content }), {
-            headers: {
-              'Content-Type': 'application/json',
-              'Access-Control-Allow-Origin': '*',
-            },
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
           });
         }
       } catch (e) {
-        console.log('Gemini failed, trying Groq:', e);
+        console.log('Groq failed:', e);
       }
     }
 
-    // Fallback to Groq
-    if (groqKey) {
+    // 3. Fallback to Pollinations AI (free, no API key needed)
+    try {
+      console.log('Using Pollinations AI (free fallback)');
+      const content = await callPollinationsAI(messages);
       if (stream) {
-        const response = await callGroq(messages, groqKey, true);
-
-        const encoder = new TextEncoder();
-        const decoder = new TextDecoder();
-        const reader = response.body?.getReader();
-
-        const readable = new ReadableStream({
-          async start(controller) {
-            if (!reader) {
-              controller.close();
-              return;
-            }
-
-            let buffer = '';
-            while (true) {
-              const { done, value } = await reader.read();
-              if (done) break;
-
-              buffer += decoder.decode(value, { stream: true });
-              const lines = buffer.split('\n');
-              buffer = lines.pop() || '';
-
-              for (const line of lines) {
-                if (line.startsWith('data: ') && line !== 'data: [DONE]') {
-                  try {
-                    const data = JSON.parse(line.slice(6));
-                    const token = data.choices?.[0]?.delta?.content;
-                    if (token) {
-                      controller.enqueue(encoder.encode(`data: ${JSON.stringify({ token })}\n\n`));
-                    }
-                  } catch {}
-                }
-              }
-            }
-            controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-            controller.close();
-          },
-        });
-
-        return new Response(readable, {
-          headers: {
-            'Content-Type': 'text/event-stream',
-            'Cache-Control': 'no-cache',
-            'Connection': 'keep-alive',
-            'Access-Control-Allow-Origin': '*',
-          },
-        });
-      } else {
-        const response = await callGroq(messages, groqKey, false);
-        const data = await response.json();
-        const content = data.choices?.[0]?.message?.content || '';
-
-        return new Response(JSON.stringify({ content }), {
-          headers: {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
-          },
-        });
+        return createStreamingResponse(content);
       }
+      return new Response(JSON.stringify({ content }), {
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      });
+    } catch (e) {
+      console.log('Pollinations AI failed:', e);
     }
 
-    // No API keys configured
+    // All providers failed
     return new Response(JSON.stringify({
-      error: 'No API keys configured',
-      message: 'Please add GEMINI_API_KEY or GROQ_API_KEY to environment variables'
+      error: 'All AI providers failed',
+      message: 'Please try again later or add GEMINI_API_KEY/GROQ_API_KEY to environment variables for better reliability'
     }), {
       status: 500,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      },
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
     });
 
   } catch (error) {
@@ -216,10 +248,7 @@ export default async function handler(req: Request) {
       details: error instanceof Error ? error.message : 'Unknown error'
     }), {
       status: 500,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      },
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
     });
   }
 }
