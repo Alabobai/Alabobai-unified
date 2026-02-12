@@ -1,17 +1,23 @@
 /**
  * Chat API - Real AI conversation endpoint
- * Integrates with Claude API for actual AI responses
+ * Integrates with LLM providers for actual AI responses
  *
- * This module provides direct Claude API integration for department-specific
+ * This module provides LLM integration for department-specific
  * AI conversations, supporting both streaming and non-streaming responses.
+ * Supports Anthropic, OpenAI, and Groq providers.
  */
 
-import Anthropic from '@anthropic-ai/sdk';
+import { getDefaultLLMClient, type LLMClient, type LLMMessage } from '../core/llm-client.js';
 
-// Initialize Anthropic client
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY
-});
+// Get the default LLM client based on environment configuration
+let llmClient: LLMClient | null = null;
+
+function getLLMClient(): LLMClient {
+  if (!llmClient) {
+    llmClient = getDefaultLLMClient();
+  }
+  return llmClient;
+}
 
 // ============================================================================
 // DEPARTMENT SYSTEM PROMPTS
@@ -413,7 +419,7 @@ export interface ChatResponse {
 // ============================================================================
 
 /**
- * Handle a chat request with Claude API (non-streaming)
+ * Handle a chat request with LLM (non-streaming)
  *
  * @param req - The chat request containing message, department, and history
  * @returns ChatResponse with the AI response and metadata
@@ -421,34 +427,25 @@ export interface ChatResponse {
 export async function handleChat(req: ChatRequest): Promise<ChatResponse> {
   const department = req.department || 'executive';
   const systemPrompt = DEPARTMENT_PROMPTS[department] || DEPARTMENT_PROMPTS.executive;
-  const maxTokens = req.maxTokens || 4096;
-  const temperature = req.temperature ?? 0.7;
 
   // Build messages array with conversation history
-  const messages: Array<{ role: 'user' | 'assistant'; content: string }> = [
-    ...(req.conversationHistory || []),
+  const messages: LLMMessage[] = [
+    { role: 'system', content: systemPrompt },
+    ...(req.conversationHistory || []).map(m => ({
+      role: m.role as 'user' | 'assistant',
+      content: m.content
+    })),
     { role: 'user' as const, content: req.message }
   ];
 
   try {
-    const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: maxTokens,
-      temperature: temperature,
-      system: systemPrompt,
-      messages: messages
-    });
-
-    // Extract text content from response
-    const assistantMessage = response.content[0].type === 'text'
-      ? response.content[0].text
-      : '';
+    const client = getLLMClient();
+    const assistantMessage = await client.chat(messages);
 
     return {
       message: assistantMessage,
       department,
-      tokensUsed: response.usage.input_tokens + response.usage.output_tokens,
-      model: response.model
+      model: process.env.LLM_MODEL || 'llama-3.3-70b-versatile'
     };
   } catch (error) {
     console.error('[Chat API] Error:', error);
@@ -461,7 +458,7 @@ export async function handleChat(req: ChatRequest): Promise<ChatResponse> {
 // ============================================================================
 
 /**
- * Handle a chat request with Claude API (streaming)
+ * Handle a chat request with LLM (streaming)
  * Streams responses in real-time for better UX
  *
  * @param req - The chat request containing message, department, and history
@@ -475,36 +472,21 @@ export async function handleChatStream(
 ): Promise<void> {
   const department = req.department || 'executive';
   const systemPrompt = DEPARTMENT_PROMPTS[department] || DEPARTMENT_PROMPTS.executive;
-  const maxTokens = req.maxTokens || 4096;
-  const temperature = req.temperature ?? 0.7;
 
   // Build messages array with conversation history
-  const messages: Array<{ role: 'user' | 'assistant'; content: string }> = [
-    ...(req.conversationHistory || []),
+  const messages: LLMMessage[] = [
+    { role: 'system', content: systemPrompt },
+    ...(req.conversationHistory || []).map(m => ({
+      role: m.role as 'user' | 'assistant',
+      content: m.content
+    })),
     { role: 'user' as const, content: req.message }
   ];
 
   try {
-    const stream = await anthropic.messages.stream({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: maxTokens,
-      temperature: temperature,
-      system: systemPrompt,
-      messages: messages
-    });
-
-    // Process stream events
-    for await (const event of stream) {
-      if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
-        onChunk(event.delta.text);
-      }
-    }
-
-    // Get final message for token count
-    const finalMessage = await stream.finalMessage();
-    const tokensUsed = finalMessage.usage.input_tokens + finalMessage.usage.output_tokens;
-
-    onComplete(tokensUsed);
+    const client = getLLMClient();
+    await client.stream(messages, onChunk);
+    onComplete();
   } catch (error) {
     console.error('[Chat API] Stream error:', error);
     throw error;

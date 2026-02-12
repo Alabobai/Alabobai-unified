@@ -112,9 +112,9 @@ export class SystemIntegrator extends EventEmitter {
       enableVoice: config.enableVoice ?? false,
       enableCheckpointing: config.enableCheckpointing ?? true,
       llmConfig: config.llmConfig || {
-        provider: (process.env.LLM_PROVIDER as 'anthropic' | 'openai') || 'anthropic',
-        model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-20250514',
-        apiKey: process.env.ANTHROPIC_API_KEY || process.env.OPENAI_API_KEY || '',
+        provider: (process.env.LLM_PROVIDER as 'anthropic' | 'openai' | 'groq') || 'groq',
+        model: process.env.GROQ_MODEL || process.env.LLM_MODEL || 'llama-3.3-70b-versatile',
+        apiKey: process.env.GROQ_API_KEY || process.env.ANTHROPIC_API_KEY || process.env.OPENAI_API_KEY || '',
       },
       sandboxConfig: config.sandboxConfig || {},
       browserConfig: config.browserConfig || {},
@@ -194,24 +194,47 @@ export class SystemIntegrator extends EventEmitter {
    */
   private async initializeLLM(): Promise<void> {
     console.log('[SystemIntegrator] Initializing LLM client...');
+    const provider = this.config.llmConfig.provider;
+    const apiKey = this.config.llmConfig.apiKey || '';
 
     try {
-      if (this.config.llmConfig.apiKey) {
-        this.components.llm = createLLMClient(this.config.llmConfig);
-      } else {
-        this.components.llm = getDefaultLLMClient();
+      const isPlaceholder = !apiKey ||
+        apiKey.includes('your-key') ||
+        apiKey.includes('your_key') ||
+        apiKey.includes('your-api-key') ||
+        apiKey.length < 20;
+
+      if (isPlaceholder) {
+        console.warn('[SystemIntegrator] No valid API key found - running in demo mode');
+        console.warn('[SystemIntegrator] Set GROQ_API_KEY, ANTHROPIC_API_KEY, or OPENAI_API_KEY in .env for full functionality');
+        console.warn(`[SystemIntegrator] Provider: ${provider}, Key length: ${apiKey.length}`);
+        // Create a mock LLM client for demo mode
+        this.components.llm = {
+          chat: async () => 'Demo mode: Please configure a valid API key in .env to enable AI features.',
+          stream: async function* () { yield 'Demo mode: Please configure a valid API key in .env to enable AI features.'; },
+        } as any;
+        return;
       }
 
+      console.log(`[SystemIntegrator] Connecting to ${provider} (key: ${apiKey.substring(0, 8)}...)`);
+      this.components.llm = createLLMClient(this.config.llmConfig);
+
       // Verify LLM is working
+      console.log('[SystemIntegrator] Testing LLM connection...');
       await this.components.llm.chat([
         { role: 'system', content: 'You are a test assistant.' },
         { role: 'user', content: 'Hello' },
       ]);
 
-      console.log(`[SystemIntegrator] LLM initialized (${this.config.llmConfig.provider})`);
+      console.log(`[SystemIntegrator] LLM initialized successfully (${provider})`);
     } catch (error) {
       console.error('[SystemIntegrator] LLM initialization failed:', error);
-      throw new Error(`Failed to initialize LLM: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.warn('[SystemIntegrator] Running in demo mode due to LLM initialization failure');
+      // Create a mock LLM client for demo mode
+      this.components.llm = {
+        chat: async () => 'Demo mode: LLM initialization failed. Please check your API key in .env',
+        stream: async function* () { yield 'Demo mode: LLM initialization failed. Please check your API key in .env'; },
+      } as any;
     }
   }
 

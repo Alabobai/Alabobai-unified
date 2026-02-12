@@ -14,7 +14,6 @@
 import * as fs from 'fs/promises';
 import * as fsSync from 'fs';
 import * as path from 'path';
-// @ts-ignore - glob types may not be available
 import { sync as globSync } from 'glob';
 import { EventEmitter } from 'events';
 
@@ -483,7 +482,7 @@ export class FileSystemTool extends EventEmitter {
     const cwd = options?.cwd ? this.resolvePath(options.cwd) : this.config.baseDir;
     const filePattern = options?.filePattern ?? '**/*.{ts,js,tsx,jsx,py,java,go,rs}';
 
-    const files = await glob(filePattern, {
+    const files = globSync(filePattern, {
       cwd,
       nodir: true,
       ignore: ['**/node_modules/**', '**/.git/**', '**/dist/**', '**/build/**'],

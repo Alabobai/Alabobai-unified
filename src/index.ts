@@ -69,9 +69,9 @@ async function initializePlatform(): Promise<void> {
       enableCheckpointing: process.env.ENABLE_CHECKPOINTING !== 'false',
       enableVoice: process.env.ENABLE_VOICE === 'true',
       llmConfig: {
-        provider: (process.env.LLM_PROVIDER as 'anthropic' | 'openai') || 'anthropic',
-        model: process.env.ANTHROPIC_MODEL || process.env.OPENAI_MODEL || 'claude-sonnet-4-20250514',
-        apiKey: process.env.ANTHROPIC_API_KEY || process.env.OPENAI_API_KEY || '',
+        provider: (process.env.LLM_PROVIDER as 'anthropic' | 'openai' | 'groq') || 'groq',
+        model: process.env.LLM_MODEL || process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
+        apiKey: process.env.GROQ_API_KEY || process.env.ANTHROPIC_API_KEY || process.env.OPENAI_API_KEY || '',
       },
       healthCheckInterval: parseInt(process.env.HEALTH_CHECK_INTERVAL || '30000', 10),
     });

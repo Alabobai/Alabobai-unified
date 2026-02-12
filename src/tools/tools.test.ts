@@ -230,7 +230,7 @@ describe('SkillRegistry', () => {
       version: '1.0.0',
       description: 'Echoes input',
       inputs: [{ name: 'message', type: 'string', description: 'Message to echo', required: true }],
-      execute: async (inputs) => ({ success: true, message: inputs.message }),
+      execute: async (inputs) => ({ success: true, message: inputs.message as string }),
     });
 
     const result = await registry.execute('echo-skill', { message: 'Hello Skills!' });

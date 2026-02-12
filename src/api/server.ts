@@ -91,12 +91,27 @@ const wsConnections: Map<string, Set<WebSocket>> = new Map();
 async function initialize(): Promise<void> {
   console.log('[Server] Initializing Alabobai Unified Platform...');
 
-  // Initialize LLM client
-  llm = createLLMClient({
-    provider: (process.env.LLM_PROVIDER || 'anthropic') as 'anthropic' | 'openai',
-    apiKey: process.env.ANTHROPIC_API_KEY || process.env.OPENAI_API_KEY || '',
-    model: process.env.LLM_MODEL || 'claude-sonnet-4-20250514',
-  });
+  // Initialize LLM client (supports Groq, Anthropic, OpenAI)
+  const provider = (process.env.LLM_PROVIDER || 'groq') as 'anthropic' | 'openai' | 'groq';
+  let apiKey = '';
+  let model = '';
+
+  switch (provider) {
+    case 'groq':
+      apiKey = process.env.GROQ_API_KEY || '';
+      model = process.env.GROQ_MODEL || process.env.LLM_MODEL || 'llama-3.3-70b-versatile';
+      break;
+    case 'anthropic':
+      apiKey = process.env.ANTHROPIC_API_KEY || '';
+      model = process.env.LLM_MODEL || 'claude-sonnet-4-20250514';
+      break;
+    case 'openai':
+      apiKey = process.env.OPENAI_API_KEY || '';
+      model = process.env.LLM_MODEL || 'gpt-4o';
+      break;
+  }
+
+  llm = createLLMClient({ provider, apiKey, model });
 
   // Initialize memory store
   memory = createMemoryStore('sqlite', process.env.DATABASE_PATH || './data/alabobai.db');

@@ -14,48 +14,58 @@ import { v4 as uuid } from 'uuid';
 // Import all reliability components
 import {
   ConfidenceScorer,
+  SourceQuality,
+  createConfidenceScorer,
+} from './ConfidenceScorer.js';
+import type {
   ConfidenceScore,
   ScoringConfig,
   SourceInfo,
-  SourceQuality,
-  createConfidenceScorer,
 } from './ConfidenceScorer.js';
 
 import {
   CheckpointManager,
+  createCheckpointManager,
+} from './CheckpointManager.js';
+import type {
   Checkpoint,
   CheckpointState,
   CheckpointConfig,
-  createCheckpointManager,
 } from './CheckpointManager.js';
 
 import {
   FactChecker,
+  createFactChecker,
+} from './FactChecker.js';
+import type {
   FactCheckReport,
   FactCheckerConfig,
   Claim,
   VerificationResult,
-  createFactChecker,
 } from './FactChecker.js';
 
 import {
   ConsistencyManager,
+  createConsistencyManager,
+} from './ConsistencyManager.js';
+import type {
   ConsistencyProfile,
   ConsistencyConfig,
   ConsistencyCheck,
   ExecutionRecord,
   ConsistencyManagerConfig,
-  createConsistencyManager,
 } from './ConsistencyManager.js';
 
 import {
   TimeoutProtector,
-  TimeoutConfig,
-  ExecutionResult,
-  FallbackProvider,
   createTimeoutProtector,
   CachedResponseFallback,
   GracefulDegradationFallback,
+} from './TimeoutProtector.js';
+import type {
+  TimeoutConfig,
+  ExecutionResult,
+  FallbackProvider,
 } from './TimeoutProtector.js';
 
 // ============================================================================

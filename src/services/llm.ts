@@ -12,7 +12,7 @@ import { EventEmitter } from 'events';
 // TYPES
 // ============================================================================
 
-export type LLMProvider = 'anthropic' | 'openai';
+export type LLMProvider = 'anthropic' | 'openai' | 'groq';
 
 export interface LLMServiceConfig {
   provider: LLMProvider;
@@ -72,6 +72,8 @@ export class LLMService extends EventEmitter {
   private provider: LLMProvider;
   private anthropic: Anthropic | null = null;
   private openai: OpenAI | null = null;
+  private groqApiKey: string | null = null;
+  private groqBaseUrl = 'https://api.groq.com/openai/v1';
   private model: string;
   private maxTokens: number;
   private temperature: number;
@@ -106,6 +108,9 @@ export class LLMService extends EventEmitter {
     } else if (config.provider === 'openai') {
       this.openai = new OpenAI({ apiKey: config.apiKey });
       this.model = config.model || 'gpt-4o';
+    } else if (config.provider === 'groq') {
+      this.groqApiKey = config.apiKey;
+      this.model = config.model || 'llama-3.3-70b-versatile';
     } else {
       throw new Error(`Unsupported LLM provider: ${config.provider}`);
     }
@@ -176,6 +181,8 @@ export class LLMService extends EventEmitter {
         accumulated = await this.streamAnthropic(messages, options);
       } else if (this.provider === 'openai' && this.openai) {
         accumulated = await this.streamOpenAI(messages, options);
+      } else if (this.provider === 'groq' && this.groqApiKey) {
+        accumulated = await this.streamGroq(messages, options);
       } else {
         throw new Error('No LLM client initialized');
       }
@@ -207,6 +214,8 @@ export class LLMService extends EventEmitter {
       return this.chatAnthropic(messages, options);
     } else if (this.provider === 'openai' && this.openai) {
       return this.chatOpenAI(messages, options);
+    } else if (this.provider === 'groq' && this.groqApiKey) {
+      return this.chatGroq(messages, options);
     }
 
     throw new Error('No LLM client initialized');
@@ -279,6 +288,46 @@ export class LLMService extends EventEmitter {
     };
   }
 
+  private async chatGroq(messages: ChatMessage[], options: ChatOptions): Promise<LLMResponse> {
+    if (!this.groqApiKey) throw new Error('Groq API key not initialized');
+
+    const response = await fetch(`${this.groqBaseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.groqApiKey}`,
+      },
+      body: JSON.stringify({
+        model: this.model,
+        messages: messages.map(m => ({ role: m.role, content: m.content })),
+        max_tokens: options.maxTokens || this.maxTokens,
+        temperature: options.temperature || this.temperature,
+        stop: options.stopSequences,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Groq API error: ${response.status} - ${error}`);
+    }
+
+    const data = await response.json();
+    const content = data.choices[0]?.message?.content || '';
+    const usage = data.usage;
+
+    return {
+      content,
+      model: data.model,
+      usage: {
+        inputTokens: usage?.prompt_tokens || 0,
+        outputTokens: usage?.completion_tokens || 0,
+        totalTokens: usage?.total_tokens || 0,
+      },
+      finishReason: data.choices[0]?.finish_reason || 'unknown',
+      metadata: options.metadata,
+    };
+  }
+
   private async streamAnthropic(messages: ChatMessage[], options: StreamOptions): Promise<string> {
     if (!this.anthropic) throw new Error('Anthropic client not initialized');
 
@@ -336,6 +385,65 @@ export class LLMService extends EventEmitter {
         accumulated += content;
         options.onChunk?.(content, accumulated);
         this.emit('stream-chunk', { chunk: content, accumulated });
+      }
+    }
+
+    return accumulated;
+  }
+
+  private async streamGroq(messages: ChatMessage[], options: StreamOptions): Promise<string> {
+    if (!this.groqApiKey) throw new Error('Groq API key not initialized');
+
+    let accumulated = '';
+
+    const response = await fetch(`${this.groqBaseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.groqApiKey}`,
+      },
+      body: JSON.stringify({
+        model: this.model,
+        messages: messages.map(m => ({ role: m.role, content: m.content })),
+        max_tokens: options.maxTokens || this.maxTokens,
+        temperature: options.temperature || this.temperature,
+        stop: options.stopSequences,
+        stream: true,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Groq API error: ${response.status} - ${error}`);
+    }
+
+    const reader = response.body?.getReader();
+    const decoder = new TextDecoder();
+
+    if (!reader) throw new Error('No response body');
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value, { stream: true });
+      const lines = chunk.split('\n').filter(line => line.trim().startsWith('data:'));
+
+      for (const line of lines) {
+        const data = line.replace('data: ', '').trim();
+        if (data === '[DONE]') continue;
+
+        try {
+          const parsed = JSON.parse(data);
+          const content = parsed.choices[0]?.delta?.content || '';
+          if (content) {
+            accumulated += content;
+            options.onChunk?.(content, accumulated);
+            this.emit('stream-chunk', { chunk: content, accumulated });
+          }
+        } catch {
+          // Skip malformed JSON
+        }
       }
     }
 
@@ -528,11 +636,28 @@ export function createLLMService(config: LLMServiceConfig): LLMService {
 
 export function getDefaultLLMService(): LLMService {
   if (!defaultService) {
-    const provider = (process.env.LLM_PROVIDER || 'anthropic') as LLMProvider;
-    const apiKey = provider === 'anthropic'
-      ? process.env.ANTHROPIC_API_KEY || ''
-      : process.env.OPENAI_API_KEY || '';
-    const model = process.env.LLM_MODEL || (provider === 'anthropic' ? 'claude-sonnet-4-20250514' : 'gpt-4o');
+    const provider = (process.env.LLM_PROVIDER || 'groq') as LLMProvider;
+
+    let apiKey: string;
+    let model: string;
+
+    switch (provider) {
+      case 'groq':
+        apiKey = process.env.GROQ_API_KEY || '';
+        model = process.env.LLM_MODEL || 'llama-3.3-70b-versatile';
+        break;
+      case 'anthropic':
+        apiKey = process.env.ANTHROPIC_API_KEY || '';
+        model = process.env.LLM_MODEL || 'claude-sonnet-4-20250514';
+        break;
+      case 'openai':
+        apiKey = process.env.OPENAI_API_KEY || '';
+        model = process.env.LLM_MODEL || 'gpt-4o';
+        break;
+      default:
+        apiKey = process.env.GROQ_API_KEY || '';
+        model = 'llama-3.3-70b-versatile';
+    }
 
     if (!apiKey) {
       throw new Error(`Missing API key for provider: ${provider}`);
