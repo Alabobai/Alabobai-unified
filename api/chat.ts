@@ -2,6 +2,8 @@ export const config = {
   runtime: 'edge',
 };
 
+// API Version: 2.0 - With Pollinations.ai fallback
+
 const SYSTEM_PROMPT = `You are Alabobai, an advanced AI agent platform. You can:
 - Build complete web applications and landing pages
 - Write production-ready code in any language
