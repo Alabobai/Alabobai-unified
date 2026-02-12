@@ -222,16 +222,16 @@ export default function ChatPanel() {
   }, [isListening, startVoiceInput, stopVoiceInput])
 
   return (
-    <div className="h-full flex flex-col bg-dark-400">
+    <div className="h-full flex flex-col bg-dark-500">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
+      <div className="morphic-glass flex items-center justify-between px-6 py-4 border-b border-rose-gold-400/10">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-gold-300 to-rose-gold-600 flex items-center justify-center animate-pulse-glow">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-gold-300 to-rose-gold-600 flex items-center justify-center shadow-glow-sm animate-pulse-glow">
             <Sparkles className="w-5 h-5 text-dark-500" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-white">Code Builder</h2>
-            <p className="text-xs text-white/40">
+            <h2 className="text-lg font-semibold text-white tracking-wide">Code Builder</h2>
+            <p className="text-xs text-rose-gold-400/60">
               {isStreaming ? 'Generating...' : 'Ready to build'}
             </p>
           </div>
@@ -242,7 +242,7 @@ export default function ChatPanel() {
               if (!workspaceOpen) toggleWorkspace()
               setActiveTab('code')
             }}
-            className="p-2 rounded-lg text-white/60 hover:text-white hover:bg-white/5 transition-colors"
+            className="p-2 rounded-xl text-white/60 hover:text-rose-gold-400 hover:bg-rose-gold-400/10 transition-colors"
             title="View Code"
           >
             <Code2 className="w-5 h-5" />
@@ -252,17 +252,17 @@ export default function ChatPanel() {
               if (!workspaceOpen) toggleWorkspace()
               setActiveTab('preview')
             }}
-            className="p-2 rounded-lg text-white/60 hover:text-white hover:bg-white/5 transition-colors"
+            className="p-2 rounded-xl text-white/60 hover:text-rose-gold-400 hover:bg-rose-gold-400/10 transition-colors"
             title="View Preview"
           >
             <Eye className="w-5 h-5" />
           </button>
           <button
             onClick={toggleWorkspace}
-            className={`p-2 rounded-lg transition-colors ${
+            className={`p-2 rounded-xl transition-colors ${
               workspaceOpen
-                ? 'text-rose-gold-400 bg-rose-gold-400/10'
-                : 'text-white/60 hover:text-white hover:bg-white/5'
+                ? 'text-rose-gold-400 bg-rose-gold-400/15 border border-rose-gold-400/30'
+                : 'text-white/60 hover:text-rose-gold-400 hover:bg-rose-gold-400/10'
             }`}
           >
             <PanelRight className="w-5 h-5" />
@@ -271,14 +271,14 @@ export default function ChatPanel() {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto morphic-scrollbar px-6 py-4">
+      <div className="flex-1 overflow-y-auto morphic-scrollbar px-6 py-4 bg-dark-500">
         {!currentChat || currentChat.messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center">
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-rose-gold-300 to-rose-gold-600 flex items-center justify-center mb-6 shadow-glow-lg">
+            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-rose-gold-300 to-rose-gold-600 flex items-center justify-center mb-6 shadow-glow-lg animate-pulse-glow">
               <Code2 className="w-10 h-10 text-dark-500" />
             </div>
-            <h3 className="text-2xl font-semibold text-white mb-2">Code Builder</h3>
-            <p className="text-white/50 text-center max-w-md mb-8">
+            <h3 className="text-2xl font-semibold text-white mb-2 tracking-wide">Code Builder</h3>
+            <p className="text-rose-gold-400/50 text-center max-w-md mb-8">
               Describe what you want to build and watch it come to life.
               I'll generate complete, working code with live preview.
             </p>
@@ -292,7 +292,7 @@ export default function ChatPanel() {
                 <button
                   key={i}
                   onClick={() => handleSuggestionClick(suggestion)}
-                  className="morphic-card text-left text-sm text-white/70 hover:text-white p-4 hover:border-rose-gold-400/30 transition-colors"
+                  className="morphic-glass text-left text-sm text-white/70 hover:text-rose-gold-400 p-4 rounded-xl border border-rose-gold-400/10 hover:border-rose-gold-400/30 hover:bg-rose-gold-400/5 transition-all duration-200"
                 >
                   {suggestion}
                 </button>
@@ -310,9 +310,9 @@ export default function ChatPanel() {
       </div>
 
       {/* Input */}
-      <div className="p-4 border-t border-white/10">
+      <div className="p-4 border-t border-rose-gold-400/10 bg-dark-500">
         <form onSubmit={handleSubmit} className="relative">
-          <div className="morphic-panel p-3">
+          <div className="morphic-glass rounded-xl p-3 border border-rose-gold-400/10 focus-within:border-rose-gold-400/30 transition-colors">
             <div className="relative">
               <textarea
                 ref={inputRef}
@@ -321,28 +321,28 @@ export default function ChatPanel() {
                 onKeyDown={handleKeyDown}
                 placeholder={isListening ? 'Listening... Speak now' : 'Describe what you want to build...'}
                 rows={1}
-                className="w-full bg-transparent text-white placeholder-white/40 resize-none outline-none text-sm"
+                className="w-full bg-transparent text-white placeholder-rose-gold-400/40 resize-none outline-none text-sm focus:placeholder-rose-gold-400/60"
                 style={{ minHeight: '24px', maxHeight: '200px' }}
               />
               {interimTranscript && (
-                <span className="text-white/40 italic text-sm">{interimTranscript}</span>
+                <span className="text-rose-gold-400/50 italic text-sm">{interimTranscript}</span>
               )}
             </div>
-            <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/10">
+            <div className="flex items-center justify-between mt-3 pt-3 border-t border-rose-gold-400/10">
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  className="p-2 rounded-lg text-white/40 hover:text-white hover:bg-white/5 transition-colors"
+                  className="p-2 rounded-xl text-white/40 hover:text-rose-gold-400 hover:bg-rose-gold-400/10 transition-colors"
                 >
                   <Paperclip className="w-4 h-4" />
                 </button>
                 <button
                   type="button"
                   onClick={toggleVoiceInput}
-                  className={`p-2 rounded-lg transition-colors ${
+                  className={`p-2 rounded-xl transition-colors ${
                     isListening
-                      ? 'text-red-400 bg-red-400/20 animate-pulse'
-                      : 'text-white/40 hover:text-white hover:bg-white/5'
+                      ? 'text-rose-gold-400 bg-rose-gold-400/20 animate-pulse shadow-glow-sm'
+                      : 'text-white/40 hover:text-rose-gold-400 hover:bg-rose-gold-400/10'
                   }`}
                   title={isListening ? 'Stop listening' : 'Start voice input'}
                 >
@@ -352,7 +352,7 @@ export default function ChatPanel() {
               <button
                 type="submit"
                 disabled={!input.trim() || isStreaming}
-                className="morphic-btn py-2 px-4 text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-gradient-to-r from-rose-gold-400 to-rose-gold-600 hover:from-rose-gold-300 hover:to-rose-gold-500 text-dark-500 font-medium py-2 px-4 rounded-xl text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-glow-sm transition-all duration-200"
               >
                 {isStreaming ? (
                   <>

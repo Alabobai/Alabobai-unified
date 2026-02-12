@@ -112,20 +112,28 @@ export default function DeepResearchView({ onClose: _onClose }: DeepResearchView
       {/* Header */}
       <div className="glass-morphic-header p-4 border-b border-white/10">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center shadow-glow-lg animate-pulse-glow">
-              <Search className="w-5 h-5 text-white" />
+          <div className="flex items-center gap-4">
+            {/* Alabobai Logo */}
+            <div className="flex items-center gap-2">
+              <img src="/logo.png" alt="Alabobai" className="w-8 h-8 rounded-lg" />
+              <div className="h-6 w-px bg-white/10" />
             </div>
-            <div>
-              <h2 className="text-lg font-bold text-white">Deep Research</h2>
-              <p className="text-xs text-white/50">AI-powered web research with real sources</p>
+            {/* View Header */}
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center shadow-glow-lg animate-pulse-glow">
+                <Search className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-white">Deep Research</h2>
+                <p className="text-xs text-rose-gold-400/70">AI-powered web research with real sources</p>
+              </div>
             </div>
           </div>
 
           {isResearching && (
             <button
               onClick={stopResearch}
-              className="glass-btn-danger px-4 py-2 text-sm"
+              className="morphic-btn bg-red-500/20 text-red-400 border-red-500/30 hover:bg-red-500/30 px-4 py-2 text-sm"
             >
               Stop Research
             </button>
@@ -160,7 +168,7 @@ export default function DeepResearchView({ onClose: _onClose }: DeepResearchView
         <div className="w-80 border-r border-white/10 flex flex-col">
           {/* Search Input */}
           <div className="p-4 border-b border-white/10">
-            <div className="glass-card p-1 rounded-xl">
+            <div className="morphic-card p-1 rounded-xl">
               <textarea
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
@@ -173,7 +181,7 @@ export default function DeepResearchView({ onClose: _onClose }: DeepResearchView
             <button
               onClick={startResearch}
               disabled={!topic.trim() || isResearching}
-              className="w-full glass-btn-primary mt-3 py-3 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed group"
+              className="w-full morphic-btn bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 mt-3 py-3 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed group"
             >
               <span className="flex items-center justify-center gap-2">
                 {isResearching ? (
@@ -215,7 +223,7 @@ export default function DeepResearchView({ onClose: _onClose }: DeepResearchView
                   {foundResults.map((result, i) => (
                     <div
                       key={i}
-                      className="glass-card p-3 rounded-lg animate-slide-in"
+                      className="morphic-card p-3 rounded-lg animate-slide-in"
                       style={{ animationDelay: `${i * 100}ms` }}
                     >
                       <div className="flex items-start gap-2">
@@ -278,15 +286,15 @@ export default function DeepResearchView({ onClose: _onClose }: DeepResearchView
                   and generate a comprehensive research report with citations.
                 </p>
                 <div className="grid grid-cols-3 gap-3 text-center">
-                  <div className="glass-card p-3 rounded-xl">
+                  <div className="morphic-card p-3 rounded-xl">
                     <Search className="w-5 h-5 text-purple-400 mx-auto mb-1" />
                     <p className="text-[10px] text-white/60">Web Search</p>
                   </div>
-                  <div className="glass-card p-3 rounded-xl">
+                  <div className="morphic-card p-3 rounded-xl">
                     <FileText className="w-5 h-5 text-purple-400 mx-auto mb-1" />
                     <p className="text-[10px] text-white/60">Content Analysis</p>
                   </div>
-                  <div className="glass-card p-3 rounded-xl">
+                  <div className="morphic-card p-3 rounded-xl">
                     <Brain className="w-5 h-5 text-purple-400 mx-auto mb-1" />
                     <p className="text-[10px] text-white/60">AI Synthesis</p>
                   </div>
@@ -338,14 +346,14 @@ export default function DeepResearchView({ onClose: _onClose }: DeepResearchView
                   <div className="flex gap-2">
                     <button
                       onClick={copyReport}
-                      className="glass-btn-secondary p-2"
+                      className="morphic-btn p-2"
                       title="Copy to clipboard"
                     >
                       <Copy className="w-4 h-4" />
                     </button>
                     <button
                       onClick={downloadReport}
-                      className="glass-btn-secondary p-2"
+                      className="morphic-btn p-2"
                       title="Download as Markdown"
                     >
                       <Download className="w-4 h-4" />
@@ -357,7 +365,7 @@ export default function DeepResearchView({ onClose: _onClose }: DeepResearchView
                         setFoundResults([])
                         setTopic('')
                       }}
-                      className="glass-btn-secondary p-2"
+                      className="morphic-btn p-2"
                       title="New research"
                     >
                       <RefreshCw className="w-4 h-4" />
@@ -366,7 +374,7 @@ export default function DeepResearchView({ onClose: _onClose }: DeepResearchView
                 </div>
 
                 {/* Summary */}
-                <section className="glass-card p-6 rounded-xl mb-6">
+                <section className="morphic-card p-6 rounded-xl mb-6">
                   <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
                     <Sparkles className="w-5 h-5 text-purple-400" />
                     Executive Summary
@@ -378,7 +386,7 @@ export default function DeepResearchView({ onClose: _onClose }: DeepResearchView
 
                 {/* Key Findings */}
                 {report.keyFindings.length > 0 && (
-                  <section className="glass-card p-6 rounded-xl mb-6">
+                  <section className="morphic-card p-6 rounded-xl mb-6">
                     <h2 className="text-lg font-semibold text-white mb-3">
                       Key Findings
                     </h2>
@@ -394,7 +402,7 @@ export default function DeepResearchView({ onClose: _onClose }: DeepResearchView
                 )}
 
                 {/* Detailed Analysis */}
-                <section className="glass-card p-6 rounded-xl mb-6">
+                <section className="morphic-card p-6 rounded-xl mb-6">
                   <h2 className="text-lg font-semibold text-white mb-3">
                     Detailed Analysis
                   </h2>
@@ -404,7 +412,7 @@ export default function DeepResearchView({ onClose: _onClose }: DeepResearchView
                 </section>
 
                 {/* Citations */}
-                <section className="glass-card p-6 rounded-xl mb-6">
+                <section className="morphic-card p-6 rounded-xl mb-6">
                   <h2 className="text-lg font-semibold text-white mb-3">
                     Sources & Citations
                   </h2>
@@ -439,7 +447,7 @@ export default function DeepResearchView({ onClose: _onClose }: DeepResearchView
           {/* Error Display */}
           {error && (
             <div className="p-4">
-              <div className="glass-card p-4 rounded-xl border border-red-500/30 bg-red-500/10">
+              <div className="morphic-card p-4 rounded-xl border border-red-500/30 bg-red-500/10">
                 <div className="flex items-center gap-3">
                   <AlertCircle className="w-5 h-5 text-red-400" />
                   <div>
@@ -461,7 +469,7 @@ function SourceCard({ source, index }: { source: ResearchSource; index: number }
 
   return (
     <div
-      className={`glass-card p-3 rounded-lg transition-all cursor-pointer ${
+      className={`morphic-card p-3 rounded-lg transition-all cursor-pointer ${
         source.error ? 'border-red-500/30' : 'border-green-500/30'
       }`}
       onClick={() => setExpanded(!expanded)}

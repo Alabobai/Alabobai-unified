@@ -183,7 +183,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
   // Get agent color by ID
   const getAgentColor = (agentId: string): string => {
     const agent = agents.find((a: AgentInfo) => a.id === agentId);
-    return agent?.color || '#d9a07a';
+    return agent?.color || 'var(--exec-accent)';
   };
 
   // Toggle event expansion

@@ -257,7 +257,7 @@ function TabButton({ active, onClick, icon: Icon, label }: {
       onClick={onClick}
       className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
         active
-          ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+          ? 'bg-rose-gold-400/20 text-rose-gold-400 border border-rose-gold-400/30'
           : 'text-white/60 hover:text-white hover:bg-white/5'
       }`}
     >
@@ -267,21 +267,21 @@ function TabButton({ active, onClick, icon: Icon, label }: {
   )
 }
 
-function StatCard({ icon: Icon, label, value, color = 'emerald' }: {
+function StatCard({ icon: Icon, label, value, color = 'rose' }: {
   icon: typeof Shield
   label: string
   value: string | number
   color?: string
 }) {
   const colorClasses: Record<string, string> = {
-    emerald: 'from-emerald-400/20 to-emerald-600/20 border-emerald-500/30 text-emerald-400',
+    rose: 'from-rose-gold-400/20 to-rose-gold-600/20 border-rose-gold-400/30 text-rose-gold-400',
     yellow: 'from-yellow-400/20 to-yellow-600/20 border-yellow-500/30 text-yellow-400',
     red: 'from-red-400/20 to-red-600/20 border-red-500/30 text-red-400',
     blue: 'from-blue-400/20 to-blue-600/20 border-blue-500/30 text-blue-400',
   }
 
   return (
-    <div className={`glass-card p-4 rounded-xl bg-gradient-to-br ${colorClasses[color]} border`}>
+    <div className={`morphic-card p-4 rounded-xl bg-gradient-to-br ${colorClasses[color]} border`}>
       <div className="flex items-center gap-3">
         <Icon className="w-5 h-5" />
         <div>
@@ -435,10 +435,10 @@ function PrivacyDashboard() {
     <div className="space-y-6">
       {/* Stats */}
       <div className="grid grid-cols-4 gap-4">
-        <StatCard icon={Database} label="Total Items" value={storageItems.length} color="blue" />
-        <StatCard icon={HardDrive} label="Total Size" value={formatBytes(totalSize)} color="emerald" />
+        <StatCard icon={Database} label="Total Items" value={storageItems.length} color="rose" />
+        <StatCard icon={HardDrive} label="Total Size" value={formatBytes(totalSize)} color="rose" />
         <StatCard icon={Cookie} label="Cookies" value={cookieItems.length} color="yellow" />
-        <StatCard icon={FileText} label="Storage Items" value={localStorageItems.length + sessionStorageItems.length} color="blue" />
+        <StatCard icon={FileText} label="Storage Items" value={localStorageItems.length + sessionStorageItems.length} color="rose" />
       </div>
 
       {/* Actions */}
@@ -446,7 +446,7 @@ function PrivacyDashboard() {
         <button
           onClick={scanStorage}
           disabled={scanning}
-          className="glass-btn-secondary px-4 py-2 text-sm flex items-center gap-2"
+          className="morphic-btn px-4 py-2 text-sm flex items-center gap-2"
         >
           <RefreshCw className={`w-4 h-4 ${scanning ? 'animate-spin' : ''}`} />
           {scanning ? 'Scanning...' : 'Rescan'}
@@ -455,7 +455,7 @@ function PrivacyDashboard() {
         {selectedItems.size > 0 && (
           <button
             onClick={deleteSelected}
-            className="glass-btn-danger px-4 py-2 text-sm flex items-center gap-2"
+            className="morphic-btn bg-red-500/20 text-red-400 border-red-500/30 hover:bg-red-500/30 px-4 py-2 text-sm flex items-center gap-2"
           >
             <Trash2 className="w-4 h-4" />
             Delete Selected ({selectedItems.size})
@@ -465,7 +465,7 @@ function PrivacyDashboard() {
         <div className="ml-auto flex items-center gap-2">
           <button
             onClick={() => clearAllStorage('all')}
-            className="glass-btn-danger px-4 py-2 text-sm flex items-center gap-2"
+            className="morphic-btn bg-red-500/20 text-red-400 border-red-500/30 hover:bg-red-500/30 px-4 py-2 text-sm flex items-center gap-2"
           >
             <Trash2 className="w-4 h-4" />
             Clear All Data
@@ -476,13 +476,13 @@ function PrivacyDashboard() {
       {/* Storage Sections */}
       <div className="space-y-4">
         {/* LocalStorage */}
-        <div className="glass-card rounded-xl overflow-hidden">
+        <div className="morphic-card rounded-xl overflow-hidden">
           <button
             onClick={() => toggleSection('localStorage')}
             className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors"
           >
             <div className="flex items-center gap-3">
-              <Database className="w-5 h-5 text-blue-400" />
+              <Database className="w-5 h-5 text-rose-gold-400" />
               <span className="font-medium text-white">LocalStorage</span>
               <span className="text-xs text-white/40">({localStorageItems.length} items)</span>
             </div>
@@ -508,7 +508,7 @@ function PrivacyDashboard() {
                     type="checkbox"
                     checked={selectedItems.has(item.key)}
                     onChange={() => toggleSelectItem(item.key)}
-                    className="rounded border-white/20 bg-white/5 text-emerald-500 focus:ring-emerald-500/50"
+                    className="rounded border-white/20 bg-white/5 text-rose-gold-400 focus:ring-rose-gold-400/50"
                   />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-white truncate">{item.key}</p>
@@ -528,13 +528,13 @@ function PrivacyDashboard() {
         </div>
 
         {/* SessionStorage */}
-        <div className="glass-card rounded-xl overflow-hidden">
+        <div className="morphic-card rounded-xl overflow-hidden">
           <button
             onClick={() => toggleSection('sessionStorage')}
             className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors"
           >
             <div className="flex items-center gap-3">
-              <HardDrive className="w-5 h-5 text-purple-400" />
+              <HardDrive className="w-5 h-5 text-rose-gold-400" />
               <span className="font-medium text-white">SessionStorage</span>
               <span className="text-xs text-white/40">({sessionStorageItems.length} items)</span>
             </div>
@@ -560,7 +560,7 @@ function PrivacyDashboard() {
                     type="checkbox"
                     checked={selectedItems.has(item.key)}
                     onChange={() => toggleSelectItem(item.key)}
-                    className="rounded border-white/20 bg-white/5 text-emerald-500 focus:ring-emerald-500/50"
+                    className="rounded border-white/20 bg-white/5 text-rose-gold-400 focus:ring-rose-gold-400/50"
                   />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-white truncate">{item.key}</p>
@@ -580,13 +580,13 @@ function PrivacyDashboard() {
         </div>
 
         {/* Cookies */}
-        <div className="glass-card rounded-xl overflow-hidden">
+        <div className="morphic-card rounded-xl overflow-hidden">
           <button
             onClick={() => toggleSection('cookie')}
             className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors"
           >
             <div className="flex items-center gap-3">
-              <Cookie className="w-5 h-5 text-yellow-400" />
+              <Cookie className="w-5 h-5 text-rose-gold-400" />
               <span className="font-medium text-white">Cookies</span>
               <span className="text-xs text-white/40">({cookieItems.length} items)</span>
             </div>
@@ -612,7 +612,7 @@ function PrivacyDashboard() {
                     type="checkbox"
                     checked={selectedItems.has(item.key)}
                     onChange={() => toggleSelectItem(item.key)}
-                    className="rounded border-white/20 bg-white/5 text-emerald-500 focus:ring-emerald-500/50"
+                    className="rounded border-white/20 bg-white/5 text-rose-gold-400 focus:ring-rose-gold-400/50"
                   />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-white truncate">{item.key}</p>
@@ -690,9 +690,9 @@ function PrivacyTools() {
   return (
     <div className="grid grid-cols-2 gap-6">
       {/* Password Generator */}
-      <div className="glass-card p-6 rounded-xl">
+      <div className="morphic-card p-6 rounded-xl">
         <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-          <Key className="w-5 h-5 text-emerald-400" />
+          <Key className="w-5 h-5 text-rose-gold-400" />
           Password Generator
         </h3>
 
@@ -705,7 +705,7 @@ function PrivacyTools() {
               max="32"
               value={passwordLength}
               onChange={(e) => setPasswordLength(Number(e.target.value))}
-              className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+              className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-rose-gold-400"
             />
           </div>
 
@@ -716,7 +716,7 @@ function PrivacyTools() {
                   type="checkbox"
                   checked={value}
                   onChange={(e) => setPasswordOptions(prev => ({ ...prev, [key]: e.target.checked }))}
-                  className="rounded border-white/20 bg-white/5 text-emerald-500 focus:ring-emerald-500/50"
+                  className="rounded border-white/20 bg-white/5 text-rose-gold-400 focus:ring-rose-gold-400/50"
                 />
                 {key.charAt(0).toUpperCase() + key.slice(1)}
               </label>
@@ -725,7 +725,7 @@ function PrivacyTools() {
 
           <button
             onClick={handleGeneratePassword}
-            className="w-full glass-btn-primary py-2.5 text-sm font-semibold flex items-center justify-center gap-2"
+            className="w-full morphic-btn bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 py-2.5 text-sm font-semibold flex items-center justify-center gap-2"
           >
             <Zap className="w-4 h-4" />
             Generate Password
@@ -750,7 +750,7 @@ function PrivacyTools() {
                   onClick={() => copyToClipboard(generatedPassword, 'password')}
                   className="p-1.5 text-white/40 hover:text-white"
                 >
-                  {copiedItem === 'password' ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                  {copiedItem === 'password' ? <Check className="w-4 h-4 text-rose-gold-400" /> : <Copy className="w-4 h-4" />}
                 </button>
               </div>
             </div>
@@ -759,9 +759,9 @@ function PrivacyTools() {
       </div>
 
       {/* Password Strength Checker */}
-      <div className="glass-card p-6 rounded-xl">
+      <div className="morphic-card p-6 rounded-xl">
         <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-          <Shield className="w-5 h-5 text-emerald-400" />
+          <Shield className="w-5 h-5 text-rose-gold-400" />
           Password Strength Checker
         </h3>
 
@@ -788,7 +788,7 @@ function PrivacyTools() {
                 <div className="flex justify-between mb-1">
                   <span className="text-sm text-white/60">Strength</span>
                   <span className={`text-sm font-medium ${
-                    passwordStrength.score >= 5 ? 'text-emerald-400' :
+                    passwordStrength.score >= 5 ? 'text-rose-gold-400' :
                     passwordStrength.score >= 3 ? 'text-yellow-400' : 'text-red-400'
                   }`}>
                     {passwordStrength.label}
@@ -806,7 +806,7 @@ function PrivacyTools() {
                 {passwordStrength.feedback.map((tip, i) => (
                   <div key={i} className="flex items-center gap-2 text-xs text-white/60">
                     {passwordStrength.score >= 5 && tip === 'Great password!' ? (
-                      <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                      <CheckCircle2 className="w-3 h-3 text-rose-gold-400" />
                     ) : (
                       <AlertCircle className="w-3 h-3 text-yellow-400" />
                     )}
@@ -820,16 +820,16 @@ function PrivacyTools() {
       </div>
 
       {/* Username Generator */}
-      <div className="glass-card p-6 rounded-xl">
+      <div className="morphic-card p-6 rounded-xl">
         <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-          <User className="w-5 h-5 text-blue-400" />
+          <User className="w-5 h-5 text-rose-gold-400" />
           Username Generator
         </h3>
 
         <div className="space-y-4">
           <button
             onClick={handleGenerateUsernames}
-            className="w-full glass-btn-secondary py-2.5 text-sm font-semibold flex items-center justify-center gap-2"
+            className="w-full morphic-btn py-2.5 text-sm font-semibold flex items-center justify-center gap-2"
           >
             <RefreshCw className="w-4 h-4" />
             Generate Usernames
@@ -847,7 +847,7 @@ function PrivacyTools() {
                     onClick={() => copyToClipboard(username, `username-${i}`)}
                     className="p-1.5 text-white/40 hover:text-white"
                   >
-                    {copiedItem === `username-${i}` ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                    {copiedItem === `username-${i}` ? <Check className="w-4 h-4 text-rose-gold-400" /> : <Copy className="w-4 h-4" />}
                   </button>
                 </div>
               ))}
@@ -857,9 +857,9 @@ function PrivacyTools() {
       </div>
 
       {/* Email Alias Generator */}
-      <div className="glass-card p-6 rounded-xl">
+      <div className="morphic-card p-6 rounded-xl">
         <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-          <Mail className="w-5 h-5 text-purple-400" />
+          <Mail className="w-5 h-5 text-rose-gold-400" />
           Email Alias Generator
         </h3>
 
@@ -878,7 +878,7 @@ function PrivacyTools() {
           <button
             onClick={handleGenerateAliases}
             disabled={!baseEmail.includes('@')}
-            className="w-full glass-btn-secondary py-2.5 text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
+            className="w-full morphic-btn py-2.5 text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
           >
             <Mail className="w-4 h-4" />
             Generate Aliases
@@ -897,7 +897,7 @@ function PrivacyTools() {
                     onClick={() => copyToClipboard(alias, `alias-${i}`)}
                     className="p-1.5 text-white/40 hover:text-white flex-shrink-0"
                   >
-                    {copiedItem === `alias-${i}` ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                    {copiedItem === `alias-${i}` ? <Check className="w-4 h-4 text-rose-gold-400" /> : <Copy className="w-4 h-4" />}
                   </button>
                 </div>
               ))}
@@ -950,9 +950,9 @@ function SecurityAnalysis() {
   return (
     <div className="space-y-6">
       {/* URL Input */}
-      <div className="glass-card p-6 rounded-xl">
+      <div className="morphic-card p-6 rounded-xl">
         <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-          <Globe className="w-5 h-5 text-blue-400" />
+          <Globe className="w-5 h-5 text-rose-gold-400" />
           URL Security Analyzer
         </h3>
 
@@ -968,7 +968,7 @@ function SecurityAnalysis() {
           <button
             onClick={handleAnalyze}
             disabled={!url.trim() || analyzing}
-            className="glass-btn-primary px-6 py-3 text-sm font-semibold flex items-center gap-2 disabled:opacity-50"
+            className="morphic-btn bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 px-6 py-3 text-sm font-semibold flex items-center gap-2 disabled:opacity-50"
           >
             {analyzing ? (
               <>
@@ -989,7 +989,7 @@ function SecurityAnalysis() {
       {analysis && (
         <div className="grid grid-cols-2 gap-6">
           {/* Score Card */}
-          <div className={`glass-card p-6 rounded-xl bg-gradient-to-br ${getScoreBg(analysis.score)} border`}>
+          <div className={`morphic-card p-6 rounded-xl bg-gradient-to-br ${getScoreBg(analysis.score)} border`}>
             <div className="text-center">
               <div className={`text-5xl font-bold ${getScoreColor(analysis.score)} mb-2`}>
                 {analysis.score}
@@ -997,7 +997,7 @@ function SecurityAnalysis() {
               <div className="text-white/60 text-sm">Security Score</div>
               <div className="mt-4 flex items-center justify-center gap-2">
                 {analysis.isHttps ? (
-                  <span className="flex items-center gap-1 text-emerald-400 text-sm">
+                  <span className="flex items-center gap-1 text-rose-gold-400 text-sm">
                     <Lock className="w-4 h-4" />
                     HTTPS Secure
                   </span>
@@ -1012,7 +1012,7 @@ function SecurityAnalysis() {
           </div>
 
           {/* Domain Info */}
-          <div className="glass-card p-6 rounded-xl">
+          <div className="morphic-card p-6 rounded-xl">
             <h4 className="text-sm font-medium text-white/60 mb-3">Domain Information</h4>
             <div className="space-y-3">
               <div>
@@ -1031,7 +1031,7 @@ function SecurityAnalysis() {
           </div>
 
           {/* Risks */}
-          <div className="glass-card p-6 rounded-xl">
+          <div className="morphic-card p-6 rounded-xl">
             <h4 className="text-sm font-medium text-white/60 mb-3 flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 text-yellow-400" />
               Potential Risks
@@ -1046,7 +1046,7 @@ function SecurityAnalysis() {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-emerald-400 flex items-center gap-2">
+              <p className="text-sm text-rose-gold-400 flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4" />
                 No obvious risks detected
               </p>
@@ -1054,15 +1054,15 @@ function SecurityAnalysis() {
           </div>
 
           {/* Recommendations */}
-          <div className="glass-card p-6 rounded-xl">
+          <div className="morphic-card p-6 rounded-xl">
             <h4 className="text-sm font-medium text-white/60 mb-3 flex items-center gap-2">
-              <Info className="w-4 h-4 text-blue-400" />
+              <Info className="w-4 h-4 text-rose-gold-400" />
               Recommendations
             </h4>
             <div className="space-y-2">
               {analysis.recommendations.map((rec, i) => (
                 <div key={i} className="flex items-start gap-2 text-sm">
-                  <CheckCircle2 className="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5" />
+                  <CheckCircle2 className="w-4 h-4 text-rose-gold-400 flex-shrink-0 mt-0.5" />
                   <span className="text-white/80">{rec}</span>
                 </div>
               ))}
@@ -1073,7 +1073,7 @@ function SecurityAnalysis() {
 
       {/* Empty State */}
       {!analysis && (
-        <div className="glass-card p-12 rounded-xl text-center">
+        <div className="morphic-card p-12 rounded-xl text-center">
           <Globe className="w-16 h-16 text-white/20 mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-white mb-2">URL Security Analysis</h3>
           <p className="text-white/50 max-w-md mx-auto">
@@ -1156,10 +1156,10 @@ function DataManagement() {
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-6">
         {/* Export Data */}
-        <div className="glass-card p-6 rounded-xl">
+        <div className="morphic-card p-6 rounded-xl">
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-xl bg-blue-500/20 border border-blue-500/30 flex items-center justify-center">
-              <Download className="w-6 h-6 text-blue-400" />
+            <div className="w-12 h-12 rounded-xl bg-rose-gold-400/20 border border-rose-gold-400/30 flex items-center justify-center">
+              <Download className="w-6 h-6 text-rose-gold-400" />
             </div>
             <div className="flex-1">
               <h3 className="text-lg font-semibold text-white mb-1">Export All Data</h3>
@@ -1169,7 +1169,7 @@ function DataManagement() {
               <button
                 onClick={exportAllData}
                 disabled={exporting}
-                className="glass-btn-secondary px-4 py-2 text-sm flex items-center gap-2"
+                className="morphic-btn px-4 py-2 text-sm flex items-center gap-2"
               >
                 {exporting ? (
                   <>
@@ -1178,7 +1178,7 @@ function DataManagement() {
                   </>
                 ) : exportComplete ? (
                   <>
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                    <CheckCircle2 className="w-4 h-4 text-rose-gold-400" />
                     Exported!
                   </>
                 ) : (
@@ -1193,7 +1193,7 @@ function DataManagement() {
         </div>
 
         {/* Clear All Data */}
-        <div className="glass-card p-6 rounded-xl border border-red-500/20">
+        <div className="morphic-card p-6 rounded-xl border border-red-500/20">
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 rounded-xl bg-red-500/20 border border-red-500/30 flex items-center justify-center">
               <Trash2 className="w-6 h-6 text-red-400" />
@@ -1205,7 +1205,7 @@ function DataManagement() {
               </p>
               <button
                 onClick={clearAllPlatformData}
-                className="glass-btn-danger px-4 py-2 text-sm flex items-center gap-2"
+                className="morphic-btn bg-red-500/20 text-red-400 border-red-500/30 hover:bg-red-500/30 px-4 py-2 text-sm flex items-center gap-2"
               >
                 <Trash2 className="w-4 h-4" />
                 Clear All Data
@@ -1216,9 +1216,9 @@ function DataManagement() {
       </div>
 
       {/* Privacy Settings Info */}
-      <div className="glass-card p-6 rounded-xl">
+      <div className="morphic-card p-6 rounded-xl">
         <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-          <Settings className="w-5 h-5 text-white/60" />
+          <Settings className="w-5 h-5 text-rose-gold-400" />
           Browser Privacy Settings
         </h3>
 
@@ -1297,10 +1297,10 @@ function PrivacyChecklist() {
   }
 
   return (
-    <div className="glass-card p-6 rounded-xl">
+    <div className="morphic-card p-6 rounded-xl">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-          <ClipboardCheck className="w-5 h-5 text-emerald-400" />
+          <ClipboardCheck className="w-5 h-5 text-rose-gold-400" />
           Privacy Checklist
         </h3>
         <div className="flex items-center gap-3">
@@ -1330,17 +1330,17 @@ function PrivacyChecklist() {
                   <label
                     key={item.id}
                     className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
-                      item.checked ? 'bg-emerald-500/10' : 'bg-white/5 hover:bg-white/10'
+                      item.checked ? 'bg-rose-gold-400/10' : 'bg-white/5 hover:bg-white/10'
                     }`}
                   >
                     <input
                       type="checkbox"
                       checked={item.checked}
                       onChange={() => toggleCheck(item.id)}
-                      className="mt-0.5 rounded border-white/20 bg-white/5 text-emerald-500 focus:ring-emerald-500/50"
+                      className="mt-0.5 rounded border-white/20 bg-white/5 text-rose-gold-400 focus:ring-rose-gold-400/50"
                     />
                     <div>
-                      <p className={`text-sm ${item.checked ? 'text-emerald-400 line-through' : 'text-white'}`}>
+                      <p className={`text-sm ${item.checked ? 'text-rose-gold-400 line-through' : 'text-white'}`}>
                         {item.title}
                       </p>
                       <p className="text-xs text-white/40">{item.description}</p>
@@ -1366,15 +1366,15 @@ export default function PrivacyFortressView() {
   return (
     <div className="h-full flex flex-col bg-dark-500 overflow-hidden">
       {/* Header */}
-      <div className="glass-morphic-header p-4 border-b border-white/10">
+      <div className="glass-morphic-header p-4 border-b border-rose-gold-400/20">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-glow-lg animate-pulse-glow">
-              <Lock className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-gold-300 to-rose-gold-600 flex items-center justify-center shadow-glow-lg animate-pulse-glow">
+              <Lock className="w-5 h-5 text-dark-500" />
             </div>
             <div>
               <h2 className="text-lg font-bold text-white">Privacy Fortress</h2>
-              <p className="text-xs text-white/50">Data security and privacy management</p>
+              <p className="text-xs text-rose-gold-400/70">Alabobai - Data security and privacy management</p>
             </div>
           </div>
         </div>

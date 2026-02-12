@@ -1231,13 +1231,21 @@ export default function IntegrationHubView() {
       {/* Header */}
       <div className="flex-shrink-0 p-6 border-b border-white/10">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
-              <Plug className="w-6 h-6 text-white" />
+          <div className="flex items-center gap-4">
+            {/* Alabobai Logo */}
+            <div className="flex items-center gap-3">
+              <img src="/logo.png" alt="Alabobai" className="w-10 h-10 rounded-lg" />
+              <div className="h-8 w-px bg-white/10" />
             </div>
-            <div>
-              <h1 className="text-2xl font-bold text-white">Integration Hub</h1>
-              <p className="text-white/50 text-sm">Connect external services and manage webhooks</p>
+            {/* View Header */}
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
+                <Plug className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-white">Integration Hub</h1>
+                <p className="text-rose-gold-400/70 text-sm">Connect external services and manage webhooks</p>
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-4">

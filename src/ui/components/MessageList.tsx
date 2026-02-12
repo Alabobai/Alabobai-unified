@@ -35,9 +35,9 @@ export const MessageList: React.FC<MessageListProps> = ({ messages, isLoading })
           {isUser ? (
             <span className="user-avatar">You</span>
           ) : isAgent ? (
-            <span className="agent-avatar">{message.agentIcon || '🤖'}</span>
+            <span className="agent-avatar">{message.agentIcon || ''}</span>
           ) : (
-            <span className="assistant-avatar">🌟</span>
+            <span className="assistant-avatar"></span>
           )}
         </div>
 
@@ -103,17 +103,17 @@ export const MessageList: React.FC<MessageListProps> = ({ messages, isLoading })
           }
 
           .user-avatar {
-            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-            color: #fff;
+            background: linear-gradient(135deg, #d9a07a 0%, #c9956c 100%);
+            color: #0a0806;
           }
 
           .agent-avatar {
-            background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+            background: linear-gradient(135deg, #b8845c 0%, #a67c52 100%);
             font-size: 1.25rem;
           }
 
           .assistant-avatar {
-            background: linear-gradient(135deg, #f5a9b8 0%, #d4af37 100%);
+            background: linear-gradient(135deg, #d9a07a 0%, #c9956c 100%);
             font-size: 1.25rem;
           }
 
@@ -125,7 +125,7 @@ export const MessageList: React.FC<MessageListProps> = ({ messages, isLoading })
           }
 
           .message.user .message-content {
-            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            background: linear-gradient(135deg, #d9a07a 0%, #c9956c 100%);
             border-bottom-right-radius: 4px;
           }
 
@@ -138,7 +138,7 @@ export const MessageList: React.FC<MessageListProps> = ({ messages, isLoading })
           .agent-name {
             font-size: 0.75rem;
             font-weight: 600;
-            color: #f5a9b8;
+            color: #d9a07a;
             margin-bottom: 0.5rem;
             text-transform: uppercase;
             letter-spacing: 0.05em;
@@ -173,7 +173,7 @@ export const MessageList: React.FC<MessageListProps> = ({ messages, isLoading })
       {isLoading && (
         <div className="message assistant">
           <div className="message-avatar">
-            <span className="assistant-avatar">🌟</span>
+            <span className="assistant-avatar"></span>
           </div>
           <div className="message-content">
             <div className="typing-indicator">

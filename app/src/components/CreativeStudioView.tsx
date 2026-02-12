@@ -401,7 +401,7 @@ export default function CreativeStudioView() {
     <div className="flex flex-col lg:flex-row gap-6 h-full">
       {/* Controls */}
       <div className="lg:w-80 space-y-4">
-        <div className="glass-card p-4 rounded-xl">
+        <div className="morphic-card p-4 rounded-xl">
           <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
             <Wand2 className="w-4 h-4 text-pink-400" />
             Image Prompt
@@ -415,7 +415,7 @@ export default function CreativeStudioView() {
         </div>
 
         {/* Style Selection */}
-        <div className="glass-card p-4 rounded-xl">
+        <div className="morphic-card p-4 rounded-xl">
           <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
             <PenTool className="w-4 h-4 text-purple-400" />
             Style
@@ -437,7 +437,7 @@ export default function CreativeStudioView() {
         </div>
 
         {/* Size Selection */}
-        <div className="glass-card p-4 rounded-xl">
+        <div className="morphic-card p-4 rounded-xl">
           <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
             <Layout className="w-4 h-4 text-blue-400" />
             Size
@@ -466,7 +466,7 @@ export default function CreativeStudioView() {
         <button
           onClick={generateImage}
           disabled={!imagePrompt.trim() || isGeneratingImage}
-          className="w-full glass-btn-primary py-3 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed group"
+          className="w-full morphic-btn bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 py-3 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed group"
         >
           <span className="flex items-center justify-center gap-2">
             {isGeneratingImage ? (
@@ -484,7 +484,7 @@ export default function CreativeStudioView() {
         </button>
 
         {/* Quick Prompts */}
-        <div className="glass-card p-4 rounded-xl">
+        <div className="morphic-card p-4 rounded-xl">
           <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-2">
             Quick Prompts
           </h3>
@@ -526,7 +526,7 @@ export default function CreativeStudioView() {
             {generatedImages.map(image => (
               <div
                 key={image.id}
-                className="glass-card rounded-xl overflow-hidden group"
+                className="morphic-card rounded-xl overflow-hidden group"
               >
                 <div className="relative aspect-square bg-white/5">
                   {image.status === 'generating' ? (
@@ -597,7 +597,7 @@ export default function CreativeStudioView() {
     <div className="flex flex-col lg:flex-row gap-6 h-full">
       {/* Controls */}
       <div className="lg:w-80 space-y-4">
-        <div className="glass-card p-4 rounded-xl">
+        <div className="morphic-card p-4 rounded-xl">
           <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
             <Type className="w-4 h-4 text-blue-400" />
             Content Type
@@ -620,7 +620,7 @@ export default function CreativeStudioView() {
           </div>
         </div>
 
-        <div className="glass-card p-4 rounded-xl">
+        <div className="morphic-card p-4 rounded-xl">
           <h3 className="text-sm font-semibold text-white mb-3">Topic / Subject</h3>
           <textarea
             value={contentTopic}
@@ -630,7 +630,7 @@ export default function CreativeStudioView() {
           />
         </div>
 
-        <div className="glass-card p-4 rounded-xl">
+        <div className="morphic-card p-4 rounded-xl">
           <h3 className="text-sm font-semibold text-white mb-3">Tone</h3>
           <div className="relative">
             <select
@@ -652,7 +652,7 @@ export default function CreativeStudioView() {
         <button
           onClick={generateContent}
           disabled={!contentTopic.trim() || isGeneratingContent}
-          className="w-full glass-btn-primary py-3 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed group"
+          className="w-full morphic-btn bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 py-3 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed group"
         >
           <span className="flex items-center justify-center gap-2">
             {isGeneratingContent ? (
@@ -670,7 +670,7 @@ export default function CreativeStudioView() {
         </button>
 
         {/* Quick Topics */}
-        <div className="glass-card p-4 rounded-xl">
+        <div className="morphic-card p-4 rounded-xl">
           <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-2">
             Popular Topics
           </h3>
@@ -712,7 +712,7 @@ export default function CreativeStudioView() {
             <div className="p-4 space-y-4">
               {/* Current generation */}
               {(currentContent || isGeneratingContent) && (
-                <div className="glass-card p-6 rounded-xl">
+                <div className="morphic-card p-6 rounded-xl">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-semibold text-white flex items-center gap-2">
                       <Sparkles className="w-5 h-5 text-blue-400" />
@@ -743,7 +743,7 @@ export default function CreativeStudioView() {
 
               {/* Previous generations */}
               {generatedContent.map(content => (
-                <div key={content.id} className="glass-card p-6 rounded-xl">
+                <div key={content.id} className="morphic-card p-6 rounded-xl">
                   <div className="flex items-center justify-between mb-4">
                     <div>
                       <h3 className="text-lg font-semibold text-white">{content.title}</h3>
@@ -782,7 +782,7 @@ export default function CreativeStudioView() {
   const renderDesignTab = () => (
     <div className="grid lg:grid-cols-2 gap-6 h-full overflow-y-auto morphic-scrollbar p-4">
       {/* Color Palette Generator */}
-      <div className="glass-card p-6 rounded-xl">
+      <div className="morphic-card p-6 rounded-xl">
         <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
           <Palette className="w-5 h-5 text-pink-400" />
           Color Palette Generator
@@ -810,7 +810,7 @@ export default function CreativeStudioView() {
           <button
             onClick={generateColorPalette}
             disabled={isGeneratingPalette}
-            className="w-full glass-btn-primary py-3 text-sm font-semibold disabled:opacity-50"
+            className="w-full morphic-btn bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 py-3 text-sm font-semibold disabled:opacity-50"
           >
             {isGeneratingPalette ? (
               <span className="flex items-center justify-center gap-2">
@@ -870,7 +870,7 @@ export default function CreativeStudioView() {
       </div>
 
       {/* Font Pairing Suggestions */}
-      <div className="glass-card p-6 rounded-xl">
+      <div className="morphic-card p-6 rounded-xl">
         <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
           <Type className="w-5 h-5 text-blue-400" />
           Font Pairing Suggestions
@@ -926,7 +926,7 @@ export default function CreativeStudioView() {
       </div>
 
       {/* Layout Recommendations */}
-      <div className="glass-card p-6 rounded-xl lg:col-span-2">
+      <div className="morphic-card p-6 rounded-xl lg:col-span-2">
         <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
           <Layout className="w-5 h-5 text-green-400" />
           Layout Recommendations
@@ -980,7 +980,7 @@ export default function CreativeStudioView() {
           </h3>
 
           {generatedImages.filter(i => i.status === 'complete').length === 0 ? (
-            <div className="glass-card p-8 rounded-xl text-center">
+            <div className="morphic-card p-8 rounded-xl text-center">
               <Image className="w-12 h-12 text-white/20 mx-auto mb-3" />
               <p className="text-white/40 text-sm">No images generated yet</p>
             </div>
@@ -989,7 +989,7 @@ export default function CreativeStudioView() {
               {generatedImages
                 .filter(i => i.status === 'complete')
                 .map(image => (
-                  <div key={image.id} className="glass-card rounded-xl overflow-hidden group">
+                  <div key={image.id} className="morphic-card rounded-xl overflow-hidden group">
                     <div className="relative aspect-square">
                       <img
                         src={image.url}
@@ -1031,14 +1031,14 @@ export default function CreativeStudioView() {
             </h3>
 
             {generatedContent.length === 0 ? (
-              <div className="glass-card p-6 rounded-xl text-center">
+              <div className="morphic-card p-6 rounded-xl text-center">
                 <FileText className="w-10 h-10 text-white/20 mx-auto mb-2" />
                 <p className="text-white/40 text-sm">No content generated yet</p>
               </div>
             ) : (
               <div className="space-y-3">
                 {generatedContent.slice(0, 5).map(content => (
-                  <div key={content.id} className="glass-card p-4 rounded-lg">
+                  <div key={content.id} className="morphic-card p-4 rounded-lg">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm text-white font-medium truncate flex-1">
                         {content.title}
@@ -1076,14 +1076,14 @@ export default function CreativeStudioView() {
             </h3>
 
             {palettes.length === 0 ? (
-              <div className="glass-card p-6 rounded-xl text-center">
+              <div className="morphic-card p-6 rounded-xl text-center">
                 <Palette className="w-10 h-10 text-white/20 mx-auto mb-2" />
                 <p className="text-white/40 text-sm">No palettes generated yet</p>
               </div>
             ) : (
               <div className="space-y-3">
                 {palettes.slice(0, 5).map(palette => (
-                  <div key={palette.id} className="glass-card p-3 rounded-lg">
+                  <div key={palette.id} className="morphic-card p-3 rounded-lg">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm text-white">{palette.name}</span>
                       <button
@@ -1119,13 +1119,21 @@ export default function CreativeStudioView() {
       {/* Header */}
       <div className="glass-morphic-header p-4 border-b border-white/10">
         <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-400 to-purple-600 flex items-center justify-center shadow-glow-lg">
-              <Sparkles className="w-5 h-5 text-white" />
+          <div className="flex items-center gap-4">
+            {/* Alabobai Logo */}
+            <div className="flex items-center gap-2">
+              <img src="/logo.png" alt="Alabobai" className="w-8 h-8 rounded-lg" />
+              <div className="h-6 w-px bg-white/10" />
             </div>
-            <div>
-              <h2 className="text-lg font-bold text-white">Creative Studio</h2>
-              <p className="text-xs text-white/50">AI-powered creative content generation</p>
+            {/* View Header */}
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-400 to-purple-600 flex items-center justify-center shadow-glow-lg">
+                <Palette className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-white">Creative Studio</h2>
+                <p className="text-xs text-rose-gold-400/70">AI-powered creative content generation</p>
+              </div>
             </div>
           </div>
 

@@ -115,14 +115,18 @@ const ParallelLanes: React.FC<ParallelLanesProps> = ({ agents, tasks, totalDurat
     const leftPercent = totalDuration > 0 ? (startTime / totalDuration) * 100 : 0;
     const widthPercent = totalDuration > 0 ? (duration / totalDuration) * 100 : 10;
 
+    // Use CSS variables for consistent brand colors
+    let backgroundColor = agentColor;
+    if (task.status === 'complete') {
+      backgroundColor = 'var(--exec-status-complete, #22c55e)';
+    } else if (task.status === 'failed') {
+      backgroundColor = 'var(--exec-status-error, #ef4444)';
+    }
+
     return {
       left: `${Math.max(0, Math.min(leftPercent, 95))}%`,
       width: `${Math.max(5, Math.min(widthPercent, 100 - leftPercent))}%`,
-      backgroundColor: task.status === 'complete'
-        ? 'rgba(74, 222, 128, 0.8)'
-        : task.status === 'failed'
-        ? 'rgba(239, 68, 68, 0.8)'
-        : agentColor,
+      backgroundColor,
     };
   };
 

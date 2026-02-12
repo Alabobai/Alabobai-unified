@@ -21,13 +21,13 @@ export const AgentActivity: React.FC<AgentActivityProps> = ({ agents }) => {
   const getStatusColor = (status: Agent['status']) => {
     switch (status) {
       case 'working':
-        return '#4ade80';
+        return '#d9a07a'; // rose-gold-400
       case 'waiting-approval':
-        return '#fbbf24';
+        return '#c9956c'; // rose-gold-500
       case 'collaborating':
-        return '#8b5cf6';
+        return '#b8845c'; // rose-gold-600
       case 'error':
-        return '#ef4444';
+        return '#6b4d32'; // rose-gold-900
       default:
         return 'rgba(255, 255, 255, 0.3)';
     }
@@ -122,33 +122,33 @@ export const AgentActivity: React.FC<AgentActivityProps> = ({ agents }) => {
         }
 
         .agent-card.working {
-          background: rgba(74, 222, 128, 0.1);
-          border: 1px solid rgba(74, 222, 128, 0.2);
+          background: rgba(217, 160, 122, 0.1);
+          border: 1px solid rgba(217, 160, 122, 0.2);
         }
 
         .agent-card.waiting-approval {
-          background: rgba(251, 191, 36, 0.1);
-          border: 1px solid rgba(251, 191, 36, 0.2);
+          background: rgba(201, 149, 108, 0.1);
+          border: 1px solid rgba(201, 149, 108, 0.2);
           animation: pulse 2s ease-in-out infinite;
         }
 
         @keyframes pulse {
           0%, 100% {
-            box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.4);
+            box-shadow: 0 0 0 0 rgba(217, 160, 122, 0.4);
           }
           50% {
-            box-shadow: 0 0 0 8px rgba(251, 191, 36, 0);
+            box-shadow: 0 0 0 8px rgba(217, 160, 122, 0);
           }
         }
 
         .agent-card.collaborating {
-          background: rgba(139, 92, 246, 0.1);
-          border: 1px solid rgba(139, 92, 246, 0.2);
+          background: rgba(184, 132, 92, 0.1);
+          border: 1px solid rgba(184, 132, 92, 0.2);
         }
 
         .agent-card.error {
-          background: rgba(239, 68, 68, 0.1);
-          border: 1px solid rgba(239, 68, 68, 0.2);
+          background: rgba(107, 77, 50, 0.1);
+          border: 1px solid rgba(107, 77, 50, 0.2);
         }
 
         .agent-icon {

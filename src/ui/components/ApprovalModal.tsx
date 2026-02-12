@@ -31,13 +31,13 @@ export const ApprovalModal: React.FC<ApprovalModalProps> = ({
   const getRiskColor = (level: string) => {
     switch (level) {
       case 'critical':
-        return '#ef4444';
+        return '#6b4d32'; // rose-gold-900
       case 'high':
-        return '#f97316';
+        return '#8b6442'; // rose-gold-800
       case 'medium':
-        return '#fbbf24';
+        return '#c9956c'; // rose-gold-500
       default:
-        return '#4ade80';
+        return '#d9a07a'; // rose-gold-400
     }
   };
 
@@ -54,7 +54,7 @@ export const ApprovalModal: React.FC<ApprovalModalProps> = ({
       <div className="approval-modal">
         {/* Header */}
         <div className="modal-header">
-          <div className="header-icon">⚡</div>
+          <div className="header-icon"></div>
           <h2>Approval Required</h2>
         </div>
 
@@ -147,13 +147,13 @@ export const ApprovalModal: React.FC<ApprovalModalProps> = ({
         }
 
         .approval-modal {
-          background: linear-gradient(135deg, #1e1e2f 0%, #2d2d44 100%);
+          background: linear-gradient(135deg, #0a0806 0%, #1a1510 100%);
           border-radius: 20px;
           padding: 2rem;
           max-width: 480px;
           width: 90%;
           box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(217, 160, 122, 0.2);
           animation: slideUp 0.3s ease;
         }
 
@@ -218,7 +218,7 @@ export const ApprovalModal: React.FC<ApprovalModalProps> = ({
         }
 
         .agent-value {
-          color: #f5a9b8;
+          color: #d9a07a;
           font-weight: 500;
         }
 
@@ -302,24 +302,24 @@ export const ApprovalModal: React.FC<ApprovalModalProps> = ({
         }
 
         .btn-approve {
-          background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
-          color: #000;
+          background: linear-gradient(135deg, #d9a07a 0%, #c9956c 100%);
+          color: #0a0806;
         }
 
         .btn-approve:hover {
           transform: translateY(-2px);
-          box-shadow: 0 8px 20px rgba(74, 222, 128, 0.3);
+          box-shadow: 0 8px 20px rgba(217, 160, 122, 0.3);
         }
 
         .btn-reject {
           background: rgba(255, 255, 255, 0.1);
           color: #fff;
-          border: 1px solid rgba(255, 255, 255, 0.2);
+          border: 1px solid rgba(217, 160, 122, 0.3);
         }
 
         .btn-reject:hover {
-          background: rgba(239, 68, 68, 0.2);
-          border-color: #ef4444;
+          background: rgba(107, 77, 50, 0.2);
+          border-color: #6b4d32;
         }
 
         .keyboard-hints {

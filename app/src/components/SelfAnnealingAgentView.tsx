@@ -87,26 +87,26 @@ interface SelfAnnealingAgent extends AgentConfig {
 
 const AGENT_TYPE_CONFIGS: Record<AgentType, { icon: string; color: string; description: string; defaultGoal: string }> = {
   researcher: {
-    icon: '🔍',
-    color: '#a78bfa',
+    icon: 'R',
+    color: '#d4a574',
     description: 'Improves at finding and synthesizing information',
     defaultGoal: 'Find comprehensive, accurate information on any topic'
   },
   coder: {
-    icon: '💻',
-    color: '#60a5fa',
+    icon: 'C',
+    color: '#d4a574',
     description: 'Improves at generating clean, efficient code',
     defaultGoal: 'Generate high-quality, bug-free code solutions'
   },
   analyst: {
-    icon: '📊',
-    color: '#34d399',
+    icon: 'A',
+    color: '#d4a574',
     description: 'Improves at data analysis and insights',
     defaultGoal: 'Analyze data and provide actionable insights'
   },
   writer: {
-    icon: '✍️',
-    color: '#f472b6',
+    icon: 'W',
+    color: '#d4a574',
     description: 'Improves at content creation and writing',
     defaultGoal: 'Create engaging, well-structured content'
   }
@@ -745,7 +745,7 @@ export default function SelfAnnealingAgentView() {
   return (
     <div className="h-full flex flex-col bg-dark-500 overflow-hidden">
       {/* Header */}
-      <div className="glass-morphic-header p-4 border-b border-white/10">
+      <div className="glass-morphic-header p-4 border-b border-rose-gold-400/20">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-rose-gold-300 to-rose-gold-600 flex items-center justify-center shadow-glow-lg animate-pulse-glow">
@@ -753,14 +753,14 @@ export default function SelfAnnealingAgentView() {
             </div>
             <div>
               <h2 className="text-xl font-bold text-white">Self-Annealing Agents</h2>
-              <p className="text-sm text-white/50">AI agents that learn and improve from every task</p>
+              <p className="text-sm text-rose-gold-400/70">Alabobai - AI agents that learn and improve from every task</p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
             <button
               onClick={() => setShowCreateModal(true)}
-              className="glass-btn-primary px-4 py-2 flex items-center gap-2"
+              className="morphic-btn bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 px-4 py-2 flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
               Create Agent
@@ -771,7 +771,7 @@ export default function SelfAnnealingAgentView() {
         {/* Task Input */}
         {currentAgent && (
           <div className="flex gap-3">
-            <div className="flex-1 glass-card p-1 rounded-xl">
+            <div className="flex-1 morphic-card p-1 rounded-xl">
               <input
                 type="text"
                 value={task}
@@ -785,7 +785,7 @@ export default function SelfAnnealingAgentView() {
             <button
               onClick={handleExecuteTask}
               disabled={isExecuting || !task.trim()}
-              className="glass-btn-primary px-6 flex items-center gap-2 disabled:opacity-50"
+              className="morphic-btn bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 px-6 flex items-center gap-2 disabled:opacity-50"
             >
               {isExecuting ? (
                 <>
@@ -819,7 +819,7 @@ export default function SelfAnnealingAgentView() {
               <p className="text-sm text-white/40 mb-4">No agents yet</p>
               <button
                 onClick={() => setShowCreateModal(true)}
-                className="glass-btn px-4 py-2 text-sm"
+                className="morphic-btn px-4 py-2 text-sm"
               >
                 Create Your First Agent
               </button>
@@ -960,7 +960,7 @@ function AgentCard({
   return (
     <div
       onClick={onClick}
-      className={`glass-card p-3 rounded-xl cursor-pointer transition-all ${
+      className={`morphic-card p-3 rounded-xl cursor-pointer transition-all ${
         isSelected ? 'border-rose-gold-400/50 shadow-glow-sm' : ''
       }`}
     >
@@ -1040,7 +1040,7 @@ function ExecutePanel({
 
       {/* Execution Logs */}
       {logs.length > 0 && (
-        <div className="glass-card rounded-xl overflow-hidden">
+        <div className="morphic-card rounded-xl overflow-hidden">
           <div className="p-3 border-b border-white/10 flex items-center justify-between">
             <h4 className="text-sm font-medium text-white">Execution Log</h4>
             <span className="text-xs text-white/40">{logs.length} entries</span>
@@ -1069,7 +1069,7 @@ function ExecutePanel({
 
       {/* Result */}
       {result && (
-        <div className="glass-card rounded-xl overflow-hidden">
+        <div className="morphic-card rounded-xl overflow-hidden">
           <div
             className="p-3 border-b border-white/10 flex items-center justify-between cursor-pointer"
             onClick={() => setShowResult(!showResult)}
@@ -1123,7 +1123,7 @@ function ExecutePanel({
 
 function AnnealingVisualization({ state }: { state: AnnealingState }) {
   return (
-    <div className="glass-card p-4 rounded-xl">
+    <div className="morphic-card p-4 rounded-xl">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Thermometer className="w-5 h-5 text-rose-gold-400" />
@@ -1234,7 +1234,7 @@ function HistoryPanel({ agent }: { agent: SelfAnnealingAgent }) {
   return (
     <div className="space-y-3">
       {agent.taskHistory.slice().reverse().map((task) => (
-        <div key={task.id} className="glass-card p-4 rounded-xl">
+        <div key={task.id} className="morphic-card p-4 rounded-xl">
           <div className="flex items-start justify-between mb-2">
             <div className="flex items-center gap-2">
               {task.success ? (
@@ -1293,7 +1293,7 @@ function LearningPanel({ agent }: { agent: SelfAnnealingAgent }) {
   return (
     <div className="space-y-6">
       {/* Best Strategy */}
-      <div className="glass-card p-4 rounded-xl">
+      <div className="morphic-card p-4 rounded-xl">
         <h4 className="text-sm font-medium text-white mb-3">Best Learned Strategy</h4>
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center">
@@ -1317,7 +1317,7 @@ function LearningPanel({ agent }: { agent: SelfAnnealingAgent }) {
         const avgDelta = entries.reduce((s, e) => s + e.qualityDelta, 0) / entries.length
 
         return (
-          <div key={type} className="glass-card p-4 rounded-xl">
+          <div key={type} className="morphic-card p-4 rounded-xl">
             <div className="flex items-center justify-between mb-3">
               <h4 className="text-sm font-medium text-white capitalize">{type} Tasks</h4>
               <div className="flex items-center gap-2">
@@ -1400,7 +1400,7 @@ function MetricsPanel({ agent }: { agent: SelfAnnealingAgent }) {
 
       {/* Performance Chart */}
       {chartData.length > 0 && (
-        <div className="glass-card p-4 rounded-xl">
+        <div className="morphic-card p-4 rounded-xl">
           <h4 className="text-sm font-medium text-white mb-4">Quality Over Time</h4>
           <div className="h-40 flex items-end gap-1">
             {chartData.map((point, i) => (
@@ -1420,7 +1420,7 @@ function MetricsPanel({ agent }: { agent: SelfAnnealingAgent }) {
       )}
 
       {/* Strategy Performance */}
-      <div className="glass-card p-4 rounded-xl">
+      <div className="morphic-card p-4 rounded-xl">
         <h4 className="text-sm font-medium text-white mb-4">Strategy Performance</h4>
         <div className="space-y-3">
           {Array.from(agent.strategies.entries())
@@ -1473,7 +1473,7 @@ function MetricCard({
   }
 
   return (
-    <div className={`glass-card p-4 rounded-xl bg-gradient-to-br ${colorClasses[color]}`}>
+    <div className={`morphic-card p-4 rounded-xl bg-gradient-to-br ${colorClasses[color]}`}>
       <div className="flex items-start justify-between">
         <span className="text-xs text-white/50">{title}</span>
         {trend && trendIcons[trend]}
@@ -1603,7 +1603,7 @@ function AgentSettingsPanel({
       {/* Reset Button */}
       <button
         onClick={onReset}
-        className="w-full glass-btn px-4 py-2 text-sm flex items-center justify-center gap-2 text-red-400 hover:bg-red-500/10"
+        className="w-full morphic-btn px-4 py-2 text-sm flex items-center justify-center gap-2 text-red-400 hover:bg-red-500/10"
       >
         <RotateCcw className="w-4 h-4" />
         Reset Learning Data
@@ -1631,7 +1631,7 @@ function EmptyState({ onCreateAgent }: { onCreateAgent: () => void }) {
           {(['researcher', 'coder', 'analyst', 'writer'] as AgentType[]).map((type) => {
             const config = AGENT_TYPE_CONFIGS[type]
             return (
-              <div key={type} className="glass-card p-3 rounded-lg text-left">
+              <div key={type} className="morphic-card p-3 rounded-lg text-left">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-lg">{config.icon}</span>
                   <span className="text-sm font-medium text-white capitalize">{type}</span>
@@ -1644,7 +1644,7 @@ function EmptyState({ onCreateAgent }: { onCreateAgent: () => void }) {
 
         <button
           onClick={onCreateAgent}
-          className="glass-btn-primary px-6 py-3 flex items-center gap-2 mx-auto"
+          className="morphic-btn bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 px-6 py-3 flex items-center gap-2 mx-auto"
         >
           <Plus className="w-5 h-5" />
           Create Your First Agent
@@ -1673,7 +1673,7 @@ function CreateAgentModal({
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-      <div className="glass-card w-full max-w-md rounded-2xl overflow-hidden">
+      <div className="morphic-card w-full max-w-md rounded-2xl overflow-hidden">
         <div className="p-4 border-b border-white/10">
           <h3 className="text-lg font-semibold text-white">Create New Agent</h3>
         </div>
@@ -1735,14 +1735,14 @@ function CreateAgentModal({
         <div className="p-4 border-t border-white/10 flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 glass-btn px-4 py-2"
+            className="flex-1 morphic-btn px-4 py-2"
           >
             Cancel
           </button>
           <button
             onClick={handleCreate}
             disabled={!name.trim()}
-            className="flex-1 glass-btn-primary px-4 py-2 disabled:opacity-50"
+            className="flex-1 morphic-btn bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 px-4 py-2 disabled:opacity-50"
           >
             Create Agent
           </button>

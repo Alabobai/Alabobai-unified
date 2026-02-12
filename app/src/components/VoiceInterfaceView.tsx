@@ -303,7 +303,7 @@ export default function VoiceInterfaceView() {
             onClick={() => setVoiceOutputEnabled(!voiceOutputEnabled)}
             className={`p-2 rounded-lg transition-colors ${
               voiceOutputEnabled
-                ? 'text-cyan-400 bg-cyan-400/10'
+                ? 'text-rose-gold-400 bg-rose-gold-400/10'
                 : 'text-white/60 hover:text-white hover:bg-white/5'
             }`}
             title={voiceOutputEnabled ? 'Voice output ON' : 'Voice output OFF'}
@@ -347,8 +347,8 @@ export default function VoiceInterfaceView() {
               <span>Voice Settings</span>
             </div>
             <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-cyan-400" />
-              <span className="text-xs text-cyan-400 font-medium">Neural TTS</span>
+              <Sparkles className="w-4 h-4 text-rose-gold-400" />
+              <span className="text-xs text-rose-gold-400 font-medium">Neural TTS</span>
             </div>
           </div>
 
@@ -361,7 +361,7 @@ export default function VoiceInterfaceView() {
             <button
               onClick={() => setUseNeural(!useNeural)}
               className={`w-12 h-6 rounded-full transition-colors relative ${
-                useNeural ? 'bg-cyan-500' : 'bg-white/20'
+                useNeural ? 'bg-rose-gold-400' : 'bg-white/20'
               }`}
             >
               <div
@@ -381,7 +381,7 @@ export default function VoiceInterfaceView() {
             <select
               value={selectedLanguage}
               onChange={(e) => setSelectedLanguage(e.target.value)}
-              className="w-full bg-dark-500 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-400/50"
+              className="w-full bg-dark-500 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-rose-gold-400/50"
             >
               {languages.map((lang) => (
                 <option key={lang.code} value={lang.code}>
@@ -405,12 +405,12 @@ export default function VoiceInterfaceView() {
                     onClick={() => setSelectedVoiceId(voice.id)}
                     className={`group relative p-2 rounded-lg text-left transition-all ${
                       selectedVoiceId === voice.id
-                        ? 'bg-cyan-500/20 border border-cyan-500/50'
+                        ? 'bg-rose-gold-400/20 border border-rose-gold-400/50'
                         : 'bg-dark-500/50 border border-white/5 hover:border-white/20'
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className={`text-sm ${selectedVoiceId === voice.id ? 'text-cyan-400' : 'text-white/80'}`}>
+                      <span className={`text-sm ${selectedVoiceId === voice.id ? 'text-rose-gold-400' : 'text-white/80'}`}>
                         {voice.name}
                       </span>
                       <button
@@ -422,7 +422,7 @@ export default function VoiceInterfaceView() {
                         className="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-white/10 transition-all"
                       >
                         {previewingVoice === voice.id ? (
-                          <Loader2 className="w-3 h-3 text-cyan-400 animate-spin" />
+                          <Loader2 className="w-3 h-3 text-rose-gold-400 animate-spin" />
                         ) : (
                           <Play className="w-3 h-3 text-white/60" />
                         )}
@@ -443,12 +443,12 @@ export default function VoiceInterfaceView() {
                     onClick={() => setSelectedVoiceId(voice.id)}
                     className={`group relative p-2 rounded-lg text-left transition-all ${
                       selectedVoiceId === voice.id
-                        ? 'bg-cyan-500/20 border border-cyan-500/50'
+                        ? 'bg-rose-gold-400/20 border border-rose-gold-400/50'
                         : 'bg-dark-500/50 border border-white/5 hover:border-white/20'
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className={`text-sm ${selectedVoiceId === voice.id ? 'text-cyan-400' : 'text-white/80'}`}>
+                      <span className={`text-sm ${selectedVoiceId === voice.id ? 'text-rose-gold-400' : 'text-white/80'}`}>
                         {voice.name}
                       </span>
                       <button
@@ -460,7 +460,7 @@ export default function VoiceInterfaceView() {
                         className="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-white/10 transition-all"
                       >
                         {previewingVoice === voice.id ? (
-                          <Loader2 className="w-3 h-3 text-cyan-400 animate-spin" />
+                          <Loader2 className="w-3 h-3 text-rose-gold-400 animate-spin" />
                         ) : (
                           <Play className="w-3 h-3 text-white/60" />
                         )}
@@ -507,7 +507,7 @@ export default function VoiceInterfaceView() {
           {/* Test Voice Button */}
           <button
             onClick={testVoice}
-            className="w-full py-2 px-4 rounded-lg bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-400 hover:from-cyan-500/30 hover:to-blue-500/30 transition-colors text-sm font-medium flex items-center justify-center gap-2"
+            className="w-full py-2 px-4 rounded-lg bg-gradient-to-r from-rose-gold-400/20 to-rose-gold-600/20 text-rose-gold-400 hover:from-rose-gold-400/30 hover:to-rose-gold-600/30 transition-colors text-sm font-medium flex items-center justify-center gap-2"
           >
             <Volume2 className="w-4 h-4" />
             Test Current Voice
@@ -523,7 +523,7 @@ export default function VoiceInterfaceView() {
           <div
             className={`absolute inset-0 rounded-full border-2 transition-all duration-200 ${
               voiceStatus === 'listening'
-                ? 'border-cyan-400 animate-ping'
+                ? 'border-rose-gold-400 animate-ping'
                 : voiceStatus === 'speaking'
                 ? 'border-blue-400 animate-ping'
                 : 'border-white/10'
@@ -536,7 +536,7 @@ export default function VoiceInterfaceView() {
           <div
             className={`absolute inset-4 rounded-full border-2 transition-all duration-200 ${
               voiceStatus === 'listening'
-                ? 'border-cyan-400'
+                ? 'border-rose-gold-400'
                 : voiceStatus === 'speaking'
                 ? 'border-blue-400'
                 : 'border-white/10'
@@ -549,7 +549,7 @@ export default function VoiceInterfaceView() {
           <div
             className={`absolute inset-8 rounded-full border-2 transition-all duration-200 ${
               voiceStatus === 'listening'
-                ? 'border-cyan-400'
+                ? 'border-rose-gold-400'
                 : voiceStatus === 'speaking'
                 ? 'border-blue-400'
                 : 'border-white/10'
@@ -566,7 +566,7 @@ export default function VoiceInterfaceView() {
             disabled={!speechRecognitionSupported || voiceStatus === 'processing'}
             className={`absolute inset-12 rounded-full flex items-center justify-center transition-all duration-300 ${
               voiceStatus === 'listening'
-                ? 'bg-cyan-500 shadow-lg shadow-cyan-500/50'
+                ? 'bg-rose-gold-400 shadow-lg shadow-rose-gold-400/50'
                 : voiceStatus === 'speaking'
                 ? 'bg-blue-500 shadow-lg shadow-blue-500/50'
                 : voiceStatus === 'processing'
@@ -592,7 +592,7 @@ export default function VoiceInterfaceView() {
             <p className="text-white/60">Click the microphone to start speaking</p>
           )}
           {voiceStatus === 'listening' && (
-            <p className="text-cyan-400 animate-pulse">Listening... Speak now</p>
+            <p className="text-rose-gold-400 animate-pulse">Listening... Speak now</p>
           )}
           {voiceStatus === 'processing' && (
             <p className="text-purple-400">Processing your request...</p>
@@ -611,8 +611,8 @@ export default function VoiceInterfaceView() {
           {(transcript || interimTranscript) && (
             <div className="morphic-card p-4">
               <div className="flex items-center gap-2 mb-2">
-                <Mic className="w-4 h-4 text-cyan-400" />
-                <span className="text-sm font-medium text-cyan-400">Your Speech</span>
+                <Mic className="w-4 h-4 text-rose-gold-400" />
+                <span className="text-sm font-medium text-rose-gold-400">Your Speech</span>
               </div>
               <p className="text-white">
                 {transcript}
@@ -678,19 +678,19 @@ export default function VoiceInterfaceView() {
                 key={index}
                 className={`p-3 rounded-lg ${
                   msg.role === 'user'
-                    ? 'bg-cyan-500/10 border border-cyan-500/20'
+                    ? 'bg-rose-gold-400/10 border border-rose-gold-400/20'
                     : 'bg-blue-500/10 border border-blue-500/20'
                 }`}
               >
                 <div className="flex items-center gap-2 mb-1">
                   {msg.role === 'user' ? (
-                    <Mic className="w-3 h-3 text-cyan-400" />
+                    <Mic className="w-3 h-3 text-rose-gold-400" />
                   ) : (
                     <Volume2 className="w-3 h-3 text-blue-400" />
                   )}
                   <span
                     className={`text-xs font-medium ${
-                      msg.role === 'user' ? 'text-cyan-400' : 'text-blue-400'
+                      msg.role === 'user' ? 'text-rose-gold-400' : 'text-blue-400'
                     }`}
                   >
                     {msg.role === 'user' ? 'You' : 'AI'}

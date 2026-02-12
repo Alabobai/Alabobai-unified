@@ -532,7 +532,7 @@ function TabButton({ active, onClick, icon: Icon, label }: {
       onClick={onClick}
       className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
         active
-          ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
+          ? 'bg-rose-gold-400/20 text-rose-gold-400 border border-rose-gold-400/30'
           : 'text-white/60 hover:text-white hover:bg-white/5'
       }`}
     >
@@ -542,7 +542,7 @@ function TabButton({ active, onClick, icon: Icon, label }: {
   )
 }
 
-function StatCard({ icon: Icon, label, value, trend, color = 'cyan' }: {
+function StatCard({ icon: Icon, label, value, trend, color = 'rose' }: {
   icon: typeof Shield
   label: string
   value: string | number
@@ -550,7 +550,7 @@ function StatCard({ icon: Icon, label, value, trend, color = 'cyan' }: {
   color?: string
 }) {
   const colorClasses: Record<string, string> = {
-    cyan: 'from-cyan-400/20 to-cyan-600/20 border-cyan-500/30 text-cyan-400',
+    rose: 'from-rose-gold-400/20 to-rose-gold-600/20 border-rose-gold-400/30 text-rose-gold-400',
     green: 'from-green-400/20 to-green-600/20 border-green-500/30 text-green-400',
     yellow: 'from-yellow-400/20 to-yellow-600/20 border-yellow-500/30 text-yellow-400',
     red: 'from-red-400/20 to-red-600/20 border-red-500/30 text-red-400',
@@ -558,7 +558,7 @@ function StatCard({ icon: Icon, label, value, trend, color = 'cyan' }: {
   }
 
   return (
-    <div className={`glass-card p-4 rounded-xl bg-gradient-to-br ${colorClasses[color]} border`}>
+    <div className={`morphic-card p-4 rounded-xl bg-gradient-to-br ${colorClasses[color]} border`}>
       <div className="flex items-center gap-3">
         <Icon className="w-5 h-5" />
         <div className="flex-1">
@@ -627,9 +627,9 @@ function VerificationSystems() {
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-6">
         {/* Email Verification */}
-        <div className="glass-card p-6 rounded-xl">
+        <div className="morphic-card p-6 rounded-xl">
           <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-            <Mail className="w-5 h-5 text-cyan-400" />
+            <Mail className="w-5 h-5 text-rose-gold-400" />
             Email Verification
           </h3>
 
@@ -645,7 +645,7 @@ function VerificationSystems() {
               />
               <button
                 onClick={handleValidateEmail}
-                className="glass-btn-primary px-4 py-2 text-sm"
+                className="morphic-btn bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 px-4 py-2 text-sm"
               >
                 Verify
               </button>
@@ -694,9 +694,9 @@ function VerificationSystems() {
         </div>
 
         {/* Domain Reputation */}
-        <div className="glass-card p-6 rounded-xl">
+        <div className="morphic-card p-6 rounded-xl">
           <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-            <Globe className="w-5 h-5 text-purple-400" />
+            <Globe className="w-5 h-5 text-rose-gold-400" />
             Domain Reputation
           </h3>
 
@@ -712,7 +712,7 @@ function VerificationSystems() {
               />
               <button
                 onClick={handleAnalyzeDomain}
-                className="glass-btn-secondary px-4 py-2 text-sm"
+                className="morphic-btn px-4 py-2 text-sm"
               >
                 Analyze
               </button>
@@ -780,9 +780,9 @@ function VerificationSystems() {
       </div>
 
       {/* URL Safety Analyzer */}
-      <div className="glass-card p-6 rounded-xl">
+      <div className="morphic-card p-6 rounded-xl">
         <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-          <ShieldCheck className="w-5 h-5 text-green-400" />
+          <ShieldCheck className="w-5 h-5 text-rose-gold-400" />
           URL Safety Analyzer
         </h3>
 
@@ -797,7 +797,7 @@ function VerificationSystems() {
           />
           <button
             onClick={handleAnalyzeURL}
-            className="glass-btn-primary px-6 py-3 text-sm"
+            className="morphic-btn bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 px-6 py-3 text-sm"
           >
             Analyze URL
           </button>
@@ -869,16 +869,16 @@ function VerificationSystems() {
       </div>
 
       {/* Identity Verification Concepts */}
-      <div className="glass-card p-6 rounded-xl">
+      <div className="morphic-card p-6 rounded-xl">
         <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-          <BadgeCheck className="w-5 h-5 text-blue-400" />
+          <BadgeCheck className="w-5 h-5 text-rose-gold-400" />
           Identity Verification Concepts
         </h3>
 
         <div className="grid grid-cols-3 gap-4">
           <div className="p-4 rounded-lg bg-white/5 border border-white/10">
             <div className="flex items-center gap-2 mb-2">
-              <Fingerprint className="w-5 h-5 text-cyan-400" />
+              <Fingerprint className="w-5 h-5 text-rose-gold-400" />
               <h4 className="font-medium text-white">Biometric</h4>
             </div>
             <p className="text-xs text-white/60">
@@ -888,7 +888,7 @@ function VerificationSystems() {
 
           <div className="p-4 rounded-lg bg-white/5 border border-white/10">
             <div className="flex items-center gap-2 mb-2">
-              <Key className="w-5 h-5 text-green-400" />
+              <Key className="w-5 h-5 text-rose-gold-400" />
               <h4 className="font-medium text-white">Knowledge-Based</h4>
             </div>
             <p className="text-xs text-white/60">
@@ -898,7 +898,7 @@ function VerificationSystems() {
 
           <div className="p-4 rounded-lg bg-white/5 border border-white/10">
             <div className="flex items-center gap-2 mb-2">
-              <User className="w-5 h-5 text-purple-400" />
+              <User className="w-5 h-5 text-rose-gold-400" />
               <h4 className="font-medium text-white">Possession-Based</h4>
             </div>
             <p className="text-xs text-white/60">
@@ -969,33 +969,33 @@ function AuthenticationTools() {
   return (
     <div className="space-y-6">
       {/* OAuth Flow Explainer */}
-      <div className="glass-card p-6 rounded-xl">
+      <div className="morphic-card p-6 rounded-xl">
         <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-          <Key className="w-5 h-5 text-cyan-400" />
+          <Key className="w-5 h-5 text-rose-gold-400" />
           OAuth 2.0 Flow Explainer
         </h3>
 
         <div className="grid grid-cols-4 gap-3">
-          <div className="p-4 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-center">
-            <div className="w-8 h-8 rounded-full bg-cyan-500/20 mx-auto mb-2 flex items-center justify-center text-cyan-400 font-bold">1</div>
+          <div className="p-4 rounded-lg bg-rose-gold-400/10 border border-rose-gold-400/30 text-center">
+            <div className="w-8 h-8 rounded-full bg-rose-gold-400/20 mx-auto mb-2 flex items-center justify-center text-rose-gold-400 font-bold">1</div>
             <h4 className="text-sm font-medium text-white mb-1">Authorization Request</h4>
             <p className="text-xs text-white/60">User clicks "Login with Provider" and is redirected to authorization server</p>
           </div>
 
-          <div className="p-4 rounded-lg bg-purple-500/10 border border-purple-500/30 text-center">
-            <div className="w-8 h-8 rounded-full bg-purple-500/20 mx-auto mb-2 flex items-center justify-center text-purple-400 font-bold">2</div>
+          <div className="p-4 rounded-lg bg-rose-gold-400/10 border border-rose-gold-400/30 text-center">
+            <div className="w-8 h-8 rounded-full bg-rose-gold-400/20 mx-auto mb-2 flex items-center justify-center text-rose-gold-400 font-bold">2</div>
             <h4 className="text-sm font-medium text-white mb-1">User Consent</h4>
             <p className="text-xs text-white/60">User authenticates and grants permissions to the application</p>
           </div>
 
-          <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/30 text-center">
-            <div className="w-8 h-8 rounded-full bg-green-500/20 mx-auto mb-2 flex items-center justify-center text-green-400 font-bold">3</div>
+          <div className="p-4 rounded-lg bg-rose-gold-400/10 border border-rose-gold-400/30 text-center">
+            <div className="w-8 h-8 rounded-full bg-rose-gold-400/20 mx-auto mb-2 flex items-center justify-center text-rose-gold-400 font-bold">3</div>
             <h4 className="text-sm font-medium text-white mb-1">Authorization Code</h4>
             <p className="text-xs text-white/60">Server redirects back with authorization code</p>
           </div>
 
-          <div className="p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/30 text-center">
-            <div className="w-8 h-8 rounded-full bg-yellow-500/20 mx-auto mb-2 flex items-center justify-center text-yellow-400 font-bold">4</div>
+          <div className="p-4 rounded-lg bg-rose-gold-400/10 border border-rose-gold-400/30 text-center">
+            <div className="w-8 h-8 rounded-full bg-rose-gold-400/20 mx-auto mb-2 flex items-center justify-center text-rose-gold-400 font-bold">4</div>
             <h4 className="text-sm font-medium text-white mb-1">Token Exchange</h4>
             <p className="text-xs text-white/60">App exchanges code for access token to make API calls</p>
           </div>
@@ -1005,19 +1005,19 @@ function AuthenticationTools() {
           <h4 className="text-sm font-medium text-white mb-2">Key OAuth Concepts:</h4>
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div className="flex items-start gap-2">
-              <span className="text-cyan-400">-</span>
+              <span className="text-rose-gold-400">-</span>
               <span className="text-white/80"><strong>Access Token:</strong> Short-lived token for API access</span>
             </div>
             <div className="flex items-start gap-2">
-              <span className="text-cyan-400">-</span>
+              <span className="text-rose-gold-400">-</span>
               <span className="text-white/80"><strong>Refresh Token:</strong> Long-lived token to get new access tokens</span>
             </div>
             <div className="flex items-start gap-2">
-              <span className="text-cyan-400">-</span>
+              <span className="text-rose-gold-400">-</span>
               <span className="text-white/80"><strong>Scope:</strong> Permissions requested by the application</span>
             </div>
             <div className="flex items-start gap-2">
-              <span className="text-cyan-400">-</span>
+              <span className="text-rose-gold-400">-</span>
               <span className="text-white/80"><strong>PKCE:</strong> Proof Key for Code Exchange (prevents interception)</span>
             </div>
           </div>
@@ -1026,9 +1026,9 @@ function AuthenticationTools() {
 
       <div className="grid grid-cols-2 gap-6">
         {/* JWT Decoder */}
-        <div className="glass-card p-6 rounded-xl">
+        <div className="morphic-card p-6 rounded-xl">
           <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-            <FileText className="w-5 h-5 text-purple-400" />
+            <FileText className="w-5 h-5 text-rose-gold-400" />
             JWT Decoder
           </h3>
 
@@ -1042,7 +1042,7 @@ function AuthenticationTools() {
 
             <button
               onClick={handleDecodeJWT}
-              className="w-full glass-btn-secondary py-2.5 text-sm font-medium"
+              className="w-full morphic-btn py-2.5 text-sm font-medium"
             >
               Decode JWT
             </button>
@@ -1065,7 +1065,7 @@ function AuthenticationTools() {
                       {copiedItem === 'jwt-header' ? <Check className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}
                     </button>
                   </div>
-                  <pre className="text-xs text-cyan-400 font-mono overflow-x-auto">
+                  <pre className="text-xs text-rose-gold-400 font-mono overflow-x-auto">
                     {JSON.stringify(jwtDecoded.header, null, 2)}
                   </pre>
                 </div>
@@ -1080,7 +1080,7 @@ function AuthenticationTools() {
                       {copiedItem === 'jwt-payload' ? <Check className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}
                     </button>
                   </div>
-                  <pre className="text-xs text-purple-400 font-mono overflow-x-auto max-h-32">
+                  <pre className="text-xs text-rose-gold-400 font-mono overflow-x-auto max-h-32">
                     {JSON.stringify(jwtDecoded.payload, null, 2)}
                   </pre>
                 </div>
@@ -1105,9 +1105,9 @@ function AuthenticationTools() {
         </div>
 
         {/* Base64 Encoder/Decoder */}
-        <div className="glass-card p-6 rounded-xl">
+        <div className="morphic-card p-6 rounded-xl">
           <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-            <Code className="w-5 h-5 text-green-400" />
+            <Code className="w-5 h-5 text-rose-gold-400" />
             Base64 Encoder/Decoder
           </h3>
 
@@ -1117,7 +1117,7 @@ function AuthenticationTools() {
                 onClick={() => setBase64Mode('encode')}
                 className={`flex-1 py-2 rounded-lg text-sm transition-colors ${
                   base64Mode === 'encode'
-                    ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                    ? 'bg-rose-gold-400/20 text-rose-gold-400 border border-rose-gold-400/30'
                     : 'bg-white/5 text-white/60 hover:text-white'
                 }`}
               >
@@ -1127,7 +1127,7 @@ function AuthenticationTools() {
                 onClick={() => setBase64Mode('decode')}
                 className={`flex-1 py-2 rounded-lg text-sm transition-colors ${
                   base64Mode === 'decode'
-                    ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                    ? 'bg-rose-gold-400/20 text-rose-gold-400 border border-rose-gold-400/30'
                     : 'bg-white/5 text-white/60 hover:text-white'
                 }`}
               >
@@ -1144,7 +1144,7 @@ function AuthenticationTools() {
 
             <button
               onClick={handleBase64}
-              className="w-full glass-btn-secondary py-2.5 text-sm font-medium"
+              className="w-full morphic-btn py-2.5 text-sm font-medium"
             >
               {base64Mode === 'encode' ? 'Encode to Base64' : 'Decode from Base64'}
             </button>
@@ -1154,7 +1154,7 @@ function AuthenticationTools() {
                 <textarea
                   value={base64Output}
                   readOnly
-                  className="w-full h-20 bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-green-400 text-sm font-mono resize-none"
+                  className="w-full h-20 bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-rose-gold-400 text-sm font-mono resize-none"
                 />
                 <button
                   onClick={() => copyToClipboard(base64Output, 'base64')}
@@ -1169,9 +1169,9 @@ function AuthenticationTools() {
       </div>
 
       {/* Hash Generator */}
-      <div className="glass-card p-6 rounded-xl">
+      <div className="morphic-card p-6 rounded-xl">
         <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-          <Hash className="w-5 h-5 text-yellow-400" />
+          <Hash className="w-5 h-5 text-rose-gold-400" />
           Hash Generator
         </h3>
 
@@ -1208,7 +1208,7 @@ function AuthenticationTools() {
 
             <button
               onClick={handleGenerateHash}
-              className="w-full glass-btn-primary py-2.5 text-sm font-medium"
+              className="w-full morphic-btn bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 py-2.5 text-sm font-medium"
             >
               Generate Hash
             </button>
@@ -1222,7 +1222,7 @@ function AuthenticationTools() {
                   value={hashOutput}
                   readOnly
                   placeholder="Hash will appear here..."
-                  className="w-full h-24 bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-yellow-400 text-xs font-mono placeholder-white/30 resize-none"
+                  className="w-full h-24 bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-rose-gold-400 text-xs font-mono placeholder-white/30 resize-none"
                 />
                 {hashOutput && (
                   <button
@@ -1375,17 +1375,17 @@ function SecurityBestPractices() {
   return (
     <div className="space-y-6">
       {/* Security Checklist */}
-      <div className="glass-card p-6 rounded-xl">
+      <div className="morphic-card p-6 rounded-xl">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-            <ShieldCheck className="w-5 h-5 text-cyan-400" />
+            <ShieldCheck className="w-5 h-5 text-rose-gold-400" />
             Application Security Checklist
           </h3>
           <div className="flex items-center gap-3">
             <span className="text-sm text-white/60">{completedCount}/{checklist.length} complete</span>
             <div className="w-32 h-2 bg-white/10 rounded-full overflow-hidden">
               <div
-                className="h-full bg-cyan-500 rounded-full transition-all duration-300"
+                className="h-full bg-rose-gold-400 rounded-full transition-all duration-300"
                 style={{ width: `${progress}%` }}
               />
             </div>
@@ -1401,18 +1401,18 @@ function SecurityBestPractices() {
                   <label
                     key={item.id}
                     className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
-                      item.checked ? 'bg-cyan-500/10' : 'bg-white/5 hover:bg-white/10'
+                      item.checked ? 'bg-rose-gold-400/10' : 'bg-white/5 hover:bg-white/10'
                     }`}
                   >
                     <input
                       type="checkbox"
                       checked={item.checked}
                       onChange={() => toggleCheck(item.id)}
-                      className="mt-0.5 rounded border-white/20 bg-white/5 text-cyan-500 focus:ring-cyan-500/50"
+                      className="mt-0.5 rounded border-white/20 bg-white/5 text-rose-gold-400 focus:ring-rose-gold-400/50"
                     />
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <p className={`text-sm ${item.checked ? 'text-cyan-400 line-through' : 'text-white'}`}>
+                        <p className={`text-sm ${item.checked ? 'text-rose-gold-400 line-through' : 'text-white'}`}>
                           {item.title}
                         </p>
                         <span className={`text-[10px] px-1.5 py-0.5 rounded border ${getSeverityColor(item.severity)}`}>
@@ -1430,9 +1430,9 @@ function SecurityBestPractices() {
       </div>
 
       {/* Common Vulnerabilities */}
-      <div className="glass-card p-6 rounded-xl">
+      <div className="morphic-card p-6 rounded-xl">
         <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-          <Bug className="w-5 h-5 text-red-400" />
+          <Bug className="w-5 h-5 text-rose-gold-400" />
           Common Vulnerabilities (OWASP Top 10)
         </h3>
 
@@ -1498,16 +1498,16 @@ function SecurityBestPractices() {
       </div>
 
       {/* Secure Coding Guidelines */}
-      <div className="glass-card p-6 rounded-xl">
+      <div className="morphic-card p-6 rounded-xl">
         <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-          <BookOpen className="w-5 h-5 text-purple-400" />
+          <BookOpen className="w-5 h-5 text-rose-gold-400" />
           Secure Coding Guidelines
         </h3>
 
         <div className="grid grid-cols-3 gap-4">
           <div className="p-4 rounded-lg bg-white/5 border border-white/10">
             <h4 className="font-medium text-white mb-2 flex items-center gap-2">
-              <Database className="w-4 h-4 text-cyan-400" />
+              <Database className="w-4 h-4 text-rose-gold-400" />
               Data Handling
             </h4>
             <ul className="space-y-1 text-xs text-white/60">
@@ -1521,7 +1521,7 @@ function SecurityBestPractices() {
 
           <div className="p-4 rounded-lg bg-white/5 border border-white/10">
             <h4 className="font-medium text-white mb-2 flex items-center gap-2">
-              <Key className="w-4 h-4 text-green-400" />
+              <Key className="w-4 h-4 text-rose-gold-400" />
               Authentication
             </h4>
             <ul className="space-y-1 text-xs text-white/60">
@@ -1535,7 +1535,7 @@ function SecurityBestPractices() {
 
           <div className="p-4 rounded-lg bg-white/5 border border-white/10">
             <h4 className="font-medium text-white mb-2 flex items-center gap-2">
-              <Server className="w-4 h-4 text-purple-400" />
+              <Server className="w-4 h-4 text-rose-gold-400" />
               API Security
             </h4>
             <ul className="space-y-1 text-xs text-white/60">
@@ -1613,7 +1613,7 @@ function TrustMetricsDashboard() {
           label="Platform Trust Score"
           value={`${metrics.trustScore}/100`}
           trend="+5%"
-          color="cyan"
+          color="rose"
         />
         <StatCard
           icon={ShieldCheck}
@@ -1625,7 +1625,7 @@ function TrustMetricsDashboard() {
           icon={FileText}
           label="Compliance Score"
           value={`${metrics.complianceScore}%`}
-          color="purple"
+          color="rose"
         />
         <StatCard
           icon={Activity}
@@ -1638,9 +1638,9 @@ function TrustMetricsDashboard() {
 
       <div className="grid grid-cols-2 gap-6">
         {/* Trust Score Breakdown */}
-        <div className="glass-card p-6 rounded-xl">
+        <div className="morphic-card p-6 rounded-xl">
           <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-            <Award className="w-5 h-5 text-cyan-400" />
+            <Award className="w-5 h-5 text-rose-gold-400" />
             Trust Score Breakdown
           </h3>
 
@@ -1664,13 +1664,13 @@ function TrustMetricsDashboard() {
                   strokeWidth="12"
                   fill="none"
                   strokeDasharray={`${metrics.trustScore * 4.4} 440`}
-                  className="text-cyan-400 transition-all duration-1000"
+                  className="text-rose-gold-400 transition-all duration-1000"
                   strokeLinecap="round"
                 />
               </svg>
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="text-center">
-                  <div className="text-4xl font-bold text-cyan-400">{metrics.trustScore}</div>
+                  <div className="text-4xl font-bold text-rose-gold-400">{metrics.trustScore}</div>
                   <div className="text-xs text-white/60">Trust Score</div>
                 </div>
               </div>
@@ -1679,10 +1679,10 @@ function TrustMetricsDashboard() {
 
           <div className="space-y-3">
             {[
-              { label: 'Authentication', score: 92, color: 'bg-green-500' },
-              { label: 'Data Protection', score: 85, color: 'bg-cyan-500' },
-              { label: 'Access Control', score: 78, color: 'bg-purple-500' },
-              { label: 'Monitoring', score: 72, color: 'bg-yellow-500' },
+              { label: 'Authentication', score: 92, color: 'bg-rose-gold-400' },
+              { label: 'Data Protection', score: 85, color: 'bg-rose-gold-400' },
+              { label: 'Access Control', score: 78, color: 'bg-rose-gold-400' },
+              { label: 'Monitoring', score: 72, color: 'bg-rose-gold-400' },
             ].map(item => (
               <div key={item.label}>
                 <div className="flex justify-between text-sm mb-1">
@@ -1701,9 +1701,9 @@ function TrustMetricsDashboard() {
         </div>
 
         {/* Compliance Status */}
-        <div className="glass-card p-6 rounded-xl">
+        <div className="morphic-card p-6 rounded-xl">
           <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-            <FileText className="w-5 h-5 text-purple-400" />
+            <FileText className="w-5 h-5 text-rose-gold-400" />
             Compliance Status
           </h3>
 
@@ -1747,9 +1747,9 @@ function TrustMetricsDashboard() {
       </div>
 
       {/* Recent Security Events */}
-      <div className="glass-card p-6 rounded-xl">
+      <div className="morphic-card p-6 rounded-xl">
         <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-          <Activity className="w-5 h-5 text-yellow-400" />
+          <Activity className="w-5 h-5 text-rose-gold-400" />
           Recent Security Events
         </h3>
 
@@ -1768,9 +1768,9 @@ function TrustMetricsDashboard() {
       </div>
 
       {/* Authentication Status */}
-      <div className="glass-card p-6 rounded-xl">
+      <div className="morphic-card p-6 rounded-xl">
         <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-          <Lock className="w-5 h-5 text-green-400" />
+          <Lock className="w-5 h-5 text-rose-gold-400" />
           Authentication Status
         </h3>
 
@@ -1814,15 +1814,15 @@ export default function TrustArchitectView() {
   return (
     <div className="h-full flex flex-col bg-dark-500 overflow-hidden">
       {/* Header */}
-      <div className="glass-morphic-header p-4 border-b border-white/10">
+      <div className="glass-morphic-header p-4 border-b border-rose-gold-400/20">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-cyan-600 flex items-center justify-center shadow-glow-lg animate-pulse-glow">
-              <Shield className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-gold-300 to-rose-gold-600 flex items-center justify-center shadow-glow-lg animate-pulse-glow">
+              <Shield className="w-5 h-5 text-dark-500" />
             </div>
             <div>
               <h2 className="text-lg font-bold text-white">Trust Architect</h2>
-              <p className="text-xs text-white/50">Security verification and authentication tools</p>
+              <p className="text-xs text-rose-gold-400/70">Alabobai - Security verification and authentication tools</p>
             </div>
           </div>
         </div>

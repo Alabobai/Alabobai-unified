@@ -52,7 +52,7 @@ export default function AgentsPanel({ onSelectAgent }: AgentsPanelProps) {
   }
 
   return (
-    <div className="border-t border-white/10">
+    <div className="border-t border-rose-gold-400/20">
       <button
         onClick={() => setExpanded(!expanded)}
         className="w-full flex items-center justify-between px-4 py-3 text-xs font-medium text-white/40 uppercase tracking-wider hover:text-white/60 transition-colors"

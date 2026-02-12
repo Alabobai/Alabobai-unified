@@ -162,46 +162,55 @@ export default function ChatMessage({ message }: ChatMessageProps) {
   }
 
   return (
-    <div className={`chat-message ${isUser ? 'user' : 'assistant'} animate-fade-in`}>
-      <div className="flex gap-3">
-        {/* Avatar */}
-        <div className={`avatar flex-shrink-0 ${isUser ? '' : 'icon-glow'}`}>
-          {isUser ? (
-            <User className="w-4 h-4" />
-          ) : (
-            <Bot className="w-4 h-4" />
-          )}
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-sm font-medium text-white">
-              {isUser ? 'You' : 'Code Builder'}
-            </span>
-            <span className="text-xs text-white/30">
-              {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            </span>
+    <div className={`animate-fade-in ${isUser ? 'flex justify-end' : ''}`}>
+      <div className={`morphic-glass rounded-2xl p-4 max-w-[85%] ${
+        isUser
+          ? 'bg-rose-gold-400/10 border border-rose-gold-400/20'
+          : 'bg-dark-300/50 border border-rose-gold-400/10'
+      }`}>
+        <div className="flex gap-3">
+          {/* Avatar */}
+          <div className={`flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center ${
+            isUser
+              ? 'bg-rose-gold-400/20 text-rose-gold-400'
+              : 'bg-gradient-to-br from-rose-gold-300 to-rose-gold-600 text-dark-500 shadow-glow-sm'
+          }`}>
+            {isUser ? (
+              <User className="w-4 h-4" />
+            ) : (
+              <Bot className="w-4 h-4" />
+            )}
           </div>
 
+          {/* Content */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <span className={`text-sm font-medium ${isUser ? 'text-rose-gold-400' : 'text-white'}`}>
+                {isUser ? 'You' : 'Alabobai'}
+              </span>
+              <span className="text-xs text-rose-gold-400/40">
+                {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </span>
+            </div>
+
           {/* Message Content with Code Blocks */}
-          <div className="text-sm text-white/80">
+          <div className="text-sm text-white/80 leading-relaxed">
             {contentParts.map((part, index) => {
               if (part.type === 'code') {
                 return (
-                  <div key={index} className="my-3 rounded-lg overflow-hidden border border-white/10">
+                  <div key={index} className="my-3 rounded-xl overflow-hidden border border-rose-gold-400/10 morphic-glass">
                     {/* Code Header */}
-                    <div className="flex items-center justify-between px-3 py-2 bg-dark-200 border-b border-white/10">
-                      <span className="text-xs text-white/50 font-mono">
+                    <div className="flex items-center justify-between px-3 py-2 bg-dark-300/50 border-b border-rose-gold-400/10">
+                      <span className="text-xs text-rose-gold-400/60 font-mono">
                         {part.language?.toUpperCase() || 'CODE'}
                       </span>
                       <button
                         onClick={() => handleCopyCode(part.content)}
-                        className="flex items-center gap-1 text-xs text-white/40 hover:text-white transition-colors"
+                        className="flex items-center gap-1 text-xs text-rose-gold-400/50 hover:text-rose-gold-400 transition-colors"
                       >
                         {copiedCode === part.content ? (
                           <>
-                            <Check className="w-3 h-3 text-green-400" />
+                            <Check className="w-3 h-3 text-rose-gold-400" />
                             <span>Copied</span>
                           </>
                         ) : (
@@ -213,7 +222,7 @@ export default function ChatMessage({ message }: ChatMessageProps) {
                       </button>
                     </div>
                     {/* Code Content */}
-                    <div className="p-4 bg-dark-300 overflow-x-auto morphic-scrollbar">
+                    <div className="p-4 bg-dark-400/50 overflow-x-auto morphic-scrollbar">
                       <pre className="text-xs font-mono leading-relaxed">
                         {highlightCode(part.content, part.language || 'text')}
                       </pre>
@@ -231,7 +240,7 @@ export default function ChatMessage({ message }: ChatMessageProps) {
             })}
 
             {message.status === 'streaming' && (
-              <span className="inline-block w-2 h-4 bg-rose-gold-400 ml-1 animate-pulse" />
+              <span className="inline-block w-2 h-4 bg-rose-gold-400 ml-1 animate-pulse rounded-sm" />
             )}
           </div>
 
@@ -241,16 +250,16 @@ export default function ChatMessage({ message }: ChatMessageProps) {
               {message.toolCalls.map(tool => (
                 <div
                   key={tool.id}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-dark-300 border border-white/10 text-xs"
+                  className="flex items-center gap-2 px-3 py-2 rounded-xl morphic-glass border border-rose-gold-400/10 text-xs"
                 >
                   <div className={`w-2 h-2 rounded-full ${
-                    tool.status === 'complete' ? 'bg-green-400' :
-                    tool.status === 'running' ? 'bg-yellow-400 animate-pulse' :
+                    tool.status === 'complete' ? 'bg-rose-gold-400' :
+                    tool.status === 'running' ? 'bg-rose-gold-400 animate-pulse shadow-glow-sm' :
                     tool.status === 'error' ? 'bg-red-400' :
-                    'bg-white/30'
+                    'bg-rose-gold-400/30'
                   }`} />
                   <span className="font-mono text-rose-gold-400">{tool.name}</span>
-                  <span className="text-white/40">
+                  <span className="text-rose-gold-400/50">
                     {tool.status === 'complete' ? 'completed' :
                      tool.status === 'running' ? 'running...' :
                      tool.status === 'error' ? 'failed' : 'pending'}
@@ -267,14 +276,14 @@ export default function ChatMessage({ message }: ChatMessageProps) {
                 <>
                   <button
                     onClick={handlePreview}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-rose-gold-400/20 text-rose-gold-400 hover:bg-rose-gold-400/30 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs bg-gradient-to-r from-rose-gold-400 to-rose-gold-600 text-dark-500 font-medium hover:from-rose-gold-300 hover:to-rose-gold-500 transition-all shadow-glow-sm"
                   >
                     <Eye className="w-3 h-3" />
                     <span>Preview</span>
                   </button>
                   <button
                     onClick={handleViewCode}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-white/5 text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs morphic-glass border border-rose-gold-400/20 text-rose-gold-400/80 hover:text-rose-gold-400 hover:border-rose-gold-400/40 transition-colors"
                   >
                     <Code2 className="w-3 h-3" />
                     <span>View in Editor</span>
@@ -283,11 +292,11 @@ export default function ChatMessage({ message }: ChatMessageProps) {
               )}
               <button
                 onClick={handleCopy}
-                className="flex items-center gap-1.5 px-2 py-1 rounded text-xs text-white/40 hover:text-white hover:bg-white/5 transition-colors"
+                className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs text-rose-gold-400/50 hover:text-rose-gold-400 hover:bg-rose-gold-400/10 transition-colors"
               >
                 {copied ? (
                   <>
-                    <Check className="w-3 h-3 text-green-400" />
+                    <Check className="w-3 h-3 text-rose-gold-400" />
                     <span>Copied</span>
                   </>
                 ) : (
@@ -300,6 +309,7 @@ export default function ChatMessage({ message }: ChatMessageProps) {
             </div>
           )}
         </div>
+      </div>
       </div>
     </div>
   )

@@ -266,7 +266,7 @@ ${data.productName} helps you ${data.benefits[1]?.toLowerCase() || 'achieve more
 
 ${data.offer || ''}
 
-${data.callToAction} 👉
+${data.callToAction}
 
 PRIMARY TEXT - VERSION 2 (Problem-Agitation-Solution)
 --------------------------------------------------------------------------------
@@ -278,7 +278,7 @@ That's why we created ${data.productName}.
 
 ${data.uniqueSellingPoint}
 
-${data.callToAction} 🚀
+${data.callToAction}
 
 PRIMARY TEXT - VERSION 3 (Social Proof)
 --------------------------------------------------------------------------------
@@ -333,7 +333,7 @@ ${data.tagline}
 
 ${data.benefits[0]}
 
-${data.callToAction} ⬇️
+${data.callToAction}
 
 [Link]
 
@@ -343,7 +343,7 @@ Stop [pain point]. Start [benefit].
 
 ${data.productName} helps ${data.targetAudience.toLowerCase()} ${data.benefits[1]?.toLowerCase() || 'succeed'}.
 
-Try it free 👉 [Link]
+Try it free [Link]
 
 TWEET 3 (280 char max)
 --------------------------------------------------------------------------------

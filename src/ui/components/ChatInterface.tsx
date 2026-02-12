@@ -266,7 +266,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       {/* Header */}
       <header className="chat-header">
         <div className="logo">
-          <span className="logo-icon">🌟</span>
+          <span className="logo-icon"></span>
           <span className="logo-text">Alabobai</span>
         </div>
         <div className="status">
@@ -343,7 +343,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           display: flex;
           flex-direction: column;
           height: 100vh;
-          background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+          background: linear-gradient(135deg, #0a0806 0%, #1a1510 100%);
           color: #fff;
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
         }
@@ -370,7 +370,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         .logo-text {
           font-size: 1.25rem;
           font-weight: 600;
-          background: linear-gradient(135deg, #f5a9b8 0%, #d4af37 100%);
+          background: linear-gradient(135deg, #d9a07a 0%, #c9956c 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
         }
@@ -390,12 +390,12 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         }
 
         .status-dot.connected {
-          background: #4ade80;
-          box-shadow: 0 0 8px #4ade80;
+          background: #d9a07a;
+          box-shadow: 0 0 8px #d9a07a;
         }
 
         .status-dot.disconnected {
-          background: #ef4444;
+          background: #6b4d32;
         }
 
         .chat-main {
@@ -458,9 +458,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           width: 40px;
           height: 40px;
           border-radius: 50%;
-          background: linear-gradient(135deg, #f5a9b8 0%, #d4af37 100%);
+          background: linear-gradient(135deg, #d9a07a 0%, #c9956c 100%);
           border: none;
-          color: #1a1a2e;
+          color: #0a0806;
           cursor: pointer;
           display: flex;
           align-items: center;

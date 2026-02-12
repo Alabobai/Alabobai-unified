@@ -187,7 +187,7 @@ export default function WorkspacePanel() {
   return (
     <div className="workspace-panel h-full bg-dark-400 flex flex-col">
       {/* Header with Tabs */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-white/10 bg-dark-300">
+      <div className="flex items-center justify-between px-4 py-2 border-b border-rose-gold-400/20 bg-dark-300">
         <div className="workspace-tabs flex gap-1 overflow-x-auto">
           {tabs.map(tab => (
             <button
@@ -250,7 +250,7 @@ export default function WorkspacePanel() {
 
       {/* Sources Summary (shown when there are sources) */}
       {currentExecution && currentExecution.sources.length > 0 && activeTab !== 'tasks' && (
-        <div className="border-t border-white/10 p-3 bg-dark-300">
+        <div className="border-t border-rose-gold-400/20 p-3 bg-dark-300">
           <div className="flex items-center justify-between mb-2">
             <div className="text-xs font-medium text-white/40 uppercase tracking-wider">
               Sources Found ({currentExecution.sources.length})
@@ -435,7 +435,7 @@ function PreviewTab() {
   return (
     <div className={`h-full flex flex-col ${isFullscreen ? 'fixed inset-0 z-50 bg-dark-400' : ''}`}>
       {/* Browser Chrome */}
-      <div className="flex items-center gap-2 px-4 py-2 bg-dark-300 border-b border-white/10">
+      <div className="flex items-center gap-2 px-4 py-2 bg-dark-300 border-b border-rose-gold-400/20">
         <div className="flex gap-1.5">
           <span
             className="w-3 h-3 rounded-full bg-red-500/80 cursor-pointer hover:bg-red-500 transition-colors"
@@ -530,7 +530,7 @@ function PreviewTab() {
 
       {/* Quick Actions Bar */}
       {generatedCode && (
-        <div className="flex items-center justify-between px-4 py-2 bg-dark-300 border-t border-white/10">
+        <div className="flex items-center justify-between px-4 py-2 bg-dark-300 border-t border-rose-gold-400/20">
           <button
             onClick={() => setActiveTab('code')}
             className="text-xs text-rose-gold-400 hover:underline flex items-center gap-1"
@@ -594,7 +594,7 @@ function CodeTab() {
     <div className="h-full flex flex-col">
       {/* File tabs */}
       {(activeFile || generatedCode || editableCode) && (
-        <div className="flex items-center justify-between px-2 py-1.5 bg-dark-300 border-b border-white/10">
+        <div className="flex items-center justify-between px-2 py-1.5 bg-dark-300 border-b border-rose-gold-400/20">
           <div className="flex items-center gap-2 px-3 py-1 rounded bg-dark-200 border border-white/10 text-xs">
             <FileCode className="w-3.5 h-3.5 text-rose-gold-400" />
             <span className="text-white/80">
@@ -652,7 +652,7 @@ function CodeTab() {
 
       {/* Status bar */}
       {content && (
-        <div className="flex items-center justify-between px-4 py-2 bg-dark-300 border-t border-white/10 text-xs text-white/40">
+        <div className="flex items-center justify-between px-4 py-2 bg-dark-300 border-t border-rose-gold-400/20 text-xs text-white/40">
           <span>{detectLanguage(content).toUpperCase()}</span>
           <span>{content.split('\n').length} lines</span>
         </div>

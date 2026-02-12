@@ -186,7 +186,7 @@ export default function CompanyDashboard() {
   return (
     <div className="h-full flex flex-col bg-dark-400 overflow-hidden">
       {/* Company Header */}
-      <div className="p-6 border-b border-white/10 bg-gradient-to-r from-dark-300 to-dark-400">
+      <div className="p-6 border-b border-rose-gold-400/20 bg-gradient-to-r from-dark-300 to-dark-400">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-rose-gold-300 to-rose-gold-600 flex items-center justify-center shadow-glow-lg">
@@ -194,7 +194,7 @@ export default function CompanyDashboard() {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-white">{companyName}</h1>
-              <p className="text-sm text-white/50">Your AI-powered company • Founded today</p>
+              <p className="text-sm text-rose-gold-400/70">Alabobai - Your AI-powered company</p>
             </div>
           </div>
           <div className="flex items-center gap-3">

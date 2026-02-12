@@ -579,13 +579,21 @@ export default function DataAnalystView() {
       {/* Header */}
       <div className="glass-morphic-header p-4 border-b border-white/10">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center shadow-glow-lg">
-              <BarChart3 className="w-5 h-5 text-white" />
+          <div className="flex items-center gap-4">
+            {/* Alabobai Logo */}
+            <div className="flex items-center gap-2">
+              <img src="/logo.png" alt="Alabobai" className="w-8 h-8 rounded-lg" />
+              <div className="h-6 w-px bg-white/10" />
             </div>
-            <div>
-              <h2 className="text-lg font-bold text-white">Data Analyst</h2>
-              <p className="text-xs text-white/50">Analyze, visualize, and gain insights from your data</p>
+            {/* View Header */}
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center shadow-glow-lg">
+                <BarChart3 className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-white">Data Analyst</h2>
+                <p className="text-xs text-rose-gold-400/70">Analyze, visualize, and gain insights from your data</p>
+              </div>
             </div>
           </div>
 
@@ -593,21 +601,21 @@ export default function DataAnalystView() {
             <div className="flex items-center gap-2">
               <button
                 onClick={exportAsCSV}
-                className="glass-btn-secondary px-3 py-1.5 text-xs flex items-center gap-1.5"
+                className="morphic-btn px-3 py-1.5 text-xs flex items-center gap-1.5"
               >
                 <Download className="w-3.5 h-3.5" />
                 Export CSV
               </button>
               <button
                 onClick={copyAsJSON}
-                className="glass-btn-secondary px-3 py-1.5 text-xs flex items-center gap-1.5"
+                className="morphic-btn px-3 py-1.5 text-xs flex items-center gap-1.5"
               >
                 <Copy className="w-3.5 h-3.5" />
                 Copy JSON
               </button>
               <button
                 onClick={clearData}
-                className="glass-btn-danger px-3 py-1.5 text-xs flex items-center gap-1.5"
+                className="morphic-btn bg-red-500/20 text-red-400 border-red-500/30 hover:bg-red-500/30 px-3 py-1.5 text-xs flex items-center gap-1.5"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 Clear
@@ -628,7 +636,7 @@ export default function DataAnalystView() {
                 onClick={() => setInputMode('paste')}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                   inputMode === 'paste'
-                    ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-400/30'
+                    ? 'bg-rose-gold-400/20 text-rose-gold-400 border border-rose-gold-400/30'
                     : 'text-white/60 hover:text-white hover:bg-white/5'
                 }`}
               >
@@ -639,7 +647,7 @@ export default function DataAnalystView() {
                 onClick={() => setInputMode('upload')}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                   inputMode === 'upload'
-                    ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-400/30'
+                    ? 'bg-rose-gold-400/20 text-rose-gold-400 border border-rose-gold-400/30'
                     : 'text-white/60 hover:text-white hover:bg-white/5'
                 }`}
               >
@@ -650,7 +658,7 @@ export default function DataAnalystView() {
                 onClick={() => setInputMode('sample')}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                   inputMode === 'sample'
-                    ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-400/30'
+                    ? 'bg-rose-gold-400/20 text-rose-gold-400 border border-rose-gold-400/30'
                     : 'text-white/60 hover:text-white hover:bg-white/5'
                 }`}
               >
@@ -674,12 +682,12 @@ Jane,25,Los Angeles
 
 Example JSON:
 [{&quot;name&quot;: &quot;John&quot;, &quot;age&quot;: 30}]"
-                  className="flex-1 min-h-[300px] p-4 bg-dark-400 border border-white/10 rounded-xl text-white placeholder-white/30 font-mono text-sm resize-none focus:outline-none focus:border-cyan-400/50"
+                  className="flex-1 min-h-[300px] p-4 bg-dark-400 border border-white/10 rounded-xl text-white placeholder-white/30 font-mono text-sm resize-none focus:outline-none focus:border-rose-gold-400/50"
                 />
                 <button
                   onClick={parseData}
                   disabled={!rawInput.trim()}
-                  className="mt-4 glass-btn-primary py-3 text-sm font-semibold disabled:opacity-50"
+                  className="mt-4 morphic-btn bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 py-3 text-sm font-semibold disabled:opacity-50"
                 >
                   <BarChart3 className="w-4 h-4 inline mr-2" />
                   Analyze Data
@@ -698,7 +706,7 @@ Example JSON:
                 />
                 <div
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-full max-w-md p-12 border-2 border-dashed border-white/20 rounded-2xl cursor-pointer hover:border-cyan-400/50 hover:bg-cyan-400/5 transition-all text-center"
+                  className="w-full max-w-md p-12 border-2 border-dashed border-white/20 rounded-2xl cursor-pointer hover:border-rose-gold-400/50 hover:bg-rose-gold-400/5 transition-all text-center"
                 >
                   <Upload className="w-16 h-16 text-white/30 mx-auto mb-4" />
                   <p className="text-white/70 mb-2">Click to upload or drag and drop</p>
@@ -715,11 +723,11 @@ Example JSON:
                     <button
                       key={key}
                       onClick={() => loadSample(key as keyof typeof SAMPLE_DATASETS)}
-                      className="glass-card p-4 rounded-xl text-left hover:border-cyan-400/30 transition-all group"
+                      className="morphic-card p-4 rounded-xl text-left hover:border-rose-gold-400/30 transition-all group"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-cyan-500/20 flex items-center justify-center group-hover:bg-cyan-500/30 transition-colors">
-                          <Database className="w-5 h-5 text-cyan-400" />
+                        <div className="w-10 h-10 rounded-lg bg-rose-gold-400/20 flex items-center justify-center group-hover:bg-rose-gold-400/30 transition-colors">
+                          <Database className="w-5 h-5 text-rose-gold-400" />
                         </div>
                         <div>
                           <h3 className="text-sm font-semibold text-white">{dataset.name}</h3>
@@ -752,7 +760,7 @@ Example JSON:
                       onClick={() => setActiveTab(tab)}
                       className={`w-full px-3 py-2 rounded-lg text-left text-sm font-medium transition-all flex items-center gap-2 ${
                         activeTab === tab
-                          ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-400/30'
+                          ? 'bg-rose-gold-400/20 text-rose-gold-400 border border-rose-gold-400/30'
                           : 'text-white/60 hover:text-white hover:bg-white/5'
                       }`}
                     >
@@ -761,7 +769,7 @@ Example JSON:
                       {tab === 'charts' && <PieChart className="w-4 h-4" />}
                       {tab === 'ai' && <Brain className="w-4 h-4" />}
                       {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                      {tab === 'ai' && <Sparkles className="w-3 h-3 text-cyan-400 ml-auto" />}
+                      {tab === 'ai' && <Sparkles className="w-3 h-3 text-rose-gold-400 ml-auto" />}
                     </button>
                   ))}
                 </div>
@@ -769,7 +777,7 @@ Example JSON:
 
               {/* Data Info */}
               <div className="p-4">
-                <div className="glass-card p-4 rounded-xl">
+                <div className="morphic-card p-4 rounded-xl">
                   <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3">
                     Data Overview
                   </h3>
@@ -784,13 +792,13 @@ Example JSON:
                     </div>
                     <div className="flex justify-between">
                       <span className="text-white/60">Numeric</span>
-                      <span className="text-cyan-400 font-mono">
+                      <span className="text-rose-gold-400 font-mono">
                         {parsedData.columns.filter(c => c.type === 'number').length}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-white/60">Categorical</span>
-                      <span className="text-cyan-400 font-mono">
+                      <span className="text-rose-gold-400 font-mono">
                         {parsedData.columns.filter(c => c.type === 'string').length}
                       </span>
                     </div>
@@ -839,7 +847,7 @@ Example JSON:
                         value={filterText}
                         onChange={(e) => setFilterText(e.target.value)}
                         placeholder="Filter data..."
-                        className="w-full pl-10 pr-4 py-2 bg-dark-400 border border-white/10 rounded-lg text-sm text-white placeholder-white/30 focus:outline-none focus:border-cyan-400/50"
+                        className="w-full pl-10 pr-4 py-2 bg-dark-400 border border-white/10 rounded-lg text-sm text-white placeholder-white/30 focus:outline-none focus:border-rose-gold-400/50"
                       />
                     </div>
                     <span className="text-xs text-white/40">
@@ -848,7 +856,7 @@ Example JSON:
                   </div>
 
                   {/* Data Table */}
-                  <div className="flex-1 overflow-auto morphic-scrollbar glass-card rounded-xl">
+                  <div className="flex-1 overflow-auto morphic-scrollbar morphic-card rounded-xl">
                     <table className="w-full text-sm">
                       <thead className="sticky top-0 bg-dark-400 z-10">
                         <tr>
@@ -862,8 +870,8 @@ Example JSON:
                                 {header}
                                 {sortColumn === header && (
                                   sortDirection === 'asc'
-                                    ? <SortAsc className="w-3.5 h-3.5 text-cyan-400" />
-                                    : <SortDesc className="w-3.5 h-3.5 text-cyan-400" />
+                                    ? <SortAsc className="w-3.5 h-3.5 text-rose-gold-400" />
+                                    : <SortDesc className="w-3.5 h-3.5 text-rose-gold-400" />
                                 )}
                               </div>
                             </th>
@@ -891,7 +899,7 @@ Example JSON:
                   {visibleRows < tableData.length && (
                     <button
                       onClick={() => setVisibleRows(v => v + 20)}
-                      className="mt-4 py-2 text-sm text-cyan-400 hover:text-cyan-300 transition-colors"
+                      className="mt-4 py-2 text-sm text-rose-gold-400 hover:text-rose-gold-300 transition-colors"
                     >
                       Load more rows...
                     </button>
@@ -922,7 +930,7 @@ Example JSON:
                             onClick={() => setSelectedChart(type)}
                             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                               selectedChart === type
-                                ? 'bg-cyan-500/20 text-cyan-400'
+                                ? 'bg-rose-gold-400/20 text-rose-gold-400'
                                 : 'text-white/60 hover:text-white hover:bg-white/10'
                             }`}
                           >
@@ -937,7 +945,7 @@ Example JSON:
                       <select
                         value={chartColumn}
                         onChange={(e) => setChartColumn(e.target.value)}
-                        className="px-3 py-1.5 bg-dark-400 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-cyan-400/50"
+                        className="px-3 py-1.5 bg-dark-400 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-rose-gold-400/50"
                       >
                         {parsedData.columns.map((col) => (
                           <option key={col.name} value={col.name}>{col.name}</option>
@@ -950,7 +958,7 @@ Example JSON:
                       <select
                         value={labelColumn}
                         onChange={(e) => setLabelColumn(e.target.value)}
-                        className="px-3 py-1.5 bg-dark-400 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-cyan-400/50"
+                        className="px-3 py-1.5 bg-dark-400 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-rose-gold-400/50"
                       >
                         {parsedData.columns.map((col) => (
                           <option key={col.name} value={col.name}>{col.name}</option>
@@ -960,7 +968,7 @@ Example JSON:
 
                     <button
                       onClick={exportChartAsImage}
-                      className="ml-auto glass-btn-secondary px-3 py-1.5 text-xs"
+                      className="ml-auto morphic-btn px-3 py-1.5 text-xs"
                     >
                       <Download className="w-3.5 h-3.5 inline mr-1.5" />
                       Export Data
@@ -968,7 +976,7 @@ Example JSON:
                   </div>
 
                   {/* Chart Display */}
-                  <div id="data-chart" className="glass-card p-6 rounded-xl">
+                  <div id="data-chart" className="morphic-card p-6 rounded-xl">
                     {selectedChart === 'bar' && <BarChartCSS data={chartData} />}
                     {selectedChart === 'line' && <LineChartCSS data={chartData} />}
                     {selectedChart === 'pie' && <PieChartCSS data={chartData} />}
@@ -979,9 +987,9 @@ Example JSON:
               {activeTab === 'ai' && (
                 <div className="flex-1 overflow-y-auto morphic-scrollbar p-4">
                   {/* AI Query Input */}
-                  <div className="glass-card p-4 rounded-xl mb-6">
+                  <div className="morphic-card p-4 rounded-xl mb-6">
                     <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-                      <Brain className="w-4 h-4 text-cyan-400" />
+                      <Brain className="w-4 h-4 text-rose-gold-400" />
                       Ask AI About Your Data
                     </h3>
                     <textarea
@@ -991,12 +999,12 @@ Example JSON:
 - What are the main trends in this data?
 - Are there any outliers or anomalies?
 - What patterns do you see?"
-                      className="w-full h-24 p-3 bg-dark-400 border border-white/10 rounded-lg text-sm text-white placeholder-white/30 resize-none focus:outline-none focus:border-cyan-400/50"
+                      className="w-full h-24 p-3 bg-dark-400 border border-white/10 rounded-lg text-sm text-white placeholder-white/30 resize-none focus:outline-none focus:border-rose-gold-400/50"
                     />
                     <button
                       onClick={runAIAnalysis}
                       disabled={!aiQuery.trim() || isAnalyzing}
-                      className="mt-3 glass-btn-primary px-4 py-2 text-sm disabled:opacity-50"
+                      className="mt-3 morphic-btn bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 px-4 py-2 text-sm disabled:opacity-50"
                     >
                       {isAnalyzing ? (
                         <>
@@ -1043,18 +1051,18 @@ Example JSON:
                   {/* AI Analysis Results */}
                   {aiAnalysis && (
                     <div className="space-y-4">
-                      <div className="glass-card p-4 rounded-xl">
+                      <div className="morphic-card p-4 rounded-xl">
                         <h3 className="text-sm font-semibold text-white mb-2 flex items-center gap-2">
-                          <FileText className="w-4 h-4 text-cyan-400" />
+                          <FileText className="w-4 h-4 text-rose-gold-400" />
                           Summary
                         </h3>
                         <p className="text-sm text-white/70 leading-relaxed">{aiAnalysis.summary}</p>
                       </div>
 
                       {aiAnalysis.insights.length > 0 && (
-                        <div className="glass-card p-4 rounded-xl">
+                        <div className="morphic-card p-4 rounded-xl">
                           <h3 className="text-sm font-semibold text-white mb-2 flex items-center gap-2">
-                            <Sparkles className="w-4 h-4 text-cyan-400" />
+                            <Sparkles className="w-4 h-4 text-rose-gold-400" />
                             Key Insights
                           </h3>
                           <ul className="space-y-2">
@@ -1069,15 +1077,15 @@ Example JSON:
                       )}
 
                       {aiAnalysis.recommendations.length > 0 && (
-                        <div className="glass-card p-4 rounded-xl">
+                        <div className="morphic-card p-4 rounded-xl">
                           <h3 className="text-sm font-semibold text-white mb-2 flex items-center gap-2">
-                            <TrendingUp className="w-4 h-4 text-cyan-400" />
+                            <TrendingUp className="w-4 h-4 text-rose-gold-400" />
                             Recommendations
                           </h3>
                           <ul className="space-y-2">
                             {aiAnalysis.recommendations.map((rec, i) => (
                               <li key={i} className="flex items-start gap-2 text-sm text-white/70">
-                                <span className="text-cyan-400">-</span>
+                                <span className="text-rose-gold-400">-</span>
                                 {rec}
                               </li>
                             ))}
@@ -1102,7 +1110,7 @@ function ColumnCard({ column }: { column: DataColumn }) {
   const stats = column.stats
 
   return (
-    <div className="glass-card rounded-xl overflow-hidden">
+    <div className="morphic-card rounded-xl overflow-hidden">
       <button
         onClick={() => setExpanded(!expanded)}
         className="w-full p-4 flex items-center justify-between hover:bg-white/5 transition-colors"

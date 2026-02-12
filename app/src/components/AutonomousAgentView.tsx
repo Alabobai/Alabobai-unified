@@ -79,13 +79,21 @@ export default function AutonomousAgentView({ onClose: _onClose }: AutonomousAge
       {/* Header */}
       <div className="glass-morphic-header p-4 border-b border-white/10">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-gold-300 to-rose-gold-600 flex items-center justify-center shadow-glow-lg animate-pulse-glow">
-              <Brain className="w-5 h-5 text-dark-500" />
+          <div className="flex items-center gap-4">
+            {/* Alabobai Logo */}
+            <div className="flex items-center gap-2">
+              <img src="/logo.png" alt="Alabobai" className="w-8 h-8 rounded-lg" />
+              <div className="h-6 w-px bg-white/10" />
             </div>
-            <div>
-              <h2 className="text-lg font-bold text-white">Autonomous Agents</h2>
-              <p className="text-xs text-white/50">Real AI agents executing real tasks</p>
+            {/* View Header */}
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-gold-300 to-rose-gold-600 flex items-center justify-center shadow-glow-lg animate-pulse-glow">
+                <Brain className="w-5 h-5 text-dark-500" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-white">Autonomous Agents</h2>
+                <p className="text-xs text-rose-gold-400/70">Real AI agents executing real tasks</p>
+              </div>
             </div>
           </div>
 
@@ -94,7 +102,7 @@ export default function AutonomousAgentView({ onClose: _onClose }: AutonomousAge
               {execution.status === 'running' ? (
                 <button
                   onClick={pauseExecution}
-                  className="glass-btn-secondary p-2"
+                  className="morphic-btn p-2"
                   title="Pause"
                 >
                   <Pause className="w-4 h-4" />
@@ -102,7 +110,7 @@ export default function AutonomousAgentView({ onClose: _onClose }: AutonomousAge
               ) : execution.status === 'paused' ? (
                 <button
                   onClick={resumeExecution}
-                  className="glass-btn-primary p-2"
+                  className="morphic-btn bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 p-2"
                   title="Resume"
                 >
                   <Play className="w-4 h-4" />
@@ -111,7 +119,7 @@ export default function AutonomousAgentView({ onClose: _onClose }: AutonomousAge
               {execution.status !== 'complete' && execution.status !== 'failed' && (
                 <button
                   onClick={stopExecution}
-                  className="glass-btn-danger p-2"
+                  className="morphic-btn bg-red-500/20 text-red-400 border-red-500/30 hover:bg-red-500/30 p-2"
                   title="Stop"
                 >
                   <Square className="w-4 h-4" />
@@ -153,7 +161,7 @@ export default function AutonomousAgentView({ onClose: _onClose }: AutonomousAge
               {['Atlas', 'Nova', 'Pixel', 'Echo', 'Scout', 'Logic'].map((name, i) => (
                 <div
                   key={name}
-                  className="agent-card-idle glass-card p-3 rounded-xl"
+                  className="agent-card-idle morphic-card p-3 rounded-xl"
                   style={{ animationDelay: `${i * 100}ms` }}
                 >
                   <div className="flex items-center gap-3">
@@ -194,7 +202,7 @@ export default function AutonomousAgentView({ onClose: _onClose }: AutonomousAge
                   </p>
                 </div>
 
-                <div className="glass-card p-1 rounded-2xl mb-4">
+                <div className="morphic-card p-1 rounded-2xl mb-4">
                   <textarea
                     value={goal}
                     onChange={(e) => setGoal(e.target.value)}
@@ -206,7 +214,7 @@ export default function AutonomousAgentView({ onClose: _onClose }: AutonomousAge
                 <button
                   onClick={startExecution}
                   disabled={!goal.trim()}
-                  className="w-full glass-btn-primary py-4 text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed group"
+                  className="w-full morphic-btn bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 py-4 text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed group"
                 >
                   <span className="flex items-center justify-center gap-2">
                     <Zap className="w-5 h-5 group-hover:animate-bounce" />
@@ -225,7 +233,7 @@ export default function AutonomousAgentView({ onClose: _onClose }: AutonomousAge
                     <button
                       key={suggestion}
                       onClick={() => setGoal(suggestion)}
-                      className="glass-card p-3 rounded-xl text-left text-sm text-white/60 hover:text-white hover:border-rose-gold-400/30 transition-all"
+                      className="morphic-card p-3 rounded-xl text-left text-sm text-white/60 hover:text-white hover:border-rose-gold-400/30 transition-all"
                     >
                       {suggestion}
                     </button>
@@ -314,7 +322,7 @@ function AgentCard({ agent, index }: { agent: Agent; index: number }) {
 
   return (
     <div
-      className={`agent-card glass-card p-3 rounded-xl transition-all duration-300 ${
+      className={`agent-card morphic-card p-3 rounded-xl transition-all duration-300 ${
         agent.status === 'working' ? 'border-rose-gold-400/50 shadow-glow-sm' :
         agent.status === 'thinking' ? 'border-purple-400/50' : ''
       }`}
@@ -500,7 +508,7 @@ function LiveOutputPanel({
   if (outputs.length === 0) {
     return (
       <div className="p-4">
-        <div className="glass-card p-6 rounded-xl text-center">
+        <div className="morphic-card p-6 rounded-xl text-center">
           <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center mx-auto mb-3">
             <Loader2 className="w-6 h-6 text-white/30 animate-spin" />
           </div>
@@ -512,7 +520,7 @@ function LiveOutputPanel({
         </div>
 
         {/* Execution Metrics */}
-        <div className="mt-4 glass-card p-4 rounded-xl">
+        <div className="mt-4 morphic-card p-4 rounded-xl">
           <h4 className="text-xs text-white/40 mb-3">Execution Metrics</h4>
           <div className="grid grid-cols-2 gap-3">
             <MetricCard label="Tasks" value={execution.tasks.length.toString()} />
@@ -543,7 +551,7 @@ function LiveOutputPanel({
                 className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all text-left ${
                   isSelected
                     ? 'bg-rose-gold-400/20 border border-rose-gold-400/30'
-                    : 'glass-card hover:bg-white/5'
+                    : 'morphic-card hover:bg-white/5'
                 }`}
               >
                 <OutputIcon className={`w-4 h-4 flex-shrink-0 ${getOutputColor(output.type)}`} />

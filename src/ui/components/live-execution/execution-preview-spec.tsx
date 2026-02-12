@@ -118,6 +118,16 @@ export const ExecutionPreviewStyles = `
     --exec-event-decision: #fbbf24;
     --exec-event-complete: #4ade80;
 
+    /* ===== Syntax Highlighting ===== */
+    --exec-syntax-keyword: #c792ea;
+    --exec-syntax-string: #c3e88d;
+    --exec-syntax-number: #f78c6c;
+    --exec-syntax-comment: rgba(255, 255, 255, 0.35);
+    --exec-syntax-function: #82aaff;
+    --exec-syntax-variable: #f07178;
+    --exec-syntax-type: #ffcb6b;
+    --exec-syntax-operator: #89ddff;
+
     /* ===== Typography ===== */
     --exec-font-system: system-ui, -apple-system, BlinkMacSystemFont,
                         'SF Pro Text', 'SF Pro Display', sans-serif;
@@ -367,7 +377,7 @@ export const ExecutionPreviewPanelStyles = `
   .exec-browser__viewport {
     flex: 1;
     position: relative;
-    background: #0a0a0a;
+    background: var(--exec-glass-bg-sunken);
     overflow: hidden;
   }
 
@@ -429,7 +439,7 @@ export const ExecutionPreviewPanelStyles = `
     display: flex;
     flex-direction: column;
     height: 100%;
-    background: #0a0a0a;
+    background: var(--exec-glass-bg-sunken);
     font-family: var(--exec-font-mono);
   }
 
@@ -475,7 +485,7 @@ export const ExecutionPreviewPanelStyles = `
   }
 
   .exec-terminal__command {
-    color: #60a5fa;
+    color: var(--exec-event-action);
   }
 
   .exec-terminal__result {
@@ -504,7 +514,7 @@ export const ExecutionPreviewPanelStyles = `
     display: flex;
     flex-direction: column;
     height: 100%;
-    background: #0d0d0d;
+    background: var(--exec-glass-bg-sunken);
   }
 
   .exec-editor__header {
@@ -614,14 +624,14 @@ export const ExecutionPreviewPanelStyles = `
   }
 
   /* Syntax Highlighting Tokens */
-  .exec-token--keyword { color: #c792ea; }
-  .exec-token--string { color: #c3e88d; }
-  .exec-token--number { color: #f78c6c; }
-  .exec-token--comment { color: rgba(255, 255, 255, 0.35); font-style: italic; }
-  .exec-token--function { color: #82aaff; }
-  .exec-token--variable { color: #f07178; }
-  .exec-token--type { color: #ffcb6b; }
-  .exec-token--operator { color: #89ddff; }
+  .exec-token--keyword { color: var(--exec-syntax-keyword); }
+  .exec-token--string { color: var(--exec-syntax-string); }
+  .exec-token--number { color: var(--exec-syntax-number); }
+  .exec-token--comment { color: var(--exec-syntax-comment); font-style: italic; }
+  .exec-token--function { color: var(--exec-syntax-function); }
+  .exec-token--variable { color: var(--exec-syntax-variable); }
+  .exec-token--type { color: var(--exec-syntax-type); }
+  .exec-token--operator { color: var(--exec-syntax-operator); }
 
   /* ===== Fullscreen Mode ===== */
   .exec-panel--fullscreen {
@@ -1351,7 +1361,7 @@ export const ControlPanelStyles = `
   .exec-controls__btn--skip {
     background: rgba(96, 165, 250, 0.1);
     border-color: rgba(96, 165, 250, 0.3);
-    color: #60a5fa;
+    color: var(--exec-event-action);
   }
 
   .exec-controls__btn--skip:hover {
@@ -1361,14 +1371,14 @@ export const ControlPanelStyles = `
 
   /* Takeover Button */
   .exec-controls__btn--takeover {
-    background: rgba(167, 139, 250, 0.1);
-    border-color: rgba(167, 139, 250, 0.3);
-    color: #a78bfa;
+    background: rgba(217, 160, 122, 0.1);
+    border-color: rgba(217, 160, 122, 0.3);
+    color: var(--exec-accent);
   }
 
   .exec-controls__btn--takeover:hover {
-    background: rgba(167, 139, 250, 0.2);
-    border-color: rgba(167, 139, 250, 0.5);
+    background: rgba(217, 160, 122, 0.2);
+    border-color: rgba(217, 160, 122, 0.5);
   }
 
   /* Cancel Button */
@@ -2049,9 +2059,9 @@ export const ApprovalQueueStyles = `
   }
 
   .exec-approval__btn--modify:hover {
-    background: rgba(167, 139, 250, 0.1);
-    border-color: rgba(167, 139, 250, 0.4);
-    color: #a78bfa;
+    background: rgba(217, 160, 122, 0.1);
+    border-color: rgba(217, 160, 122, 0.4);
+    color: var(--exec-accent);
   }
 
   .exec-approval__btn--approve {
@@ -2108,7 +2118,7 @@ export const CompanyDashboardStyles = `
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-    background: #0a0908;
+    background: var(--exec-glass-bg-sunken);
   }
 
   /* ===== Dashboard Header ===== */

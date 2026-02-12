@@ -569,13 +569,21 @@ Only return the JSON object, no other text.`
       {/* Header */}
       <div className="glass-morphic-header p-4 border-b border-white/10">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-glow-lg">
-              <Shield className="w-5 h-5 text-white" />
+          <div className="flex items-center gap-4">
+            {/* Alabobai Logo */}
+            <div className="flex items-center gap-2">
+              <img src="/logo.png" alt="Alabobai" className="w-8 h-8 rounded-lg" />
+              <div className="h-6 w-px bg-white/10" />
             </div>
-            <div>
-              <h2 className="text-lg font-bold text-white">Financial Guardian</h2>
-              <p className="text-xs text-white/50">AI-powered budget tracking and analysis</p>
+            {/* View Header */}
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-glow-lg">
+                <Shield className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-white">Financial Guardian</h2>
+                <p className="text-xs text-rose-gold-400/70">AI-powered budget tracking and analysis</p>
+              </div>
             </div>
           </div>
 
@@ -602,7 +610,7 @@ Only return the JSON object, no other text.`
 
             <button
               onClick={() => setShowImportModal(true)}
-              className="glass-btn-secondary px-3 py-2 text-sm flex items-center gap-2"
+              className="morphic-btn px-3 py-2 text-sm flex items-center gap-2"
             >
               <Upload className="w-4 h-4" />
               Import
@@ -610,7 +618,7 @@ Only return the JSON object, no other text.`
 
             <button
               onClick={exportData}
-              className="glass-btn-secondary px-3 py-2 text-sm flex items-center gap-2"
+              className="morphic-btn px-3 py-2 text-sm flex items-center gap-2"
             >
               <Download className="w-4 h-4" />
               Export
@@ -618,7 +626,7 @@ Only return the JSON object, no other text.`
 
             <button
               onClick={() => setShowAddTransaction(true)}
-              className="glass-btn-primary px-3 py-2 text-sm flex items-center gap-2"
+              className="morphic-btn bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 px-3 py-2 text-sm flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
               Add Transaction
@@ -659,7 +667,7 @@ Only return the JSON object, no other text.`
             {alerts.slice(0, 3).map(alert => (
               <div
                 key={alert.id}
-                className={`glass-card p-3 rounded-lg flex items-center gap-3 ${
+                className={`morphic-card p-3 rounded-lg flex items-center gap-3 ${
                   alert.type === 'danger' ? 'border-red-500/30 bg-red-500/10' :
                   alert.type === 'warning' ? 'border-yellow-500/30 bg-yellow-500/10' :
                   'border-blue-500/30 bg-blue-500/10'
@@ -687,7 +695,7 @@ Only return the JSON object, no other text.`
           <div className="space-y-6">
             {/* Summary Cards */}
             <div className="grid grid-cols-4 gap-4">
-              <div className="glass-card p-4 rounded-xl">
+              <div className="morphic-card p-4 rounded-xl">
                 <div className="flex items-center gap-2 text-white/60 mb-2">
                   <TrendingUp className="w-4 h-4 text-green-400" />
                   <span className="text-xs">Income</span>
@@ -700,7 +708,7 @@ Only return the JSON object, no other text.`
                 </div>
               </div>
 
-              <div className="glass-card p-4 rounded-xl">
+              <div className="morphic-card p-4 rounded-xl">
                 <div className="flex items-center gap-2 text-white/60 mb-2">
                   <TrendingDown className="w-4 h-4 text-red-400" />
                   <span className="text-xs">Expenses</span>
@@ -713,7 +721,7 @@ Only return the JSON object, no other text.`
                 </div>
               </div>
 
-              <div className="glass-card p-4 rounded-xl">
+              <div className="morphic-card p-4 rounded-xl">
                 <div className="flex items-center gap-2 text-white/60 mb-2">
                   <DollarSign className="w-4 h-4 text-emerald-400" />
                   <span className="text-xs">Net Savings</span>
@@ -726,7 +734,7 @@ Only return the JSON object, no other text.`
                 </div>
               </div>
 
-              <div className="glass-card p-4 rounded-xl">
+              <div className="morphic-card p-4 rounded-xl">
                 <div className="flex items-center gap-2 text-white/60 mb-2">
                   <BarChart2 className="w-4 h-4 text-purple-400" />
                   <span className="text-xs">Savings Rate</span>
@@ -743,7 +751,7 @@ Only return the JSON object, no other text.`
             {/* Charts Row */}
             <div className="grid grid-cols-2 gap-4">
               {/* Expense Breakdown */}
-              <div className="glass-card p-4 rounded-xl">
+              <div className="morphic-card p-4 rounded-xl">
                 <h3 className="text-sm font-semibold text-white mb-4">Expense Breakdown</h3>
                 <div className="space-y-3">
                   {getExpenseBreakdown().slice(0, 6).map(item => (
@@ -778,7 +786,7 @@ Only return the JSON object, no other text.`
               </div>
 
               {/* Budget Overview */}
-              <div className="glass-card p-4 rounded-xl">
+              <div className="morphic-card p-4 rounded-xl">
                 <h3 className="text-sm font-semibold text-white mb-4">Budget Status</h3>
                 <div className="space-y-3">
                   {budgets.slice(0, 6).map(budget => {
@@ -819,7 +827,7 @@ Only return the JSON object, no other text.`
 
             {/* Savings Goals */}
             {savingsGoals.length > 0 && (
-              <div className="glass-card p-4 rounded-xl">
+              <div className="morphic-card p-4 rounded-xl">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-sm font-semibold text-white">Savings Goals</h3>
                   <button
@@ -877,7 +885,7 @@ Only return the JSON object, no other text.`
             )}
 
             {/* Recent Transactions */}
-            <div className="glass-card p-4 rounded-xl">
+            <div className="morphic-card p-4 rounded-xl">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-sm font-semibold text-white">Recent Transactions</h3>
                 <button
@@ -921,7 +929,7 @@ Only return the JSON object, no other text.`
 
         {/* Transactions Tab */}
         {activeTab === 'transactions' && (
-          <div className="glass-card rounded-xl overflow-hidden">
+          <div className="morphic-card rounded-xl overflow-hidden">
             <div className="p-4 border-b border-white/10 flex justify-between items-center">
               <h3 className="text-sm font-semibold text-white">All Transactions</h3>
               <div className="text-xs text-white/40">{transactions.length} transactions</div>
@@ -991,7 +999,7 @@ Only return the JSON object, no other text.`
         {/* Budgets Tab */}
         {activeTab === 'budgets' && (
           <div className="space-y-4">
-            <div className="glass-card p-4 rounded-xl">
+            <div className="morphic-card p-4 rounded-xl">
               <h3 className="text-sm font-semibold text-white mb-4">Monthly Budget Limits</h3>
               <div className="grid grid-cols-2 gap-4">
                 {budgets.map(budget => {
@@ -1039,7 +1047,7 @@ Only return the JSON object, no other text.`
             </div>
 
             {/* Add new budget category */}
-            <div className="glass-card p-4 rounded-xl">
+            <div className="morphic-card p-4 rounded-xl">
               <h3 className="text-sm font-semibold text-white mb-4">Add Budget Category</h3>
               <div className="grid grid-cols-4 gap-2">
                 {EXPENSE_CATEGORIES.filter(cat => !budgets.some(b => b.category === cat.id)).map(cat => (
@@ -1064,7 +1072,7 @@ Only return the JSON object, no other text.`
               <h3 className="text-sm font-semibold text-white">Savings Goals</h3>
               <button
                 onClick={() => setShowAddGoal(true)}
-                className="glass-btn-primary px-3 py-2 text-sm flex items-center gap-2"
+                className="morphic-btn bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 px-3 py-2 text-sm flex items-center gap-2"
               >
                 <Plus className="w-4 h-4" />
                 New Goal
@@ -1080,7 +1088,7 @@ Only return the JSON object, no other text.`
                 const monthlyNeeded = monthsLeft > 0 ? remainingAmount / monthsLeft : remainingAmount
 
                 return (
-                  <div key={goal.id} className="glass-card p-6 rounded-xl">
+                  <div key={goal.id} className="morphic-card p-6 rounded-xl">
                     <div className="flex justify-between items-start mb-4">
                       <div>
                         <h4 className="text-lg font-semibold text-white">{goal.name}</h4>
@@ -1160,13 +1168,13 @@ Only return the JSON object, no other text.`
             </div>
 
             {savingsGoals.length === 0 && (
-              <div className="glass-card p-12 rounded-xl text-center">
+              <div className="morphic-card p-12 rounded-xl text-center">
                 <Target className="w-16 h-16 text-white/20 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-white mb-2">No Savings Goals Yet</h3>
                 <p className="text-sm text-white/40 mb-4">Set financial goals to track your progress</p>
                 <button
                   onClick={() => setShowAddGoal(true)}
-                  className="glass-btn-primary px-4 py-2 text-sm"
+                  className="morphic-btn bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 px-4 py-2 text-sm"
                 >
                   Create Your First Goal
                 </button>
@@ -1178,7 +1186,7 @@ Only return the JSON object, no other text.`
         {/* AI Analysis Tab */}
         {activeTab === 'analysis' && (
           <div className="space-y-4">
-            <div className="glass-card p-6 rounded-xl">
+            <div className="morphic-card p-6 rounded-xl">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center">
@@ -1192,7 +1200,7 @@ Only return the JSON object, no other text.`
                 <button
                   onClick={runFinancialAnalysis}
                   disabled={isAnalyzing || transactions.length === 0}
-                  className="glass-btn-primary px-4 py-2 text-sm flex items-center gap-2 disabled:opacity-50"
+                  className="morphic-btn bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 px-4 py-2 text-sm flex items-center gap-2 disabled:opacity-50"
                 >
                   {isAnalyzing ? (
                     <>
@@ -1234,7 +1242,7 @@ Only return the JSON object, no other text.`
             {financialReport && (
               <div className="space-y-4">
                 {/* Summary */}
-                <div className="glass-card p-6 rounded-xl">
+                <div className="morphic-card p-6 rounded-xl">
                   <h4 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
                     <Sparkles className="w-4 h-4 text-purple-400" />
                     Summary
@@ -1244,7 +1252,7 @@ Only return the JSON object, no other text.`
 
                 {/* Insights */}
                 {financialReport.insights.length > 0 && (
-                  <div className="glass-card p-6 rounded-xl">
+                  <div className="morphic-card p-6 rounded-xl">
                     <h4 className="text-sm font-semibold text-white mb-3">Key Insights</h4>
                     <ul className="space-y-2">
                       {financialReport.insights.map((insight, i) => (
@@ -1259,7 +1267,7 @@ Only return the JSON object, no other text.`
 
                 {/* Recommendations */}
                 {financialReport.recommendations.length > 0 && (
-                  <div className="glass-card p-6 rounded-xl">
+                  <div className="morphic-card p-6 rounded-xl">
                     <h4 className="text-sm font-semibold text-white mb-3">Recommendations</h4>
                     <ul className="space-y-2">
                       {financialReport.recommendations.map((rec, i) => (
@@ -1274,7 +1282,7 @@ Only return the JSON object, no other text.`
 
                 {/* Risk Alerts */}
                 {financialReport.riskAlerts.length > 0 && (
-                  <div className="glass-card p-6 rounded-xl border border-red-500/30 bg-red-500/5">
+                  <div className="morphic-card p-6 rounded-xl border border-red-500/30 bg-red-500/5">
                     <h4 className="text-sm font-semibold text-red-400 mb-3 flex items-center gap-2">
                       <AlertTriangle className="w-4 h-4" />
                       Risk Alerts
@@ -1291,7 +1299,7 @@ Only return the JSON object, no other text.`
 
                 {/* Saving Opportunities */}
                 {financialReport.savingOpportunities.length > 0 && (
-                  <div className="glass-card p-6 rounded-xl border border-emerald-500/30 bg-emerald-500/5">
+                  <div className="morphic-card p-6 rounded-xl border border-emerald-500/30 bg-emerald-500/5">
                     <h4 className="text-sm font-semibold text-emerald-400 mb-3 flex items-center gap-2">
                       <DollarSign className="w-4 h-4" />
                       Saving Opportunities
@@ -1314,7 +1322,7 @@ Only return the JSON object, no other text.`
       {/* Add Transaction Modal */}
       {showAddTransaction && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="glass-card p-6 rounded-xl w-[500px] max-h-[90vh] overflow-y-auto">
+          <div className="morphic-card p-6 rounded-xl w-[500px] max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold text-white">Add Transaction</h3>
               <button onClick={() => setShowAddTransaction(false)} className="text-white/40 hover:text-white">
@@ -1434,7 +1442,7 @@ Only return the JSON object, no other text.`
               <button
                 onClick={handleAddTransaction}
                 disabled={!newTransaction.amount || !newTransaction.category}
-                className="w-full glass-btn-primary py-3 text-sm font-semibold disabled:opacity-50"
+                className="w-full morphic-btn bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 py-3 text-sm font-semibold disabled:opacity-50"
               >
                 Add Transaction
               </button>
@@ -1446,7 +1454,7 @@ Only return the JSON object, no other text.`
       {/* Edit Transaction Modal */}
       {editingTransaction && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="glass-card p-6 rounded-xl w-[500px] max-h-[90vh] overflow-y-auto">
+          <div className="morphic-card p-6 rounded-xl w-[500px] max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold text-white">Edit Transaction</h3>
               <button onClick={() => setEditingTransaction(null)} className="text-white/40 hover:text-white">
@@ -1491,13 +1499,13 @@ Only return the JSON object, no other text.`
               <div className="flex gap-2">
                 <button
                   onClick={() => setEditingTransaction(null)}
-                  className="flex-1 glass-btn-secondary py-3 text-sm"
+                  className="flex-1 morphic-btn py-3 text-sm"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleUpdateTransaction}
-                  className="flex-1 glass-btn-primary py-3 text-sm font-semibold"
+                  className="flex-1 morphic-btn bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 py-3 text-sm font-semibold"
                 >
                   Save Changes
                 </button>
@@ -1510,7 +1518,7 @@ Only return the JSON object, no other text.`
       {/* Add Goal Modal */}
       {showAddGoal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="glass-card p-6 rounded-xl w-[450px]">
+          <div className="morphic-card p-6 rounded-xl w-[450px]">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold text-white">New Savings Goal</h3>
               <button onClick={() => setShowAddGoal(false)} className="text-white/40 hover:text-white">
@@ -1587,7 +1595,7 @@ Only return the JSON object, no other text.`
               <button
                 onClick={handleAddGoal}
                 disabled={!newGoal.name || !newGoal.targetAmount || !newGoal.deadline}
-                className="w-full glass-btn-primary py-3 text-sm font-semibold disabled:opacity-50"
+                className="w-full morphic-btn bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 py-3 text-sm font-semibold disabled:opacity-50"
               >
                 Create Goal
               </button>
@@ -1599,7 +1607,7 @@ Only return the JSON object, no other text.`
       {/* Import Modal */}
       {showImportModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="glass-card p-6 rounded-xl w-[600px]">
+          <div className="morphic-card p-6 rounded-xl w-[600px]">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold text-white">Import Transactions</h3>
               <button onClick={() => setShowImportModal(false)} className="text-white/40 hover:text-white">
@@ -1628,14 +1636,14 @@ Example:
               <div className="flex gap-2">
                 <button
                   onClick={() => setShowImportModal(false)}
-                  className="flex-1 glass-btn-secondary py-3 text-sm"
+                  className="flex-1 morphic-btn py-3 text-sm"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleImportParse}
                   disabled={!importText.trim() || isParsingImport}
-                  className="flex-1 glass-btn-primary py-3 text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
+                  className="flex-1 morphic-btn bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 py-3 text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                   {isParsingImport ? (
                     <>

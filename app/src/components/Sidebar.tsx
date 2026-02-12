@@ -7,17 +7,21 @@ export default function Sidebar() {
 
   if (!sidebarOpen) {
     return (
-      <div className="w-12 bg-dark-300 border-r border-white/10 flex flex-col items-center py-4">
+      <div className="w-14 morphic-glass border-r border-rose-gold-400/10 flex flex-col items-center py-4 bg-dark-400/95">
+        {/* Collapsed Logo */}
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-gold-300 to-rose-gold-600 flex items-center justify-center mb-4 shadow-glow-sm">
+          <span className="text-lg font-bold text-dark-500">A</span>
+        </div>
         <button
           onClick={toggleSidebar}
-          className="p-2 rounded-lg text-white/60 hover:text-white hover:bg-white/5 transition-colors"
+          className="p-2 rounded-lg text-rose-gold-400/60 hover:text-rose-gold-400 hover:bg-rose-gold-400/10 transition-colors"
         >
           <ChevronRight className="w-5 h-5" />
         </button>
-        <div className="morphic-divider w-8" />
+        <div className="morphic-divider w-8 my-3" />
         <button
           onClick={createChat}
-          className="p-2 rounded-lg text-rose-gold-400 hover:bg-rose-gold-400/10 transition-colors"
+          className="p-2 rounded-lg text-rose-gold-400 hover:bg-rose-gold-400/15 transition-colors shadow-glow-sm"
         >
           <Plus className="w-5 h-5" />
         </button>
@@ -26,21 +30,21 @@ export default function Sidebar() {
   }
 
   return (
-    <div className="w-72 bg-dark-300 border-r border-white/10 flex flex-col">
-      {/* Header */}
-      <div className="p-4 flex items-center justify-between border-b border-white/10">
+    <div className="w-72 morphic-glass border-r border-rose-gold-400/10 flex flex-col bg-dark-400/95">
+      {/* Header with Prominent Logo */}
+      <div className="p-4 flex items-center justify-between border-b border-rose-gold-400/10">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-rose-gold-300 to-rose-gold-600 flex items-center justify-center">
-            <span className="text-sm font-bold text-dark-500">C</span>
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-gold-300 to-rose-gold-600 flex items-center justify-center shadow-glow-sm animate-pulse-glow">
+            <span className="text-lg font-bold text-dark-500">A</span>
           </div>
           <div>
-            <h1 className="text-sm font-semibold text-white">Alabobai</h1>
-            <p className="text-xs text-white/40">AI Agent Platform</p>
+            <h1 className="text-base font-semibold text-white tracking-wide">Alabobai</h1>
+            <p className="text-xs text-rose-gold-400/60">AI Agent Platform</p>
           </div>
         </div>
         <button
           onClick={toggleSidebar}
-          className="p-1.5 rounded-lg text-white/40 hover:text-white hover:bg-white/5 transition-colors"
+          className="p-1.5 rounded-lg text-rose-gold-400/40 hover:text-rose-gold-400 hover:bg-rose-gold-400/10 transition-colors"
         >
           <ChevronLeft className="w-4 h-4" />
         </button>
@@ -50,16 +54,16 @@ export default function Sidebar() {
       <div className="p-3">
         <button
           onClick={createChat}
-          className="w-full morphic-btn-ghost flex items-center justify-center gap-2 py-2.5"
+          className="w-full morphic-glass border border-rose-gold-400/20 hover:border-rose-gold-400/40 hover:bg-rose-gold-400/10 flex items-center justify-center gap-2 py-2.5 rounded-xl text-rose-gold-400 transition-all duration-200"
         >
           <Plus className="w-4 h-4" />
-          <span>New Chat</span>
+          <span className="font-medium">New Chat</span>
         </button>
       </div>
 
       {/* Chat List */}
       <div className="flex-1 overflow-y-auto morphic-scrollbar px-3">
-        <div className="text-xs font-medium text-white/40 uppercase tracking-wider px-2 py-2">
+        <div className="text-xs font-medium text-rose-gold-400/50 uppercase tracking-wider px-2 py-2">
           Recent Chats
         </div>
         <div className="space-y-1">
@@ -87,17 +91,17 @@ export default function Sidebar() {
       </div>
 
       {/* Autonomous Agents Section */}
-      <div className="border-t border-white/10 p-3">
-        <div className="text-xs font-medium text-white/40 uppercase tracking-wider px-2 py-2">
+      <div className="border-t border-rose-gold-400/10 p-3">
+        <div className="text-xs font-medium text-rose-gold-400/50 uppercase tracking-wider px-2 py-2">
           AI Workforce
         </div>
         <div className="space-y-1">
           <button
             onClick={() => setView('autonomous-agents')}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group ${
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group ${
               currentView === 'autonomous-agents'
-                ? 'bg-rose-gold-400/15 text-rose-gold-400 border border-rose-gold-400/30 shadow-glow-sm'
-                : 'text-white/70 hover:bg-white/5 hover:text-white'
+                ? 'morphic-glass bg-rose-gold-400/15 text-rose-gold-400 border border-rose-gold-400/30 shadow-glow-sm'
+                : 'text-white/70 hover:bg-rose-gold-400/5 hover:text-rose-gold-400/90'
             }`}
           >
             <Brain className={`w-4 h-4 ${currentView === 'autonomous-agents' ? 'animate-pulse' : ''}`} />
@@ -106,17 +110,17 @@ export default function Sidebar() {
           </button>
           <button
             onClick={() => setView('self-annealing')}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group ${
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group ${
               currentView === 'self-annealing'
-                ? 'bg-gradient-to-r from-rose-gold-400/20 to-orange-500/20 text-rose-gold-400 border border-rose-gold-400/30 shadow-glow-sm'
-                : 'text-white/70 hover:bg-white/5 hover:text-white'
+                ? 'morphic-glass bg-rose-gold-400/15 text-rose-gold-400 border border-rose-gold-400/30 shadow-glow-sm'
+                : 'text-white/70 hover:bg-rose-gold-400/5 hover:text-rose-gold-400/90'
             }`}
           >
-            <Flame className={`w-4 h-4 ${currentView === 'self-annealing' ? 'animate-pulse text-orange-400' : ''}`} />
+            <Flame className={`w-4 h-4 ${currentView === 'self-annealing' ? 'animate-pulse text-rose-gold-400' : ''}`} />
             <span className="text-sm">Self-Annealing</span>
             <span className={`ml-auto text-[10px] px-1.5 py-0.5 rounded-full ${
               currentView === 'self-annealing'
-                ? 'bg-orange-500/30 text-orange-300'
+                ? 'bg-rose-gold-400/30 text-rose-gold-300'
                 : 'bg-rose-gold-400/20 text-rose-gold-400 opacity-0 group-hover:opacity-100'
             } transition-opacity`}>
               AI+
@@ -124,126 +128,126 @@ export default function Sidebar() {
           </button>
           <button
             onClick={() => setView('deep-research')}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group ${
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group ${
               currentView === 'deep-research'
-                ? 'bg-gradient-to-r from-purple-500/20 to-purple-600/20 text-purple-400 border border-purple-400/30 shadow-glow-sm'
-                : 'text-white/70 hover:bg-white/5 hover:text-white'
+                ? 'morphic-glass bg-rose-gold-400/15 text-rose-gold-400 border border-rose-gold-400/30 shadow-glow-sm'
+                : 'text-white/70 hover:bg-rose-gold-400/5 hover:text-rose-gold-400/90'
             }`}
           >
-            <Search className={`w-4 h-4 ${currentView === 'deep-research' ? 'animate-pulse text-purple-400' : ''}`} />
+            <Search className={`w-4 h-4 ${currentView === 'deep-research' ? 'animate-pulse text-rose-gold-400' : ''}`} />
             <span className="text-sm">Deep Research</span>
             <span className={`ml-auto text-[10px] px-1.5 py-0.5 rounded-full ${
               currentView === 'deep-research'
-                ? 'bg-purple-500/30 text-purple-300'
-                : 'bg-purple-400/20 text-purple-400 opacity-0 group-hover:opacity-100'
+                ? 'bg-rose-gold-400/30 text-rose-gold-300'
+                : 'bg-rose-gold-400/20 text-rose-gold-400 opacity-0 group-hover:opacity-100'
             } transition-opacity`}>
               NEW
             </span>
           </button>
           <button
             onClick={() => setView('privacy-fortress')}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group ${
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group ${
               currentView === 'privacy-fortress'
-                ? 'bg-gradient-to-r from-emerald-500/20 to-emerald-600/20 text-emerald-400 border border-emerald-400/30 shadow-glow-sm'
-                : 'text-white/70 hover:bg-white/5 hover:text-white'
+                ? 'morphic-glass bg-rose-gold-400/15 text-rose-gold-400 border border-rose-gold-400/30 shadow-glow-sm'
+                : 'text-white/70 hover:bg-rose-gold-400/5 hover:text-rose-gold-400/90'
             }`}
           >
-            <Shield className={`w-4 h-4 ${currentView === 'privacy-fortress' ? 'animate-pulse text-emerald-400' : ''}`} />
+            <Shield className={`w-4 h-4 ${currentView === 'privacy-fortress' ? 'animate-pulse text-rose-gold-400' : ''}`} />
             <span className="text-sm">Privacy Fortress</span>
             <span className={`ml-auto text-[10px] px-1.5 py-0.5 rounded-full ${
               currentView === 'privacy-fortress'
-                ? 'bg-emerald-500/30 text-emerald-300'
-                : 'bg-emerald-400/20 text-emerald-400 opacity-0 group-hover:opacity-100'
+                ? 'bg-rose-gold-400/30 text-rose-gold-300'
+                : 'bg-rose-gold-400/20 text-rose-gold-400 opacity-0 group-hover:opacity-100'
             } transition-opacity`}>
               NEW
             </span>
           </button>
           <button
             onClick={() => setView('financial-guardian')}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group ${
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group ${
               currentView === 'financial-guardian'
-                ? 'bg-gradient-to-r from-green-500/20 to-emerald-600/20 text-green-400 border border-green-400/30 shadow-glow-sm'
-                : 'text-white/70 hover:bg-white/5 hover:text-white'
+                ? 'morphic-glass bg-rose-gold-400/15 text-rose-gold-400 border border-rose-gold-400/30 shadow-glow-sm'
+                : 'text-white/70 hover:bg-rose-gold-400/5 hover:text-rose-gold-400/90'
             }`}
           >
-            <Wallet className={`w-4 h-4 ${currentView === 'financial-guardian' ? 'animate-pulse text-green-400' : ''}`} />
+            <Wallet className={`w-4 h-4 ${currentView === 'financial-guardian' ? 'animate-pulse text-rose-gold-400' : ''}`} />
             <span className="text-sm">Financial Guardian</span>
             <span className={`ml-auto text-[10px] px-1.5 py-0.5 rounded-full ${
               currentView === 'financial-guardian'
-                ? 'bg-green-500/30 text-green-300'
-                : 'bg-green-400/20 text-green-400 opacity-0 group-hover:opacity-100'
+                ? 'bg-rose-gold-400/30 text-rose-gold-300'
+                : 'bg-rose-gold-400/20 text-rose-gold-400 opacity-0 group-hover:opacity-100'
             } transition-opacity`}>
               NEW
             </span>
           </button>
           <button
             onClick={() => setView('creative-studio')}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group ${
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group ${
               currentView === 'creative-studio'
-                ? 'bg-gradient-to-r from-pink-500/20 to-purple-600/20 text-pink-400 border border-pink-400/30 shadow-glow-sm'
-                : 'text-white/70 hover:bg-white/5 hover:text-white'
+                ? 'morphic-glass bg-rose-gold-400/15 text-rose-gold-400 border border-rose-gold-400/30 shadow-glow-sm'
+                : 'text-white/70 hover:bg-rose-gold-400/5 hover:text-rose-gold-400/90'
             }`}
           >
-            <Palette className={`w-4 h-4 ${currentView === 'creative-studio' ? 'animate-pulse text-pink-400' : ''}`} />
+            <Palette className={`w-4 h-4 ${currentView === 'creative-studio' ? 'animate-pulse text-rose-gold-400' : ''}`} />
             <span className="text-sm">Creative Studio</span>
             <span className={`ml-auto text-[10px] px-1.5 py-0.5 rounded-full ${
               currentView === 'creative-studio'
-                ? 'bg-pink-500/30 text-pink-300'
-                : 'bg-pink-400/20 text-pink-400 opacity-0 group-hover:opacity-100'
+                ? 'bg-rose-gold-400/30 text-rose-gold-300'
+                : 'bg-rose-gold-400/20 text-rose-gold-400 opacity-0 group-hover:opacity-100'
             } transition-opacity`}>
               NEW
             </span>
           </button>
           <button
             onClick={() => setView('data-analyst')}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group ${
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group ${
               currentView === 'data-analyst'
-                ? 'bg-gradient-to-r from-cyan-500/20 to-blue-600/20 text-cyan-400 border border-cyan-400/30 shadow-glow-sm'
-                : 'text-white/70 hover:bg-white/5 hover:text-white'
+                ? 'morphic-glass bg-rose-gold-400/15 text-rose-gold-400 border border-rose-gold-400/30 shadow-glow-sm'
+                : 'text-white/70 hover:bg-rose-gold-400/5 hover:text-rose-gold-400/90'
             }`}
           >
-            <BarChart3 className={`w-4 h-4 ${currentView === 'data-analyst' ? 'animate-pulse text-cyan-400' : ''}`} />
+            <BarChart3 className={`w-4 h-4 ${currentView === 'data-analyst' ? 'animate-pulse text-rose-gold-400' : ''}`} />
             <span className="text-sm">Data Analyst</span>
             <span className={`ml-auto text-[10px] px-1.5 py-0.5 rounded-full ${
               currentView === 'data-analyst'
-                ? 'bg-cyan-500/30 text-cyan-300'
-                : 'bg-cyan-400/20 text-cyan-400 opacity-0 group-hover:opacity-100'
+                ? 'bg-rose-gold-400/30 text-rose-gold-300'
+                : 'bg-rose-gold-400/20 text-rose-gold-400 opacity-0 group-hover:opacity-100'
             } transition-opacity`}>
               NEW
             </span>
           </button>
           <button
             onClick={() => setView('voice-interface')}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group ${
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group ${
               currentView === 'voice-interface'
-                ? 'bg-gradient-to-r from-teal-500/20 to-cyan-600/20 text-teal-400 border border-teal-400/30 shadow-glow-sm'
-                : 'text-white/70 hover:bg-white/5 hover:text-white'
+                ? 'morphic-glass bg-rose-gold-400/15 text-rose-gold-400 border border-rose-gold-400/30 shadow-glow-sm'
+                : 'text-white/70 hover:bg-rose-gold-400/5 hover:text-rose-gold-400/90'
             }`}
           >
-            <Mic className={`w-4 h-4 ${currentView === 'voice-interface' ? 'animate-pulse text-teal-400' : ''}`} />
+            <Mic className={`w-4 h-4 ${currentView === 'voice-interface' ? 'animate-pulse text-rose-gold-400' : ''}`} />
             <span className="text-sm">Voice Interface</span>
             <span className={`ml-auto text-[10px] px-1.5 py-0.5 rounded-full ${
               currentView === 'voice-interface'
-                ? 'bg-teal-500/30 text-teal-300'
-                : 'bg-teal-400/20 text-teal-400 opacity-0 group-hover:opacity-100'
+                ? 'bg-rose-gold-400/30 text-rose-gold-300'
+                : 'bg-rose-gold-400/20 text-rose-gold-400 opacity-0 group-hover:opacity-100'
             } transition-opacity`}>
               NEW
             </span>
           </button>
           <button
             onClick={() => setView('trust-architect')}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group ${
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group ${
               currentView === 'trust-architect'
-                ? 'bg-gradient-to-r from-cyan-500/20 to-cyan-600/20 text-cyan-400 border border-cyan-400/30 shadow-glow-sm'
-                : 'text-white/70 hover:bg-white/5 hover:text-white'
+                ? 'morphic-glass bg-rose-gold-400/15 text-rose-gold-400 border border-rose-gold-400/30 shadow-glow-sm'
+                : 'text-white/70 hover:bg-rose-gold-400/5 hover:text-rose-gold-400/90'
             }`}
           >
-            <ShieldCheck className={`w-4 h-4 ${currentView === 'trust-architect' ? 'animate-pulse text-cyan-400' : ''}`} />
+            <ShieldCheck className={`w-4 h-4 ${currentView === 'trust-architect' ? 'animate-pulse text-rose-gold-400' : ''}`} />
             <span className="text-sm">Trust Architect</span>
             <span className={`ml-auto text-[10px] px-1.5 py-0.5 rounded-full ${
               currentView === 'trust-architect'
-                ? 'bg-cyan-500/30 text-cyan-300'
-                : 'bg-cyan-400/20 text-cyan-400 opacity-0 group-hover:opacity-100'
+                ? 'bg-rose-gold-400/30 text-rose-gold-300'
+                : 'bg-rose-gold-400/20 text-rose-gold-400 opacity-0 group-hover:opacity-100'
             } transition-opacity`}>
               NEW
             </span>
@@ -252,17 +256,17 @@ export default function Sidebar() {
       </div>
 
       {/* Company Section */}
-      <div className="border-t border-white/10 p-3">
-        <div className="text-xs font-medium text-white/40 uppercase tracking-wider px-2 py-2">
+      <div className="border-t border-rose-gold-400/10 p-3">
+        <div className="text-xs font-medium text-rose-gold-400/50 uppercase tracking-wider px-2 py-2">
           Your Company
         </div>
         <div className="space-y-1">
           <button
             onClick={() => setView('company-wizard')}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${
               currentView === 'company-wizard'
-                ? 'bg-rose-gold-400/15 text-rose-gold-400 border border-rose-gold-400/30'
-                : 'text-white/70 hover:bg-white/5 hover:text-white'
+                ? 'morphic-glass bg-rose-gold-400/15 text-rose-gold-400 border border-rose-gold-400/30 shadow-glow-sm'
+                : 'text-white/70 hover:bg-rose-gold-400/5 hover:text-rose-gold-400/90'
             }`}
           >
             <Rocket className="w-4 h-4" />
@@ -270,10 +274,10 @@ export default function Sidebar() {
           </button>
           <button
             onClick={() => setView('company-dashboard')}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${
               currentView === 'company-dashboard'
-                ? 'bg-rose-gold-400/15 text-rose-gold-400 border border-rose-gold-400/30'
-                : 'text-white/70 hover:bg-white/5 hover:text-white'
+                ? 'morphic-glass bg-rose-gold-400/15 text-rose-gold-400 border border-rose-gold-400/30 shadow-glow-sm'
+                : 'text-white/70 hover:bg-rose-gold-400/5 hover:text-rose-gold-400/90'
             }`}
           >
             <LayoutDashboard className="w-4 h-4" />
@@ -281,10 +285,10 @@ export default function Sidebar() {
           </button>
           <button
             onClick={() => setView('chat')}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${
               currentView === 'chat'
-                ? 'bg-rose-gold-400/15 text-rose-gold-400 border border-rose-gold-400/30'
-                : 'text-white/70 hover:bg-white/5 hover:text-white'
+                ? 'morphic-glass bg-rose-gold-400/15 text-rose-gold-400 border border-rose-gold-400/30 shadow-glow-sm'
+                : 'text-white/70 hover:bg-rose-gold-400/5 hover:text-rose-gold-400/90'
             }`}
           >
             <MessageSquare className="w-4 h-4" />
@@ -294,11 +298,11 @@ export default function Sidebar() {
       </div>
 
       {/* Projects Section */}
-      <div className="border-t border-white/10 p-3">
-        <div className="text-xs font-medium text-white/40 uppercase tracking-wider px-2 py-2">
+      <div className="border-t border-rose-gold-400/10 p-3">
+        <div className="text-xs font-medium text-rose-gold-400/50 uppercase tracking-wider px-2 py-2">
           Projects
         </div>
-        <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-white/70 hover:bg-white/5 hover:text-white transition-colors">
+        <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-white/70 hover:bg-rose-gold-400/5 hover:text-rose-gold-400/90 transition-colors">
           <FolderOpen className="w-4 h-4" />
           <span className="text-sm">Browse Projects</span>
         </button>
@@ -308,32 +312,32 @@ export default function Sidebar() {
       <AgentsPanel />
 
       {/* System Section */}
-      <div className="border-t border-white/10 p-3">
-        <div className="text-xs font-medium text-white/40 uppercase tracking-wider px-2 py-2">
+      <div className="border-t border-rose-gold-400/10 p-3">
+        <div className="text-xs font-medium text-rose-gold-400/50 uppercase tracking-wider px-2 py-2">
           System
         </div>
         <div className="space-y-1">
           <button
             onClick={() => setView('integration-hub')}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group ${
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group ${
               currentView === 'integration-hub'
-                ? 'bg-gradient-to-r from-cyan-500/20 to-blue-600/20 text-cyan-400 border border-cyan-400/30 shadow-glow-sm'
-                : 'text-white/70 hover:bg-white/5 hover:text-white'
+                ? 'morphic-glass bg-rose-gold-400/15 text-rose-gold-400 border border-rose-gold-400/30 shadow-glow-sm'
+                : 'text-white/70 hover:bg-rose-gold-400/5 hover:text-rose-gold-400/90'
             }`}
           >
-            <Plug className={`w-4 h-4 ${currentView === 'integration-hub' ? 'animate-pulse text-cyan-400' : ''}`} />
+            <Plug className={`w-4 h-4 ${currentView === 'integration-hub' ? 'animate-pulse text-rose-gold-400' : ''}`} />
             <span className="text-sm">Integration Hub</span>
             <span className={`ml-auto text-[10px] px-1.5 py-0.5 rounded-full ${
               currentView === 'integration-hub'
-                ? 'bg-cyan-500/30 text-cyan-300'
-                : 'bg-cyan-400/20 text-cyan-400 opacity-0 group-hover:opacity-100'
+                ? 'bg-rose-gold-400/30 text-rose-gold-300'
+                : 'bg-rose-gold-400/20 text-rose-gold-400 opacity-0 group-hover:opacity-100'
             } transition-opacity`}>
               NEW
             </span>
           </button>
           <button
             onClick={toggleSettings}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-white/70 hover:bg-white/5 hover:text-white transition-colors"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-white/70 hover:bg-rose-gold-400/5 hover:text-rose-gold-400/90 transition-colors"
           >
             <Settings className="w-4 h-4" />
             <span className="text-sm">Settings</span>

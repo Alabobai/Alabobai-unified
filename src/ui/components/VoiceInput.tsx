@@ -235,15 +235,15 @@ export const VoiceInput: React.FC<VoiceInputProps> = ({
         }
 
         .voice-button.recording {
-          background: #ef4444;
-          color: #fff;
+          background: #d9a07a;
+          color: #0a0806;
         }
 
         .voice-ring {
           position: absolute;
           inset: -4px;
           border-radius: 50%;
-          border: 2px solid #ef4444;
+          border: 2px solid #d9a07a;
           pointer-events: none;
           transition: transform 0.1s ease, opacity 0.1s ease;
         }

@@ -169,7 +169,7 @@ export class AgentRegistry extends EventEmitter {
       name: 'WealthLabobai',
       category: 'advisory',
       skills: ['portfolio', 'investment', 'tax', 'trading', 'retirement', 'budgeting'],
-      icon: '💰',
+      icon: 'Wallet',
       description: 'Personal wealth management and financial advisory',
       handler: this.createAdvisoryHandler('wealth'),
     });
@@ -178,7 +178,7 @@ export class AgentRegistry extends EventEmitter {
       name: 'CreditLabobai',
       category: 'advisory',
       skills: ['credit-score', 'debt', 'loans', 'credit-cards', 'disputes'],
-      icon: '💳',
+      icon: 'CreditCard',
       description: 'Credit optimization and debt management',
       handler: this.createAdvisoryHandler('credit'),
     });
@@ -187,7 +187,7 @@ export class AgentRegistry extends EventEmitter {
       name: 'LegalLabobai',
       category: 'advisory',
       skills: ['contracts', 'compliance', 'business-law', 'intellectual-property'],
-      icon: '⚖️',
+      icon: 'Scale',
       description: 'Legal guidance and contract analysis',
       handler: this.createAdvisoryHandler('legal'),
     });
@@ -196,7 +196,7 @@ export class AgentRegistry extends EventEmitter {
       name: 'BusinessLabobai',
       category: 'advisory',
       skills: ['strategy', 'marketing', 'sales', 'operations', 'scaling'],
-      icon: '📈',
+      icon: 'TrendingUp',
       description: 'Business strategy and growth advisory',
       handler: this.createAdvisoryHandler('business'),
     });
@@ -205,7 +205,7 @@ export class AgentRegistry extends EventEmitter {
       name: 'HealthLabobai',
       category: 'advisory',
       skills: ['wellness', 'fitness', 'nutrition', 'mental-health', 'prevention'],
-      icon: '💪',
+      icon: 'Heart',
       description: 'Health and wellness optimization',
       handler: this.createAdvisoryHandler('health'),
     });
@@ -215,7 +215,7 @@ export class AgentRegistry extends EventEmitter {
       name: 'GuardianLabobai',
       category: 'advisory',
       skills: ['security', 'compliance', 'fraud-detection', 'risk-assessment', 'audit'],
-      icon: '🛡️',
+      icon: 'Shield',
       description: 'Security, compliance, and risk management',
       handler: this.createAdvisoryHandler('guardian'),
     });
@@ -225,7 +225,7 @@ export class AgentRegistry extends EventEmitter {
       name: 'ComputerLabobai',
       category: 'computer-control',
       skills: ['screen-control', 'mouse', 'keyboard', 'browser', 'file-system', 'automation'],
-      icon: '🖥️',
+      icon: 'Monitor',
       description: 'Computer control and automation',
       handler: this.createComputerControlHandler(),
     });
@@ -235,7 +235,7 @@ export class AgentRegistry extends EventEmitter {
       name: 'BuilderLabobai',
       category: 'builder',
       skills: ['webapp', 'website', 'api', 'mobile-app', 'landing-page', 'dashboard'],
-      icon: '🏗️',
+      icon: 'Hammer',
       description: 'Full-stack application builder',
       handler: this.createBuilderHandler(),
     });
@@ -245,7 +245,7 @@ export class AgentRegistry extends EventEmitter {
       name: 'ResearchLabobai',
       category: 'research',
       skills: ['web-search', 'document-analysis', 'data-extraction', 'summarization'],
-      icon: '🔍',
+      icon: 'Search',
       description: 'Web research and document analysis',
       handler: this.createResearchHandler(),
     });
