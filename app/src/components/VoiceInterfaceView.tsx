@@ -12,9 +12,11 @@ import {
   Loader2,
   Languages,
   SlidersHorizontal,
-  Waves
+  Waves,
+  Play,
+  Sparkles
 } from 'lucide-react'
-import { voiceService } from '@/services/voiceService'
+import { voiceService, type NeuralVoice } from '@/services/voiceService'
 import { useAppStore } from '@/stores/appStore'
 import aiService from '@/services/ai'
 
@@ -35,11 +37,12 @@ export default function VoiceInterfaceView() {
 
   // Voice settings
   const [selectedLanguage, setSelectedLanguage] = useState('en-US')
-  const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([])
-  const [selectedVoice, setSelectedVoice] = useState<SpeechSynthesisVoice | null>(null)
+  const [neuralVoices, setNeuralVoices] = useState<NeuralVoice[]>([])
+  const [selectedVoiceId, setSelectedVoiceId] = useState('brian')
   const [speechRate, setSpeechRate] = useState(1)
-  const [speechPitch, setSpeechPitch] = useState(1)
   const [speechVolume, setSpeechVolume] = useState(1)
+  const [useNeural, setUseNeural] = useState(true)
+  const [previewingVoice, setPreviewingVoice] = useState<string | null>(null)
 
   // Animation state
   const [waveformIntensity, setWaveformIntensity] = useState(0)
@@ -56,22 +59,16 @@ export default function VoiceInterfaceView() {
     setSpeechRecognitionSupported(voiceService.isSpeechRecognitionSupported())
     setSpeechSynthesisSupported(voiceService.isSpeechSynthesisSupported())
 
-    // Load voices with a small delay (some browsers need time)
-    const loadVoices = () => {
-      const voices = voiceService.getVoices()
-      if (voices.length > 0) {
-        setAvailableVoices(voices)
-        const defaultVoice = voices.find(v => v.default) || voices[0]
-        setSelectedVoice(defaultVoice)
-        voiceService.setVoice(defaultVoice)
-      }
-    }
+    // Load neural voices
+    const voices = voiceService.getNeuralVoices()
+    setNeuralVoices(voices)
 
-    loadVoices()
-    // Also try again after a delay
-    const timeout = setTimeout(loadVoices, 500)
-
-    return () => clearTimeout(timeout)
+    // Get current speech config
+    const config = voiceService.getSpeechConfig()
+    setSelectedVoiceId(config.voice)
+    setSpeechRate(config.rate)
+    setSpeechVolume(config.volume)
+    setUseNeural(config.useNeural)
   }, [])
 
   // Apply voice settings changes
@@ -80,22 +77,20 @@ export default function VoiceInterfaceView() {
   }, [selectedLanguage])
 
   useEffect(() => {
-    if (selectedVoice) {
-      voiceService.setVoice(selectedVoice)
-    }
-  }, [selectedVoice])
+    voiceService.setVoice(selectedVoiceId)
+  }, [selectedVoiceId])
 
   useEffect(() => {
     voiceService.setRate(speechRate)
   }, [speechRate])
 
   useEffect(() => {
-    voiceService.setPitch(speechPitch)
-  }, [speechPitch])
-
-  useEffect(() => {
     voiceService.setVolume(speechVolume)
   }, [speechVolume])
+
+  useEffect(() => {
+    voiceService.setUseNeural(useNeural)
+  }, [useNeural])
 
   // Waveform animation
   const startWaveformAnimation = useCallback(() => {
@@ -258,9 +253,19 @@ export default function VoiceInterfaceView() {
     stopWaveformAnimation()
   }, [stopWaveformAnimation])
 
-  // Test voice
+  // Test/preview voice
+  const previewVoice = useCallback(async (voiceId: string) => {
+    setPreviewingVoice(voiceId)
+    try {
+      await voiceService.previewVoice(voiceId)
+    } finally {
+      setPreviewingVoice(null)
+    }
+  }, [])
+
+  // Test current voice
   const testVoice = useCallback(() => {
-    voiceService.speak('Hello! This is a test of the voice synthesis system. How does it sound?')
+    voiceService.speak('Hello! This is how I sound. Pretty natural, right?')
   }, [])
 
   // Clear conversation
@@ -335,10 +340,36 @@ export default function VoiceInterfaceView() {
 
       {/* Settings Panel */}
       {showSettings && (
-        <div className="mx-6 mt-4 p-4 rounded-xl bg-dark-300/50 border border-white/10 space-y-4">
-          <div className="flex items-center gap-2 text-white/80 font-medium">
-            <SlidersHorizontal className="w-4 h-4" />
-            <span>Voice Settings</span>
+        <div className="mx-6 mt-4 p-4 rounded-xl bg-dark-300/50 border border-white/10 space-y-4 max-h-96 overflow-y-auto morphic-scrollbar">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-white/80 font-medium">
+              <SlidersHorizontal className="w-4 h-4" />
+              <span>Voice Settings</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-cyan-400" />
+              <span className="text-xs text-cyan-400 font-medium">Neural TTS</span>
+            </div>
+          </div>
+
+          {/* Neural TTS Toggle */}
+          <div className="flex items-center justify-between p-3 rounded-lg bg-dark-500/50 border border-white/5">
+            <div>
+              <span className="text-sm text-white">Use Neural Voices</span>
+              <p className="text-xs text-white/40">High-quality, natural sounding voices</p>
+            </div>
+            <button
+              onClick={() => setUseNeural(!useNeural)}
+              className={`w-12 h-6 rounded-full transition-colors relative ${
+                useNeural ? 'bg-cyan-500' : 'bg-white/20'
+              }`}
+            >
+              <div
+                className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${
+                  useNeural ? 'translate-x-7' : 'translate-x-1'
+                }`}
+              />
+            </button>
           </div>
 
           {/* Language Selection */}
@@ -360,23 +391,85 @@ export default function VoiceInterfaceView() {
             </select>
           </div>
 
-          {/* Voice Selection */}
+          {/* Neural Voice Selection */}
           <div>
             <label className="text-sm text-white/60 mb-2 block">Output Voice</label>
-            <select
-              value={selectedVoice?.name || ''}
-              onChange={(e) => {
-                const voice = availableVoices.find((v) => v.name === e.target.value)
-                setSelectedVoice(voice || null)
-              }}
-              className="w-full bg-dark-500 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-400/50"
-            >
-              {availableVoices.map((voice) => (
-                <option key={voice.name} value={voice.name}>
-                  {voice.name} ({voice.lang})
-                </option>
-              ))}
-            </select>
+
+            {/* Female Voices */}
+            <div className="mb-3">
+              <span className="text-xs text-white/40 uppercase tracking-wider">Female Voices</span>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                {neuralVoices.filter(v => v.gender === 'female').map((voice) => (
+                  <button
+                    key={voice.id}
+                    onClick={() => setSelectedVoiceId(voice.id)}
+                    className={`group relative p-2 rounded-lg text-left transition-all ${
+                      selectedVoiceId === voice.id
+                        ? 'bg-cyan-500/20 border border-cyan-500/50'
+                        : 'bg-dark-500/50 border border-white/5 hover:border-white/20'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className={`text-sm ${selectedVoiceId === voice.id ? 'text-cyan-400' : 'text-white/80'}`}>
+                        {voice.name}
+                      </span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          previewVoice(voice.id)
+                        }}
+                        disabled={previewingVoice === voice.id}
+                        className="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-white/10 transition-all"
+                      >
+                        {previewingVoice === voice.id ? (
+                          <Loader2 className="w-3 h-3 text-cyan-400 animate-spin" />
+                        ) : (
+                          <Play className="w-3 h-3 text-white/60" />
+                        )}
+                      </button>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Male Voices */}
+            <div>
+              <span className="text-xs text-white/40 uppercase tracking-wider">Male Voices</span>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                {neuralVoices.filter(v => v.gender === 'male').map((voice) => (
+                  <button
+                    key={voice.id}
+                    onClick={() => setSelectedVoiceId(voice.id)}
+                    className={`group relative p-2 rounded-lg text-left transition-all ${
+                      selectedVoiceId === voice.id
+                        ? 'bg-cyan-500/20 border border-cyan-500/50'
+                        : 'bg-dark-500/50 border border-white/5 hover:border-white/20'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className={`text-sm ${selectedVoiceId === voice.id ? 'text-cyan-400' : 'text-white/80'}`}>
+                        {voice.name}
+                      </span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          previewVoice(voice.id)
+                        }}
+                        disabled={previewingVoice === voice.id}
+                        className="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-white/10 transition-all"
+                      >
+                        {previewingVoice === voice.id ? (
+                          <Loader2 className="w-3 h-3 text-cyan-400 animate-spin" />
+                        ) : (
+                          <Play className="w-3 h-3 text-white/60" />
+                        )}
+                      </button>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
 
           {/* Speed */}
@@ -391,22 +484,6 @@ export default function VoiceInterfaceView() {
               step="0.1"
               value={speechRate}
               onChange={(e) => setSpeechRate(parseFloat(e.target.value))}
-              className="w-full accent-cyan-400"
-            />
-          </div>
-
-          {/* Pitch */}
-          <div>
-            <label className="text-sm text-white/60 mb-2 block">
-              Pitch: {speechPitch.toFixed(1)}
-            </label>
-            <input
-              type="range"
-              min="0.5"
-              max="1.5"
-              step="0.1"
-              value={speechPitch}
-              onChange={(e) => setSpeechPitch(parseFloat(e.target.value))}
               className="w-full accent-cyan-400"
             />
           </div>
@@ -430,9 +507,10 @@ export default function VoiceInterfaceView() {
           {/* Test Voice Button */}
           <button
             onClick={testVoice}
-            className="w-full py-2 px-4 rounded-lg bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500/30 transition-colors text-sm font-medium"
+            className="w-full py-2 px-4 rounded-lg bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-400 hover:from-cyan-500/30 hover:to-blue-500/30 transition-colors text-sm font-medium flex items-center justify-center gap-2"
           >
-            Test Voice
+            <Volume2 className="w-4 h-4" />
+            Test Current Voice
           </button>
         </div>
       )}

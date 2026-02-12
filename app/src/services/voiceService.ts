@@ -1,4 +1,5 @@
-// Voice Service - Speech-to-Text and Text-to-Speech using Web Speech API
+// Voice Service - Speech-to-Text and Neural Text-to-Speech
+// Uses StreamElements neural voices for natural sounding speech
 
 // Type declarations for Web Speech API
 interface SpeechRecognitionAlternative {
@@ -46,20 +47,45 @@ export interface VoiceServiceConfig {
   interimResults: boolean
 }
 
+export interface NeuralVoice {
+  id: string
+  name: string
+  gender: 'male' | 'female'
+  preview?: string
+}
+
 export interface SpeechConfig {
-  voice: SpeechSynthesisVoice | null
-  rate: number // 0.1 to 10
-  pitch: number // 0 to 2
+  voice: string // Neural voice ID
+  rate: number // 0.5 to 2
   volume: number // 0 to 1
+  useNeural: boolean // Whether to use neural TTS
 }
 
 export type TranscriptCallback = (transcript: string, isFinal: boolean) => void
 export type ErrorCallback = (error: string) => void
 export type SpeechEndCallback = () => void
 
+// Available neural voices (high quality, natural sounding)
+const NEURAL_VOICES: NeuralVoice[] = [
+  // Female voices - Natural & Professional
+  { id: 'aria', name: 'Aria (Natural)', gender: 'female' },
+  { id: 'jenny', name: 'Jenny (Friendly)', gender: 'female' },
+  { id: 'salli', name: 'Salli (Professional)', gender: 'female' },
+  { id: 'kimberly', name: 'Kimberly (Warm)', gender: 'female' },
+  { id: 'joanna', name: 'Joanna (Clear)', gender: 'female' },
+  { id: 'ivy', name: 'Ivy (Young)', gender: 'female' },
+  { id: 'kendra', name: 'Kendra (Confident)', gender: 'female' },
+
+  // Male voices - Natural & Professional
+  { id: 'brian', name: 'Brian (Deep)', gender: 'male' },
+  { id: 'joey', name: 'Joey (Casual)', gender: 'male' },
+  { id: 'justin', name: 'Justin (Young)', gender: 'male' },
+  { id: 'matthew', name: 'Matthew (Professional)', gender: 'male' },
+  { id: 'russell', name: 'Russell (Australian)', gender: 'male' },
+]
+
 class VoiceService {
   private recognition: SpeechRecognitionType | null = null
-  private synthesis: SpeechSynthesis | null = null
   private isListening: boolean = false
   private transcriptCallback: TranscriptCallback | null = null
   private errorCallback: ErrorCallback | null = null
@@ -71,19 +97,19 @@ class VoiceService {
   }
 
   private speechConfig: SpeechConfig = {
-    voice: null,
+    voice: 'brian', // Default to Brian (sounds like 11Labs)
     rate: 1,
-    pitch: 1,
-    volume: 1
+    volume: 1,
+    useNeural: true
   }
 
-  private utteranceQueue: SpeechSynthesisUtterance[] = []
+  private audioContext: AudioContext | null = null
+  private currentAudio: HTMLAudioElement | null = null
   private isSpeaking: boolean = false
-  private availableVoices: SpeechSynthesisVoice[] = []
+  private speechQueue: { text: string; onEnd?: SpeechEndCallback }[] = []
 
   constructor() {
     this.initializeSpeechRecognition()
-    this.initializeSpeechSynthesis()
   }
 
   // ============================================
@@ -91,7 +117,6 @@ class VoiceService {
   // ============================================
 
   private initializeSpeechRecognition(): void {
-    // Check for browser support
     const SpeechRecognitionAPI =
       (window as any).SpeechRecognition ||
       (window as any).webkitSpeechRecognition
@@ -153,7 +178,6 @@ class VoiceService {
     }
 
     this.recognition.onend = () => {
-      // Auto-restart if continuous mode is enabled and we're still supposed to be listening
       if (this.isListening && this.config.continuous) {
         try {
           this.recognition?.start()
@@ -166,9 +190,6 @@ class VoiceService {
     }
   }
 
-  /**
-   * Start listening for speech
-   */
   startListening(
     onTranscript: TranscriptCallback,
     onError?: ErrorCallback
@@ -195,9 +216,6 @@ class VoiceService {
     }
   }
 
-  /**
-   * Stop listening for speech
-   */
   stopListening(): void {
     this.isListening = false
     if (this.recognition) {
@@ -211,16 +229,10 @@ class VoiceService {
     this.errorCallback = null
   }
 
-  /**
-   * Check if currently listening
-   */
   getIsListening(): boolean {
     return this.isListening
   }
 
-  /**
-   * Set the language for speech recognition
-   */
   setLanguage(language: string): void {
     this.config.language = language
     if (this.recognition) {
@@ -228,9 +240,6 @@ class VoiceService {
     }
   }
 
-  /**
-   * Set continuous mode
-   */
   setContinuous(continuous: boolean): void {
     this.config.continuous = continuous
     if (this.recognition) {
@@ -238,9 +247,6 @@ class VoiceService {
     }
   }
 
-  /**
-   * Get available languages for speech recognition
-   */
   getSupportedLanguages(): { code: string; name: string }[] {
     return [
       { code: 'en-US', name: 'English (US)' },
@@ -258,77 +264,32 @@ class VoiceService {
       { code: 'ru-RU', name: 'Russian' },
       { code: 'ar-SA', name: 'Arabic' },
       { code: 'hi-IN', name: 'Hindi' },
-      { code: 'nl-NL', name: 'Dutch' },
-      { code: 'pl-PL', name: 'Polish' },
-      { code: 'sv-SE', name: 'Swedish' },
-      { code: 'th-TH', name: 'Thai' },
-      { code: 'vi-VN', name: 'Vietnamese' }
     ]
   }
 
   // ============================================
-  // TEXT-TO-SPEECH (Speech Synthesis)
+  // TEXT-TO-SPEECH (Neural TTS)
   // ============================================
 
-  private initializeSpeechSynthesis(): void {
-    if (!('speechSynthesis' in window)) {
-      console.warn('Speech Synthesis is not supported in this browser')
-      return
-    }
-
-    this.synthesis = window.speechSynthesis
-
-    // Load voices - they may not be available immediately
-    this.loadVoices()
-
-    // Some browsers fire voiceschanged event when voices are loaded
-    if (this.synthesis.onvoiceschanged !== undefined) {
-      this.synthesis.onvoiceschanged = () => this.loadVoices()
-    }
-  }
-
-  private loadVoices(): void {
-    if (!this.synthesis) return
-
-    this.availableVoices = this.synthesis.getVoices()
-
-    // Set default voice if not already set
-    if (!this.speechConfig.voice && this.availableVoices.length > 0) {
-      // Try to find a default English voice
-      const defaultVoice = this.availableVoices.find(v =>
-        v.default || v.lang.startsWith('en')
-      ) || this.availableVoices[0]
-
-      this.speechConfig.voice = defaultVoice
-    }
-  }
-
   /**
-   * Get available voices
+   * Get available neural voices (high quality)
    */
-  getVoices(): SpeechSynthesisVoice[] {
-    return this.availableVoices
+  getNeuralVoices(): NeuralVoice[] {
+    return NEURAL_VOICES
   }
 
   /**
-   * Set the voice for speech synthesis
+   * Set the neural voice
    */
-  setVoice(voice: SpeechSynthesisVoice | null): void {
-    this.speechConfig.voice = voice
+  setVoice(voiceId: string): void {
+    this.speechConfig.voice = voiceId
   }
 
   /**
-   * Set speech rate (0.1 to 10)
+   * Set speech rate (0.5 to 2)
    */
   setRate(rate: number): void {
-    this.speechConfig.rate = Math.max(0.1, Math.min(10, rate))
-  }
-
-  /**
-   * Set speech pitch (0 to 2)
-   */
-  setPitch(pitch: number): void {
-    this.speechConfig.pitch = Math.max(0, Math.min(2, pitch))
+    this.speechConfig.rate = Math.max(0.5, Math.min(2, rate))
   }
 
   /**
@@ -339,6 +300,13 @@ class VoiceService {
   }
 
   /**
+   * Enable/disable neural TTS
+   */
+  setUseNeural(useNeural: boolean): void {
+    this.speechConfig.useNeural = useNeural
+  }
+
+  /**
    * Get current speech config
    */
   getSpeechConfig(): SpeechConfig {
@@ -346,79 +314,172 @@ class VoiceService {
   }
 
   /**
-   * Speak text aloud
+   * Speak text using neural TTS (natural voice)
    */
-  speak(text: string, onEnd?: SpeechEndCallback): void {
-    if (!this.synthesis) {
-      console.warn('Speech synthesis not available')
+  async speak(text: string, onEnd?: SpeechEndCallback): Promise<void> {
+    if (!text || text.trim().length === 0) {
+      if (onEnd) onEnd()
       return
     }
 
-    const utterance = new SpeechSynthesisUtterance(text)
+    // Add to queue
+    this.speechQueue.push({ text, onEnd })
 
-    if (this.speechConfig.voice) {
-      utterance.voice = this.speechConfig.voice
-    }
-    utterance.rate = this.speechConfig.rate
-    utterance.pitch = this.speechConfig.pitch
-    utterance.volume = this.speechConfig.volume
-
-    utterance.onend = () => {
-      this.isSpeaking = false
-      this.processQueue()
-      if (onEnd) onEnd()
-    }
-
-    utterance.onerror = (event) => {
-      console.error('Speech synthesis error:', event.error)
-      this.isSpeaking = false
+    // Process queue if not already speaking
+    if (!this.isSpeaking) {
       this.processQueue()
     }
+  }
 
-    // Add to queue and process
-    this.utteranceQueue.push(utterance)
+  private async processQueue(): Promise<void> {
+    if (this.isSpeaking || this.speechQueue.length === 0) {
+      return
+    }
+
+    const item = this.speechQueue.shift()
+    if (!item) return
+
+    this.isSpeaking = true
+
+    try {
+      if (this.speechConfig.useNeural) {
+        await this.speakNeural(item.text)
+      } else {
+        await this.speakWebAPI(item.text)
+      }
+    } catch (error) {
+      console.error('TTS error, falling back to Web Speech API:', error)
+      try {
+        await this.speakWebAPI(item.text)
+      } catch (e) {
+        console.error('Web Speech API also failed:', e)
+      }
+    }
+
+    this.isSpeaking = false
+    if (item.onEnd) item.onEnd()
+
+    // Process next in queue
     this.processQueue()
   }
 
-  private processQueue(): void {
-    if (!this.synthesis || this.isSpeaking || this.utteranceQueue.length === 0) {
-      return
-    }
+  /**
+   * Neural TTS via API (high quality)
+   */
+  private async speakNeural(text: string): Promise<void> {
+    return new Promise(async (resolve, reject) => {
+      try {
+        // Call our neural TTS API
+        const response = await fetch('/api/tts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text,
+            voice: this.speechConfig.voice,
+          }),
+        })
 
-    const utterance = this.utteranceQueue.shift()
-    if (utterance) {
-      this.isSpeaking = true
-      this.synthesis.speak(utterance)
-    }
+        if (!response.ok) {
+          throw new Error(`TTS API error: ${response.status}`)
+        }
+
+        // Get audio blob and play it
+        const audioBlob = await response.blob()
+        const audioUrl = URL.createObjectURL(audioBlob)
+
+        this.currentAudio = new Audio(audioUrl)
+        this.currentAudio.volume = this.speechConfig.volume
+        this.currentAudio.playbackRate = this.speechConfig.rate
+
+        this.currentAudio.onended = () => {
+          URL.revokeObjectURL(audioUrl)
+          this.currentAudio = null
+          resolve()
+        }
+
+        this.currentAudio.onerror = (e) => {
+          URL.revokeObjectURL(audioUrl)
+          this.currentAudio = null
+          reject(e)
+        }
+
+        await this.currentAudio.play()
+      } catch (error) {
+        reject(error)
+      }
+    })
   }
 
   /**
-   * Queue multiple texts to speak
+   * Web Speech API fallback (basic quality)
    */
-  speakMultiple(texts: string[], onAllEnd?: SpeechEndCallback): void {
-    texts.forEach((text, index) => {
-      const isLast = index === texts.length - 1
-      this.speak(text, isLast ? onAllEnd : undefined)
+  private speakWebAPI(text: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (!('speechSynthesis' in window)) {
+        reject(new Error('Speech synthesis not supported'))
+        return
+      }
+
+      const utterance = new SpeechSynthesisUtterance(text)
+      utterance.rate = this.speechConfig.rate
+      utterance.volume = this.speechConfig.volume
+
+      // Try to find a good voice
+      const voices = window.speechSynthesis.getVoices()
+      const preferredVoice = voices.find(v =>
+        v.name.includes('Google') || v.name.includes('Microsoft') || v.name.includes('Neural')
+      ) || voices.find(v => v.lang.startsWith('en'))
+
+      if (preferredVoice) {
+        utterance.voice = preferredVoice
+      }
+
+      utterance.onend = () => resolve()
+      utterance.onerror = (e) => reject(e)
+
+      window.speechSynthesis.speak(utterance)
     })
+  }
+
+  /**
+   * Speak multiple texts in sequence
+   */
+  async speakMultiple(texts: string[], onAllEnd?: SpeechEndCallback): Promise<void> {
+    for (let i = 0; i < texts.length; i++) {
+      const isLast = i === texts.length - 1
+      await this.speak(texts[i], isLast ? onAllEnd : undefined)
+    }
   }
 
   /**
    * Stop speaking and clear queue
    */
   stopSpeaking(): void {
-    if (this.synthesis) {
-      this.synthesis.cancel()
-      this.utteranceQueue = []
-      this.isSpeaking = false
+    // Stop current audio
+    if (this.currentAudio) {
+      this.currentAudio.pause()
+      this.currentAudio = null
     }
+
+    // Cancel Web Speech API
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel()
+    }
+
+    // Clear queue
+    this.speechQueue = []
+    this.isSpeaking = false
   }
 
   /**
    * Pause speaking
    */
   pauseSpeaking(): void {
-    if (this.synthesis) {
-      this.synthesis.pause()
+    if (this.currentAudio) {
+      this.currentAudio.pause()
+    }
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.pause()
     }
   }
 
@@ -426,8 +487,11 @@ class VoiceService {
    * Resume speaking
    */
   resumeSpeaking(): void {
-    if (this.synthesis) {
-      this.synthesis.resume()
+    if (this.currentAudio) {
+      this.currentAudio.play()
+    }
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.resume()
     }
   }
 
@@ -435,14 +499,16 @@ class VoiceService {
    * Check if currently speaking
    */
   getIsSpeaking(): boolean {
-    return this.isSpeaking || (this.synthesis?.speaking ?? false)
+    return this.isSpeaking ||
+      (this.currentAudio !== null && !this.currentAudio.paused) ||
+      (('speechSynthesis' in window) && window.speechSynthesis.speaking)
   }
 
   /**
    * Check if speech synthesis is supported
    */
   isSpeechSynthesisSupported(): boolean {
-    return 'speechSynthesis' in window
+    return true // Neural TTS always works via API
   }
 
   /**
@@ -453,6 +519,18 @@ class VoiceService {
       (window as any).SpeechRecognition ||
       (window as any).webkitSpeechRecognition
     )
+  }
+
+  /**
+   * Preview a voice with sample text
+   */
+  async previewVoice(voiceId: string): Promise<void> {
+    const originalVoice = this.speechConfig.voice
+    this.speechConfig.voice = voiceId
+
+    await this.speak('Hello! This is how I sound. I can help you with anything.')
+
+    this.speechConfig.voice = originalVoice
   }
 }
 
