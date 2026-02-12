@@ -310,7 +310,7 @@ function AgentCard({ agent, index }: { agent: Agent; index: number }) {
 
   const statusColors: Record<string, string> = {
     idle: 'bg-white/10 text-white/40',
-    thinking: 'bg-purple-500/20 text-purple-400 animate-pulse',
+    thinking: 'bg-rose-gold-500/20 text-rose-gold-400 animate-pulse',
     working: 'bg-rose-gold-400/20 text-rose-gold-400',
     delegating: 'bg-blue-500/20 text-blue-400',
     reviewing: 'bg-yellow-500/20 text-yellow-400',
@@ -324,7 +324,7 @@ function AgentCard({ agent, index }: { agent: Agent; index: number }) {
     <div
       className={`agent-card morphic-card p-3 rounded-xl transition-all duration-300 ${
         agent.status === 'working' ? 'border-rose-gold-400/50 shadow-glow-sm' :
-        agent.status === 'thinking' ? 'border-purple-400/50' : ''
+        agent.status === 'thinking' ? 'border-rose-gold-400/50' : ''
       }`}
       style={{ animationDelay: `${index * 100}ms` }}
     >
@@ -386,7 +386,7 @@ function LogEntry({ log, agents }: { log: AgentMessage; agents: Agent[] }) {
   const isLong = log.content.length > 150
 
   const typeStyles: Record<string, { icon: typeof Brain; color: string }> = {
-    thought: { icon: Brain, color: 'text-purple-400' },
+    thought: { icon: Brain, color: 'text-rose-gold-400' },
     action: { icon: Zap, color: 'text-rose-gold-400' },
     result: { icon: CheckCircle2, color: 'text-green-400' },
     delegation: { icon: ArrowRight, color: 'text-blue-400' },
@@ -498,7 +498,7 @@ function LiveOutputPanel({
   const getOutputColor = (type: string) => {
     switch (type) {
       case 'code': return 'text-blue-400'
-      case 'search_results': return 'text-purple-400'
+      case 'search_results': return 'text-rose-gold-400'
       case 'web_content': return 'text-green-400'
       case 'data': return 'text-yellow-400'
       default: return 'text-white/60'

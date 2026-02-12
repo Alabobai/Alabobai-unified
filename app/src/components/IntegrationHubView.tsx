@@ -151,7 +151,7 @@ const AVAILABLE_INTEGRATIONS: Integration[] = [
     name: 'Slack',
     description: 'Send notifications and updates to your Slack channels',
     icon: <MessageSquare className="w-6 h-6" />,
-    color: 'from-purple-500 to-purple-700',
+    color: 'from-rose-gold-400 to-rose-gold-600',
     category: 'communication',
     status: 'disconnected',
     connectionType: 'webhook',

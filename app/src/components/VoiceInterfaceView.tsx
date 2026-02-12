@@ -570,7 +570,7 @@ export default function VoiceInterfaceView() {
                 : voiceStatus === 'speaking'
                 ? 'bg-blue-500 shadow-lg shadow-blue-500/50'
                 : voiceStatus === 'processing'
-                ? 'bg-purple-500 shadow-lg shadow-purple-500/50'
+                ? 'bg-rose-gold-500 shadow-lg shadow-rose-gold-500/50'
                 : voiceStatus === 'error'
                 ? 'bg-red-500 shadow-lg shadow-red-500/50'
                 : 'bg-gradient-to-br from-cyan-400 to-blue-600 hover:shadow-lg hover:shadow-cyan-500/30'
@@ -595,7 +595,7 @@ export default function VoiceInterfaceView() {
             <p className="text-rose-gold-400 animate-pulse">Listening... Speak now</p>
           )}
           {voiceStatus === 'processing' && (
-            <p className="text-purple-400">Processing your request...</p>
+            <p className="text-rose-gold-400">Processing your request...</p>
           )}
           {voiceStatus === 'speaking' && (
             <p className="text-blue-400">AI is speaking...</p>

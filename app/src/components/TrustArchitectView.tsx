@@ -554,8 +554,7 @@ function StatCard({ icon: Icon, label, value, trend, color = 'rose' }: {
     green: 'from-green-400/20 to-green-600/20 border-green-500/30 text-green-400',
     yellow: 'from-yellow-400/20 to-yellow-600/20 border-yellow-500/30 text-yellow-400',
     red: 'from-red-400/20 to-red-600/20 border-red-500/30 text-red-400',
-    purple: 'from-purple-400/20 to-purple-600/20 border-purple-500/30 text-purple-400',
-  }
+      }
 
   return (
     <div className={`morphic-card p-4 rounded-xl bg-gradient-to-br ${colorClasses[color]} border`}>
@@ -841,7 +840,7 @@ function VerificationSystems() {
             {/* Phishing Indicators */}
             <div className="p-4 rounded-lg bg-white/5 border border-white/10">
               <h4 className="text-sm font-medium text-white/60 mb-2 flex items-center gap-2">
-                <Fingerprint className="w-4 h-4 text-purple-400" />
+                <Fingerprint className="w-4 h-4 text-rose-gold-400" />
                 Phishing Indicators
               </h4>
               {urlAnalysis.phishingIndicators.length > 0 ? (

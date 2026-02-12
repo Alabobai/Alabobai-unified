@@ -822,7 +822,7 @@ Example JSON:
                         <span className={`text-[10px] px-1.5 py-0.5 rounded ${
                           col.type === 'number' ? 'bg-blue-500/20 text-blue-400' :
                           col.type === 'string' ? 'bg-green-500/20 text-green-400' :
-                          col.type === 'date' ? 'bg-purple-500/20 text-purple-400' :
+                          col.type === 'date' ? 'bg-rose-gold-500/20 text-rose-gold-400' :
                           'bg-gray-500/20 text-gray-400'
                         }`}>
                           {col.type}
@@ -1119,7 +1119,7 @@ function ColumnCard({ column }: { column: DataColumn }) {
           <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
             column.type === 'number' ? 'bg-blue-500/20' :
             column.type === 'string' ? 'bg-green-500/20' :
-            column.type === 'date' ? 'bg-purple-500/20' :
+            column.type === 'date' ? 'bg-rose-gold-500/20' :
             'bg-gray-500/20'
           }`}>
             {column.type === 'number' ? '#' :

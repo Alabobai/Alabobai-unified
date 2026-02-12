@@ -120,8 +120,8 @@ export default function DeepResearchView({ onClose: _onClose }: DeepResearchView
             </div>
             {/* View Header */}
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center shadow-glow-lg animate-pulse-glow">
-                <Search className="w-5 h-5 text-white" />
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-gold-300 to-rose-gold-600 flex items-center justify-center shadow-glow-lg animate-pulse-glow">
+                <Search className="w-5 h-5 text-dark-500" />
               </div>
               <div>
                 <h2 className="text-lg font-bold text-white">Deep Research</h2>
@@ -148,11 +148,11 @@ export default function DeepResearchView({ onClose: _onClose }: DeepResearchView
                 <PhaseIcon phase={progress.phase} />
                 {progress.message}
               </span>
-              <span className="text-sm text-purple-400">{progress.progress}%</span>
+              <span className="text-sm text-rose-gold-400">{progress.progress}%</span>
             </div>
             <div className="h-2 bg-white/10 rounded-full overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-purple-500 to-purple-400 rounded-full transition-all duration-500 relative"
+                className="h-full bg-gradient-to-r from-rose-gold-400 to-rose-gold-300 rounded-full transition-all duration-500 relative"
                 style={{ width: `${progress.progress}%` }}
               >
                 <div className="absolute inset-0 bg-white/20 animate-shimmer" />
@@ -227,7 +227,7 @@ export default function DeepResearchView({ onClose: _onClose }: DeepResearchView
                       style={{ animationDelay: `${i * 100}ms` }}
                     >
                       <div className="flex items-start gap-2">
-                        <Loader2 className="w-4 h-4 text-purple-400 animate-spin flex-shrink-0 mt-0.5" />
+                        <Loader2 className="w-4 h-4 text-rose-gold-400 animate-spin flex-shrink-0 mt-0.5" />
                         <div className="min-w-0">
                           <p className="text-xs text-white truncate">{result.title}</p>
                           <p className="text-[10px] text-white/40 truncate">{result.url}</p>
@@ -275,8 +275,8 @@ export default function DeepResearchView({ onClose: _onClose }: DeepResearchView
           {!report && !isResearching && (
             <div className="flex-1 flex items-center justify-center p-8">
               <div className="text-center max-w-md">
-                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-400/20 to-purple-600/20 border border-purple-400/30 flex items-center justify-center mx-auto mb-4 animate-float">
-                  <BookOpen className="w-10 h-10 text-purple-400" />
+                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-rose-gold-300/20 to-rose-gold-600/20 border border-rose-gold-400/30 flex items-center justify-center mx-auto mb-4 animate-float">
+                  <BookOpen className="w-10 h-10 text-rose-gold-400" />
                 </div>
                 <h2 className="text-2xl font-bold text-white mb-2">
                   AI-Powered Research
@@ -287,15 +287,15 @@ export default function DeepResearchView({ onClose: _onClose }: DeepResearchView
                 </p>
                 <div className="grid grid-cols-3 gap-3 text-center">
                   <div className="morphic-card p-3 rounded-xl">
-                    <Search className="w-5 h-5 text-purple-400 mx-auto mb-1" />
+                    <Search className="w-5 h-5 text-rose-gold-400 mx-auto mb-1" />
                     <p className="text-[10px] text-white/60">Web Search</p>
                   </div>
                   <div className="morphic-card p-3 rounded-xl">
-                    <FileText className="w-5 h-5 text-purple-400 mx-auto mb-1" />
+                    <FileText className="w-5 h-5 text-rose-gold-400 mx-auto mb-1" />
                     <p className="text-[10px] text-white/60">Content Analysis</p>
                   </div>
                   <div className="morphic-card p-3 rounded-xl">
-                    <Brain className="w-5 h-5 text-purple-400 mx-auto mb-1" />
+                    <Brain className="w-5 h-5 text-rose-gold-400 mx-auto mb-1" />
                     <p className="text-[10px] text-white/60">AI Synthesis</p>
                   </div>
                 </div>
@@ -306,8 +306,8 @@ export default function DeepResearchView({ onClose: _onClose }: DeepResearchView
           {isResearching && !report && (
             <div className="flex-1 flex items-center justify-center p-8">
               <div className="text-center">
-                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-400/20 to-purple-600/20 border border-purple-400/30 flex items-center justify-center mx-auto mb-4">
-                  <Loader2 className="w-10 h-10 text-purple-400 animate-spin" />
+                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-rose-gold-300/20 to-rose-gold-600/20 border border-rose-gold-400/30 flex items-center justify-center mx-auto mb-4">
+                  <Loader2 className="w-10 h-10 text-rose-gold-400 animate-spin" />
                 </div>
                 <h2 className="text-xl font-bold text-white mb-2">
                   Researching: {topic}
@@ -376,7 +376,7 @@ export default function DeepResearchView({ onClose: _onClose }: DeepResearchView
                 {/* Summary */}
                 <section className="morphic-card p-6 rounded-xl mb-6">
                   <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-purple-400" />
+                    <Sparkles className="w-5 h-5 text-rose-gold-400" />
                     Executive Summary
                   </h2>
                   <p className="text-white/80 leading-relaxed whitespace-pre-wrap">
@@ -419,7 +419,7 @@ export default function DeepResearchView({ onClose: _onClose }: DeepResearchView
                   <div className="space-y-3">
                     {report.citations.map((citation) => (
                       <div key={citation.number} className="flex items-start gap-3">
-                        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-purple-500/20 text-purple-400 text-xs flex items-center justify-center">
+                        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-rose-gold-500/20 text-rose-gold-400 text-xs flex items-center justify-center">
                           {citation.number}
                         </span>
                         <div className="flex-1 min-w-0">
@@ -428,7 +428,7 @@ export default function DeepResearchView({ onClose: _onClose }: DeepResearchView
                             href={citation.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-xs text-purple-400 hover:underline flex items-center gap-1 truncate"
+                            className="text-xs text-rose-gold-400 hover:underline flex items-center gap-1 truncate"
                           >
                             {citation.url}
                             <ExternalLink className="w-3 h-3 flex-shrink-0" />
@@ -525,7 +525,7 @@ function SourceCard({ source, index }: { source: ResearchSource; index: number }
 function PhaseIcon({ phase }: { phase: string }) {
   switch (phase) {
     case 'searching':
-      return <Search className="w-4 h-4 text-purple-400 animate-pulse" />
+      return <Search className="w-4 h-4 text-rose-gold-400 animate-pulse" />
     case 'fetching':
       return <Globe className="w-4 h-4 text-blue-400 animate-pulse" />
     case 'extracting':

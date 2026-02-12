@@ -736,7 +736,7 @@ Only return the JSON object, no other text.`
 
               <div className="morphic-card p-4 rounded-xl">
                 <div className="flex items-center gap-2 text-white/60 mb-2">
-                  <BarChart2 className="w-4 h-4 text-purple-400" />
+                  <BarChart2 className="w-4 h-4 text-rose-gold-400" />
                   <span className="text-xs">Savings Rate</span>
                 </div>
                 <div className={`text-2xl font-bold ${totals.savingsRate >= 20 ? 'text-emerald-400' : totals.savingsRate >= 10 ? 'text-yellow-400' : 'text-red-400'}`}>
@@ -955,7 +955,7 @@ Only return the JSON object, no other text.`
                         {t.recurring && (
                           <>
                             <span className="w-1 h-1 rounded-full bg-white/20" />
-                            <span className="text-purple-400">Recurring</span>
+                            <span className="text-rose-gold-400">Recurring</span>
                           </>
                         )}
                       </div>
@@ -1189,7 +1189,7 @@ Only return the JSON object, no other text.`
             <div className="morphic-card p-6 rounded-xl">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-gold-300 to-rose-gold-600 flex items-center justify-center">
                     <Brain className="w-5 h-5 text-white" />
                   </div>
                   <div>
@@ -1224,7 +1224,7 @@ Only return the JSON object, no other text.`
                   </div>
                   <div className="h-2 bg-white/10 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-gradient-to-r from-purple-500 to-purple-400 rounded-full transition-all duration-500"
+                      className="h-full bg-gradient-to-r from-rose-gold-400 to-rose-gold-300 rounded-full transition-all duration-500"
                       style={{ width: `${analysisProgress}%` }}
                     />
                   </div>
@@ -1244,7 +1244,7 @@ Only return the JSON object, no other text.`
                 {/* Summary */}
                 <div className="morphic-card p-6 rounded-xl">
                   <h4 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-purple-400" />
+                    <Sparkles className="w-4 h-4 text-rose-gold-400" />
                     Summary
                   </h4>
                   <p className="text-white/80 leading-relaxed">{financialReport.summary}</p>

@@ -1187,7 +1187,7 @@ function AnnealingVisualization({ state }: { state: AnnealingState }) {
           icon={<GitBranch className="w-4 h-4" />}
           label="Iterations"
           value={state.iterations.toString()}
-          color="text-purple-400"
+          color="text-rose-gold-400"
         />
         <StatCard
           icon={<Layers className="w-4 h-4" />}
@@ -1388,7 +1388,7 @@ function MetricsPanel({ agent }: { agent: SelfAnnealingAgent }) {
           title="Average Time"
           value={`${(performance.averageTime / 1000).toFixed(2)}s`}
           subtitle="Per task execution"
-          color="purple"
+          color="rose"
         />
         <MetricCard
           title="Learning Progress"
@@ -1462,7 +1462,6 @@ function MetricCard({
   const colorClasses: Record<string, string> = {
     green: 'from-green-500/20 to-green-500/5 border-green-500/20',
     blue: 'from-blue-500/20 to-blue-500/5 border-blue-500/20',
-    purple: 'from-purple-500/20 to-purple-500/5 border-purple-500/20',
     rose: 'from-rose-gold-400/20 to-rose-gold-400/5 border-rose-gold-400/20'
   }
 

@@ -557,7 +557,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       }`}
                     >
                       <div className="flex items-center gap-3">
-                        <Cpu className="w-5 h-5 text-purple-400" />
+                        <Cpu className="w-5 h-5 text-rose-gold-400" />
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
                             <span className="text-white font-medium">Ollama (Local)</span>
@@ -714,7 +714,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                         <button
                           onClick={() => testConnection('Ollama')}
                           disabled={testingConnection === 'Ollama'}
-                          className="px-4 py-2 rounded-lg bg-purple-400/20 text-purple-400 hover:bg-purple-400/30 transition-colors disabled:opacity-50"
+                          className="px-4 py-2 rounded-lg bg-rose-gold-400/20 text-rose-gold-400 hover:bg-rose-gold-400/30 transition-colors disabled:opacity-50"
                         >
                           {testingConnection === 'Ollama' ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
@@ -1026,7 +1026,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             {activeSection === 'about' && (
               <div className="space-y-6">
                 {/* Version Info */}
-                <div className="p-6 rounded-xl bg-gradient-to-br from-rose-gold-400/10 to-purple-500/10 border border-rose-gold-400/20">
+                <div className="p-6 rounded-xl bg-gradient-to-br from-rose-gold-400/10 to-rose-gold-600/10 border border-rose-gold-400/20">
                   <div className="flex items-center gap-4">
                     <div className="w-16 h-16 rounded-2xl bg-rose-gold-400/20 flex items-center justify-center">
                       <span className="text-3xl">🤖</span>
