@@ -252,3 +252,4 @@ export default async function handler(req: Request) {
     });
   }
 }
+// Force rebuild: Thu Feb 12 01:27:30 PST 2026
