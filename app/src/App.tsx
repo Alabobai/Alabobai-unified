@@ -14,6 +14,7 @@ import VoiceInterfaceView from './components/VoiceInterfaceView'
 import DataAnalystView from './components/DataAnalystView'
 import TrustArchitectView from './components/TrustArchitectView'
 import IntegrationHubView from './components/IntegrationHubView'
+import LocalAIBrainView from './components/LocalAIBrainView'
 import SettingsModal from './components/SettingsModal'
 import { useAppStore } from './stores/appStore'
 import { aiService } from './services/ai'
@@ -59,6 +60,19 @@ function App() {
         <Sidebar />
         <div className="flex-1 overflow-hidden">
           <AutonomousAgentView />
+        </div>
+        <SettingsModal isOpen={settingsOpen} onClose={toggleSettings} />
+      </div>
+    )
+  }
+
+  // Render Local AI Brain (full screen)
+  if (currentView === 'local-ai-brain') {
+    return (
+      <div className="h-screen w-screen flex bg-black overflow-hidden">
+        <Sidebar />
+        <div className="flex-1 overflow-hidden">
+          <LocalAIBrainView />
         </div>
         <SettingsModal isOpen={settingsOpen} onClose={toggleSettings} />
       </div>

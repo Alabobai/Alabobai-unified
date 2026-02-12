@@ -1,4 +1,4 @@
-import { MessageSquare, Plus, FolderOpen, Settings, ChevronLeft, ChevronRight, Rocket, LayoutDashboard, Brain, Zap, Flame, Search, Shield, Wallet, Palette, Mic, BarChart3, ShieldCheck, Plug } from 'lucide-react'
+import { MessageSquare, Plus, FolderOpen, Settings, ChevronLeft, ChevronRight, Rocket, LayoutDashboard, Brain, Zap, Flame, Search, Shield, Wallet, Palette, Mic, BarChart3, ShieldCheck, Plug, Cpu } from 'lucide-react'
 import { useAppStore } from '@/stores/appStore'
 import AgentsPanel from './AgentsPanel'
 
@@ -96,6 +96,24 @@ export default function Sidebar() {
           AI Workforce
         </div>
         <div className="space-y-1">
+          <button
+            onClick={() => setView('local-ai-brain')}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group ${
+              currentView === 'local-ai-brain'
+                ? 'morphic-glass bg-rose-gold-400/15 text-rose-gold-400 border border-rose-gold-400/30 shadow-glow-sm'
+                : 'text-white/70 hover:bg-rose-gold-400/5 hover:text-rose-gold-400/90'
+            }`}
+          >
+            <Cpu className={`w-4 h-4 ${currentView === 'local-ai-brain' ? 'animate-pulse text-rose-gold-400' : ''}`} />
+            <span className="text-sm">Local AI Brain</span>
+            <span className={`ml-auto text-[10px] px-1.5 py-0.5 rounded-full ${
+              currentView === 'local-ai-brain'
+                ? 'bg-rose-gold-400/30 text-rose-gold-300'
+                : 'bg-green-500/20 text-green-400 opacity-0 group-hover:opacity-100'
+            } transition-opacity`}>
+              LOCAL
+            </span>
+          </button>
           <button
             onClick={() => setView('autonomous-agents')}
             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group ${

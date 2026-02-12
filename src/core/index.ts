@@ -16,6 +16,9 @@ export { Orchestrator, getOrchestrator } from './orchestrator.js';
 export { createLLMClient, getDefaultLLMClient } from './llm-client.js';
 export type { LLMClient, LLMMessage, LLMConfig } from './llm-client.js';
 
+// Ollama Service (Local LLM)
+export * from './llm/index.js';
+
 // Memory
 export { createMemoryStore, SQLiteMemoryStore, InMemoryStore } from './memory.js';
 export type { MemoryStore, MemoryEntry } from './memory.js';
@@ -222,6 +225,17 @@ export {
 
 // Builder Engine (Better than Bolt.new - Code generation, live preview, surgical edits)
 export * from './builder/index.js';
+
+// Knowledge Module (Embeddings, Vector Operations, Knowledge Management)
+export * from './knowledge/index.js';
+
+// Local AI Brain (Main Orchestrator - Ollama, Qdrant, RAG, Memory)
+export {
+  LocalAIBrain,
+  createLocalAIBrain,
+  createLocalAIBrainSync,
+  getDefaultLocalAIBrain,
+} from './local-ai-brain.js';
 
 // State Persistence (Checkpointing, Task Recovery, Durable Storage)
 export * from '../persistence/index.js';

@@ -1,0 +1,84 @@
+# Qdrant Vector Database - Docker Compose
+# For local development and testing with Alabobai platform
+#
+# Usage:
+#   docker-compose up -d           # Start Qdrant
+#   docker-compose down            # Stop Qdrant
+#   docker-compose logs -f qdrant  # View logs
+#
+# Access:
+#   REST API: http://localhost:6333
+#   gRPC: localhost:6334
+#   Dashboard: http://localhost:6333/dashboard
+
+version: '3.8'
+
+services:
+  qdrant:
+    image: qdrant/qdrant:v1.12.4
+    container_name: alabobai-qdrant
+    restart: unless-stopped
+    ports:
+      # REST API
+      - "6333:6333"
+      # gRPC API
+      - "6334:6334"
+    volumes:
+      # Persistent storage
+      - qdrant-data:/qdrant/storage
+      # Snapshots directory
+      - qdrant-snapshots:/qdrant/snapshots
+      # Custom configuration (optional)
+      - ./config:/qdrant/config:ro
+    environment:
+      # Enable REST API (default: true)
+      - QDRANT__SERVICE__HTTP_PORT=6333
+      # Enable gRPC API (default: true)
+      - QDRANT__SERVICE__GRPC_PORT=6334
+      # Telemetry (set to false for privacy)
+      - QDRANT__TELEMETRY_DISABLED=${QDRANT_TELEMETRY_DISABLED:-false}
+      # API Key (optional - set in .env for security)
+      - QDRANT__SERVICE__API_KEY=${QDRANT_API_KEY:-}
+      # Enable CORS for web dashboard
+      - QDRANT__SERVICE__ENABLE_CORS=true
+      # Performance tuning
+      - QDRANT__STORAGE__ON_DISK_PAYLOAD=${QDRANT_ON_DISK_PAYLOAD:-false}
+      # Memory limits for indexing
+      - QDRANT__STORAGE__OPTIMIZER__INDEXING_THRESHOLD=${QDRANT_INDEXING_THRESHOLD:-20000}
+      # Max segment size before triggering optimization
+      - QDRANT__STORAGE__OPTIMIZER__MAX_SEGMENT_SIZE_KB=${QDRANT_MAX_SEGMENT_SIZE:-200000}
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:6333/readyz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          # Adjust based on your available memory
+          memory: ${QDRANT_MEMORY_LIMIT:-2G}
+        reservations:
+          memory: ${QDRANT_MEMORY_RESERVATION:-512M}
+    labels:
+      - "com.alabobai.service=vector-store"
+      - "com.alabobai.component=qdrant"
+
+volumes:
+  qdrant-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${QDRANT_DATA_PATH:-./data}
+  qdrant-snapshots:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${QDRANT_SNAPSHOTS_PATH:-./snapshots}
+
+networks:
+  default:
+    name: alabobai-network
+    external: true
