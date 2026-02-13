@@ -37,53 +37,76 @@ export default async function handler(req: Request) {
       },
     });
 
-    if (!response.ok) {
-      throw new Error(`Search failed: ${response.status}`);
-    }
-
-    const html = await response.text();
-
     // Parse search results from HTML
     const results: Array<{ title: string; url: string; snippet: string }> = [];
+    if (response.ok) {
+      const html = await response.text();
 
-    // Extract results using regex (simple parsing)
-    const resultRegex = /<a[^>]*class="result__a"[^>]*href="([^"]*)"[^>]*>([^<]*)<\/a>[\s\S]*?<a[^>]*class="result__snippet"[^>]*>([^<]*)/gi;
+      // Extract results using regex (simple parsing)
+      const resultRegex = /<a[^>]*class="result__a"[^>]*href="([^"]*)"[^>]*>([^<]*)<\/a>[\s\S]*?<a[^>]*class="result__snippet"[^>]*>([^<]*)/gi;
 
-    let match;
-    while ((match = resultRegex.exec(html)) !== null && results.length < limit) {
-      const url = match[1];
-      const title = match[2].trim();
-      const snippet = match[3].trim();
+      let match;
+      while ((match = resultRegex.exec(html)) !== null && results.length < limit) {
+        const url = match[1];
+        const title = match[2].trim();
+        const snippet = match[3].trim();
 
-      if (url && title && !url.includes('duckduckgo.com')) {
-        results.push({ title, url, snippet });
-      }
-    }
-
-    // Fallback: simpler parsing if regex fails
-    if (results.length === 0) {
-      const titleRegex = /<a[^>]*class="result__a"[^>]*>([^<]+)<\/a>/gi;
-      const urlRegex = /href="(https?:\/\/[^"]+)"/gi;
-
-      const titles: string[] = [];
-      const urls: string[] = [];
-
-      while ((match = titleRegex.exec(html)) !== null) {
-        titles.push(match[1].trim());
-      }
-
-      while ((match = urlRegex.exec(html)) !== null) {
-        if (!match[1].includes('duckduckgo.com')) {
-          urls.push(match[1]);
+        if (url && title && !url.includes('duckduckgo.com')) {
+          results.push({ title, url, snippet });
         }
       }
 
-      for (let i = 0; i < Math.min(titles.length, urls.length, limit); i++) {
-        results.push({
-          title: titles[i],
-          url: urls[i],
-          snippet: '',
-        });
+      // Fallback: simpler parsing if regex fails
+      if (results.length === 0) {
+        const titleRegex = /<a[^>]*class="result__a"[^>]*>([^<]+)<\/a>/gi;
+        const urlRegex = /href="(https?:\/\/[^"]+)"/gi;
+
+        const titles: string[] = [];
+        const urls: string[] = [];
+
+        while ((match = titleRegex.exec(html)) !== null) {
+          titles.push(match[1].trim());
+        }
+
+        while ((match = urlRegex.exec(html)) !== null) {
+          if (!match[1].includes('duckduckgo.com')) {
+            urls.push(match[1]);
+          }
+        }
+
+        for (let i = 0; i < Math.min(titles.length, urls.length, limit); i++) {
+          results.push({
+            title: titles[i],
+            url: urls[i],
+            snippet: '',
+          });
+        }
+      }
+    }
+
+    // Secondary fallback for environments where DDG blocks requests.
+    if (results.length === 0) {
+      const wikiRes = await fetch(
+        `https://en.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(query)}&limit=${encodeURIComponent(String(limit))}&namespace=0&format=json`,
+        {
+          headers: {
+            'User-Agent': 'Alabobai/2.0',
+          },
+        }
+      );
+
+      if (wikiRes.ok) {
+        const wikiData = await wikiRes.json() as [string, string[], string[], string[]];
+        const titles = wikiData[1] || [];
+        const snippets = wikiData[2] || [];
+        const urls = wikiData[3] || [];
+        for (let i = 0; i < Math.min(titles.length, urls.length, limit); i++) {
+          results.push({
+            title: titles[i],
+            url: urls[i],
+            snippet: snippets[i] || '',
+          });
+        }
       }
     }
 

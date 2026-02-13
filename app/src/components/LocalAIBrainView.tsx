@@ -7,12 +7,12 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Brain, Server, Database, FileText, Upload, Link, Type,
-  Settings, Send, Loader2, CheckCircle2, XCircle, AlertCircle,
+  Brain, Database, FileText, Upload, Type,
+  Settings, Send, Loader2, CheckCircle2, AlertCircle,
   Download, Trash2, RefreshCw, ChevronDown, ChevronRight,
-  MessageSquare, Sparkles, BookOpen, Layers, Cpu, HardDrive,
-  Thermometer, Hash, ExternalLink, Copy, Check, Info, X,
-  File, Globe, Clipboard, Search, Zap, Archive
+  MessageSquare, BookOpen, Layers, Cpu,
+  Thermometer, Copy, Check, X,
+  File, Globe, Clipboard, Archive
 } from 'lucide-react'
 
 // ============== Types ==============
@@ -111,42 +111,6 @@ function TabButton({
         </span>
       )}
     </button>
-  )
-}
-
-// ============== Status Indicator Component ==============
-
-function StatusIndicator({
-  connected,
-  label,
-  details,
-  error
-}: {
-  connected: boolean
-  label: string
-  details?: string
-  error?: string
-}) {
-  return (
-    <div className="morphic-card p-4 rounded-xl">
-      <div className="flex items-center gap-3">
-        <div className={`w-3 h-3 rounded-full ${
-          connected
-            ? 'bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.6)]'
-            : 'bg-red-400 shadow-[0_0_8px_rgba(248,113,113,0.6)]'
-        } animate-pulse`} />
-        <div className="flex-1">
-          <p className="text-sm font-medium text-white">{label}</p>
-          {details && <p className="text-xs text-white/40">{details}</p>}
-          {error && <p className="text-xs text-red-400">{error}</p>}
-        </div>
-        {connected ? (
-          <CheckCircle2 className="w-5 h-5 text-green-400" />
-        ) : (
-          <XCircle className="w-5 h-5 text-red-400" />
-        )}
-      </div>
-    </div>
   )
 }
 
@@ -1222,10 +1186,34 @@ export default function LocalAIBrainView() {
   const fetchStatus = useCallback(async () => {
     try {
       const response = await fetch('/api/local-ai/status')
-      if (response.ok) {
-        const data = await response.json()
-        setServiceStatus(data)
-      }
+      if (!response.ok) throw new Error(`status endpoint failed: ${response.status}`)
+      const data = await response.json()
+      const normalized = data?.services
+        ? {
+            ollama: {
+              connected: !!data.services?.ollama?.connected,
+              version: data.services?.ollama?.version,
+              error: data.services?.ollama?.error,
+            },
+            qdrant: {
+              connected: !!data.services?.qdrant?.connected,
+              collections: data.services?.qdrant?.collections,
+              error: data.services?.qdrant?.error,
+            },
+          }
+        : {
+            ollama: {
+              connected: !!data?.ollama?.connected,
+              version: data?.ollama?.version,
+              error: data?.ollama?.error,
+            },
+            qdrant: {
+              connected: !!data?.qdrant?.connected,
+              collections: data?.qdrant?.collections,
+              error: data?.qdrant?.error,
+            },
+          }
+      setServiceStatus(normalized)
     } catch (error) {
       console.error('Failed to fetch status:', error)
       // Set demo data for development
@@ -1241,10 +1229,9 @@ export default function LocalAIBrainView() {
     setIsLoading(true)
     try {
       const response = await fetch('/api/local-ai/models')
-      if (response.ok) {
-        const data = await response.json()
-        setModels(data.models || [])
-      }
+      if (!response.ok) throw new Error(`models endpoint failed: ${response.status}`)
+      const data = await response.json()
+      setModels(Array.isArray(data.models) ? data.models : [])
     } catch (error) {
       console.error('Failed to fetch models:', error)
       // Set demo data for development
@@ -1263,10 +1250,19 @@ export default function LocalAIBrainView() {
     setIsLoading(true)
     try {
       const response = await fetch('/api/local-ai/knowledge/stats')
-      if (response.ok) {
-        const data = await response.json()
-        setKnowledgeStats(data)
-      }
+      if (!response.ok) throw new Error(`knowledge stats endpoint failed: ${response.status}`)
+      const data = await response.json()
+      const collectionsRaw = Array.isArray(data?.collections) ? data.collections : []
+      const collections = collectionsRaw.map((c: any) => ({
+        name: c.name || 'unknown',
+        documentCount: c.documentCount ?? c.pointsCount ?? 0,
+        chunkCount: c.chunkCount ?? c.vectorCount ?? c.pointsCount ?? 0,
+      }))
+      setKnowledgeStats({
+        totalDocuments: data?.totalDocuments ?? collections.reduce((s: number, c: any) => s + (c.documentCount || 0), 0),
+        totalChunks: data?.totalChunks ?? collections.reduce((s: number, c: any) => s + (c.chunkCount || 0), 0),
+        collections,
+      })
     } catch (error) {
       console.error('Failed to fetch knowledge stats:', error)
       // Set demo data for development
@@ -1286,10 +1282,10 @@ export default function LocalAIBrainView() {
 
   // Pull model
   const pullModel = async (modelName: string) => {
-    const response = await fetch('/api/local-ai/models/pull', {
+    const response = await fetch('/api/local-ai/models', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: modelName })
+      body: JSON.stringify({ model: modelName })
     })
     if (!response.ok) throw new Error('Failed to pull model')
     await fetchModels()
@@ -1299,8 +1295,10 @@ export default function LocalAIBrainView() {
   const deleteModel = async (modelName: string) => {
     if (!confirm(`Are you sure you want to delete ${modelName}?`)) return
     try {
-      const response = await fetch(`/api/local-ai/models/${modelName}`, {
-        method: 'DELETE'
+      const response = await fetch('/api/local-ai/models', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: modelName })
       })
       if (response.ok) {
         await fetchModels()
@@ -1312,19 +1310,23 @@ export default function LocalAIBrainView() {
 
   // Ingest document
   const ingestDocument = async (type: 'file' | 'url' | 'text', data: File | string) => {
-    const formData = new FormData()
-    formData.append('type', type)
+    let response: Response
 
     if (type === 'file' && data instanceof File) {
+      const formData = new FormData()
+      formData.append('type', type)
       formData.append('file', data)
-    } else if (typeof data === 'string') {
-      formData.append('content', data)
+      response = await fetch('/api/local-ai/knowledge/ingest', {
+        method: 'POST',
+        body: formData
+      })
+    } else {
+      response = await fetch('/api/local-ai/knowledge/ingest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type, content: data })
+      })
     }
-
-    const response = await fetch('/api/local-ai/knowledge/ingest', {
-      method: 'POST',
-      body: formData
-    })
 
     if (!response.ok) throw new Error('Failed to ingest document')
     await fetchKnowledgeStats()
@@ -1356,13 +1358,12 @@ export default function LocalAIBrainView() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: content,
+          messages: [{ role: 'user', content }],
           model: modelSettings.model,
+          stream: false,
           temperature: modelSettings.temperature,
-          maxTokens: modelSettings.maxTokens,
-          ragEnabled: ragSettings.enabled,
-          ragTopK: ragSettings.topK,
-          ragMinScore: ragSettings.minScore
+          useKnowledge: ragSettings.enabled,
+          topK: ragSettings.topK
         })
       })
 
@@ -1370,9 +1371,10 @@ export default function LocalAIBrainView() {
 
       const data = await response.json()
 
+      const finalContent = data?.response ?? data?.content ?? ''
       setChatMessages(prev => prev.map(msg =>
         msg.id === assistantMessage.id
-          ? { ...msg, content: data.response, sources: data.sources, status: 'complete' }
+          ? { ...msg, content: finalContent || 'No response generated.', sources: data?.sources, status: 'complete' }
           : msg
       ))
     } catch (error) {

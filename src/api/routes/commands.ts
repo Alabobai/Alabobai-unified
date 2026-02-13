@@ -258,10 +258,30 @@ export function createCommandsRouter(config: CommandsRouterConfig = {}): Router 
   }
 
   // ============================================================================
+  // GET /api/commands/stats - Command/task statistics
+  // ============================================================================
+
+  router.get('/stats', (req: Request, res: Response) => {
+    const tasks = orchestrator.getRecentTasks(1000);
+    const total = tasks.length;
+    const byStatus = tasks.reduce((acc: Record<string, number>, t: any) => {
+      const k = t.status || 'unknown';
+      acc[k] = (acc[k] || 0) + 1;
+      return acc;
+    }, {});
+
+    const avgMs = total > 0
+      ? Math.round(tasks.reduce((s: number, t: any) => s + (t.executionTimeMs || 0), 0) / total)
+      : 0;
+
+    res.json({ total, byStatus, averageExecutionTimeMs: avgMs });
+  });
+
+  // ============================================================================
   // DELETE /api/commands/:taskId - Cancel a running command
   // ============================================================================
 
-  router.delete('/:taskId', (req: Request, res: Response) => {
+  router.delete('/:taskId([0-9a-fA-F-]{36})', (req: Request, res: Response) => {
     const { taskId } = req.params;
 
     const cancelled = orchestrator.cancelCommand(taskId);
@@ -287,7 +307,7 @@ export function createCommandsRouter(config: CommandsRouterConfig = {}): Router 
   // GET /api/commands/:taskId - Get command/task status
   // ============================================================================
 
-  router.get('/:taskId', (req: Request, res: Response) => {
+  router.get('/:taskId([0-9a-fA-F-]{36})', (req: Request, res: Response) => {
     const { taskId } = req.params;
     const task = orchestrator.getTask(taskId);
 

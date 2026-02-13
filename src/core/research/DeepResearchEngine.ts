@@ -20,6 +20,8 @@ import { EventEmitter } from 'events';
 import {
   SourceManager,
   sourceManager,
+} from './SourceManager.js';
+import type {
   SourceConfig,
   SourceResult,
   SearchQuery,
@@ -30,6 +32,8 @@ import {
 import {
   CitationTracker,
   citationTracker,
+} from './CitationTracker.js';
+import type {
   Citation,
   Claim,
   VerificationStatus,
@@ -39,6 +43,8 @@ import {
 import {
   SourceQualityScorer,
   sourceQualityScorer,
+} from './SourceQualityScorer.js';
+import type {
   QualityScore,
   SourceMetadata,
   SourceType,
@@ -48,6 +54,8 @@ import {
 import {
   ResearchOrchestrator,
   researchOrchestrator,
+} from './ResearchOrchestrator.js';
+import type {
   ResearchQuery,
   ResearchResult,
   ResearchProgress,
@@ -60,6 +68,8 @@ import {
 import {
   ReportGenerator,
   reportGenerator,
+} from './ReportGenerator.js';
+import type {
   Report,
   ReportOptions,
   ReportFormat,

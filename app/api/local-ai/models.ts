@@ -5,7 +5,7 @@ export const config = {
 // Local AI Brain Models API
 // List available models and pull new models from Ollama
 
-const OLLAMA_URL = 'http://localhost:11434';
+const OLLAMA_URL = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
 
 interface OllamaModel {
   name: string;

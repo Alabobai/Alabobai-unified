@@ -227,7 +227,8 @@ export {
 export * from './builder/index.js';
 
 // Knowledge Module (Embeddings, Vector Operations, Knowledge Management)
-export * from './knowledge/index.js';
+// Exported as a namespace to avoid symbol collisions with llm/voice modules.
+export * as knowledge from './knowledge/index.js';
 
 // Local AI Brain (Main Orchestrator - Ollama, Qdrant, RAG, Memory)
 export {
@@ -236,6 +237,12 @@ export {
   createLocalAIBrainSync,
   getDefaultLocalAIBrain,
 } from './local-ai-brain.js';
+
+// Brain System (OpenClaw-style Memory, Agentic Loop)
+export * as brain from './brain/index.js';
+
+// Code Builder Agent (Self-building capabilities)
+export * as agents from './agents/index.js';
 
 // State Persistence (Checkpointing, Task Recovery, Durable Storage)
 export * from '../persistence/index.js';

@@ -5,8 +5,8 @@ export const config = {
 // Local AI Brain Chat API
 // Chat with local Ollama models with optional RAG from Qdrant knowledge base
 
-const OLLAMA_URL = 'http://localhost:11434';
-const QDRANT_URL = 'http://localhost:6333';
+const OLLAMA_URL = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
+const QDRANT_URL = process.env.QDRANT_URL || process.env.QDRANT_BASE_URL || 'http://localhost:6333';
 const DEFAULT_MODEL = 'llama3.2';
 const DEFAULT_COLLECTION = 'knowledge';
 const EMBEDDING_MODEL = 'nomic-embed-text';
@@ -94,7 +94,6 @@ async function searchKnowledge(
 
 // Build RAG-enhanced prompt with knowledge context
 function buildRAGPrompt(
-  userMessage: string,
   chunks: KnowledgeChunk[],
   systemPrompt?: string
 ): string {
@@ -282,7 +281,6 @@ export default async function handler(req: Request) {
         if (knowledgeChunks.length > 0) {
           // Build RAG-enhanced system prompt
           const ragPrompt = buildRAGPrompt(
-            lastUserMessage.content,
             knowledgeChunks,
             systemPrompt
           );

@@ -42,3 +42,5 @@ coverage/
 # Demo files (optional)
 kasa-demo-frames/
 *.gif
+.vercel
+.env*.local

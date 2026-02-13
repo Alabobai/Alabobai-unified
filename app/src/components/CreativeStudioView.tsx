@@ -8,7 +8,7 @@ import {
   Palette, Image, FileText, Type, Wand2, Download, Copy,
   RefreshCw, Loader2, CheckCircle2, Sparkles, Grid,
   PenTool, Layout, Mail, ShoppingBag, MessageSquare,
-  Zap, Trash2, ExternalLink, AlertCircle, X, ChevronDown
+  Zap, Trash2, ExternalLink, AlertCircle, X, ChevronDown, Film
 } from 'lucide-react'
 import { aiService } from '@/services/ai'
 
@@ -20,6 +20,16 @@ interface GeneratedImage {
   url: string
   width: number
   height: number
+  createdAt: Date
+  status: 'generating' | 'complete' | 'error'
+  error?: string
+}
+
+interface GeneratedVideo {
+  id: string
+  prompt: string
+  url: string
+  durationSeconds: number
   createdAt: Date
   status: 'generating' | 'complete' | 'error'
   error?: string
@@ -95,7 +105,7 @@ const FONT_PAIRINGS: FontPairing[] = [
   { heading: 'DM Sans', body: 'Plus Jakarta Sans', accent: 'Fraunces' }
 ]
 
-type TabType = 'images' | 'content' | 'design' | 'gallery'
+type TabType = 'images' | 'video' | 'content' | 'design' | 'gallery'
 
 export default function CreativeStudioView() {
   const [activeTab, setActiveTab] = useState<TabType>('images')
@@ -106,6 +116,9 @@ export default function CreativeStudioView() {
   const [selectedSize, setSelectedSize] = useState(IMAGE_SIZES[0])
   const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([])
   const [isGeneratingImage, setIsGeneratingImage] = useState(false)
+  const [videoPrompt, setVideoPrompt] = useState('')
+  const [generatedVideos, setGeneratedVideos] = useState<GeneratedVideo[]>([])
+  const [isGeneratingVideo, setIsGeneratingVideo] = useState(false)
 
   // Content generation state
   const [contentType, setContentType] = useState<'blog' | 'social' | 'email' | 'product'>('blog')
@@ -134,21 +147,17 @@ export default function CreativeStudioView() {
     }
   }, [notification])
 
-  // Generate image using Pollinations.ai
+  // Generate image via local inference API
   const generateImage = useCallback(async () => {
     if (!imagePrompt.trim()) return
 
     setIsGeneratingImage(true)
 
-    const fullPrompt = `${imagePrompt}, ${selectedStyle.prompt}`
-    const encodedPrompt = encodeURIComponent(fullPrompt)
-    const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${selectedSize.width}&height=${selectedSize.height}&nologo=true&seed=${Date.now()}`
-
     const newImage: GeneratedImage = {
       id: crypto.randomUUID(),
       prompt: imagePrompt,
       style: selectedStyle.name,
-      url: imageUrl,
+      url: '',
       width: selectedSize.width,
       height: selectedSize.height,
       createdAt: new Date(),
@@ -157,24 +166,92 @@ export default function CreativeStudioView() {
 
     setGeneratedImages(prev => [newImage, ...prev])
 
-    // Preload the image to detect when it's ready
-    const img = new window.Image()
-    img.onload = () => {
+    try {
+      const response = await fetch('/api/generate-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: `${imagePrompt}, ${selectedStyle.prompt}`,
+          width: selectedSize.width,
+          height: selectedSize.height,
+          style: selectedStyle.id,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`Image generation failed: ${response.status}`)
+      }
+
+      const data = await response.json() as { url: string }
       setGeneratedImages(prev =>
-        prev.map(i => i.id === newImage.id ? { ...i, status: 'complete' } : i)
+        prev.map(i => (i.id === newImage.id ? { ...i, status: 'complete', url: data.url } : i))
       )
-      setIsGeneratingImage(false)
       setNotification({ type: 'success', message: 'Image generated successfully!' })
-    }
-    img.onerror = () => {
+    } catch (error) {
       setGeneratedImages(prev =>
-        prev.map(i => i.id === newImage.id ? { ...i, status: 'error', error: 'Failed to generate image' } : i)
+        prev.map(i => i.id === newImage.id
+          ? { ...i, status: 'error', error: error instanceof Error ? error.message : 'Failed to generate image' }
+          : i)
       )
-      setIsGeneratingImage(false)
       setNotification({ type: 'error', message: 'Failed to generate image' })
+    } finally {
+      setIsGeneratingImage(false)
     }
-    img.src = imageUrl
   }, [imagePrompt, selectedStyle, selectedSize])
+
+  // Generate video via local inference API
+  const generateVideo = useCallback(async () => {
+    if (!videoPrompt.trim()) return
+    setIsGeneratingVideo(true)
+
+    const newVideo: GeneratedVideo = {
+      id: crypto.randomUUID(),
+      prompt: videoPrompt,
+      url: '',
+      durationSeconds: 4,
+      createdAt: new Date(),
+      status: 'generating',
+    }
+
+    setGeneratedVideos(prev => [newVideo, ...prev])
+
+    try {
+      const response = await fetch('/api/generate-video', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: videoPrompt,
+          durationSeconds: 4,
+          fps: 16,
+          width: 512,
+          height: 512,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`Video generation failed: ${response.status}`)
+      }
+
+      const data = await response.json() as { url: string; durationSeconds?: number }
+      setGeneratedVideos(prev =>
+        prev.map(v =>
+          v.id === newVideo.id
+            ? { ...v, status: 'complete', url: data.url, durationSeconds: data.durationSeconds || 4 }
+            : v
+        )
+      )
+      setNotification({ type: 'success', message: 'Video generated successfully!' })
+    } catch (error) {
+      setGeneratedVideos(prev =>
+        prev.map(v => v.id === newVideo.id
+          ? { ...v, status: 'error', error: error instanceof Error ? error.message : 'Failed to generate video' }
+          : v)
+      )
+      setNotification({ type: 'error', message: 'Failed to generate video' })
+    } finally {
+      setIsGeneratingVideo(false)
+    }
+  }, [videoPrompt])
 
   // Generate content using AI service
   const generateContent = useCallback(async () => {
@@ -376,6 +453,7 @@ export default function CreativeStudioView() {
     <div className="flex gap-1 p-1 bg-white/5 rounded-xl">
       {[
         { id: 'images', name: 'Image Gen', icon: Image },
+        { id: 'video', name: 'Video Gen', icon: Film },
         { id: 'content', name: 'Content', icon: FileText },
         { id: 'design', name: 'Design Tools', icon: Palette },
         { id: 'gallery', name: 'Gallery', icon: Grid }
@@ -393,6 +471,91 @@ export default function CreativeStudioView() {
           <span className="hidden sm:inline">{tab.name}</span>
         </button>
       ))}
+    </div>
+  )
+
+  const renderVideoTab = () => (
+    <div className="flex flex-col lg:flex-row gap-6 h-full">
+      <div className="lg:w-80 space-y-4">
+        <div className="morphic-card p-4 rounded-xl">
+          <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+            <Film className="w-4 h-4 text-rose-gold-400" />
+            Video Prompt
+          </h3>
+          <textarea
+            value={videoPrompt}
+            onChange={(e) => setVideoPrompt(e.target.value)}
+            placeholder="Describe the video scene you want to generate..."
+            className="w-full h-24 p-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/30 resize-none focus:outline-none focus:ring-2 focus:ring-rose-gold-400/50 text-sm"
+          />
+        </div>
+        <button
+          onClick={generateVideo}
+          disabled={!videoPrompt.trim() || isGeneratingVideo}
+          className="w-full morphic-btn bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 py-3 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed group"
+        >
+          <span className="flex items-center justify-center gap-2">
+            {isGeneratingVideo ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Generating...
+              </>
+            ) : (
+              <>
+                <Film className="w-4 h-4" />
+                Generate Video
+              </>
+            )}
+          </span>
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto morphic-scrollbar">
+        {generatedVideos.length === 0 ? (
+          <div className="h-full flex items-center justify-center">
+            <div className="text-center">
+              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-rose-gold-400/20 to-rose-gold-600/20 border border-rose-gold-400/30 flex items-center justify-center mx-auto mb-4">
+                <Film className="w-10 h-10 text-rose-gold-400" />
+              </div>
+              <h2 className="text-xl font-bold text-white mb-2">Local Video Generation</h2>
+              <p className="text-white/50 text-sm max-w-md">
+                Uses your configured local/open-source video inference backend.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
+            {generatedVideos.map(video => (
+              <div key={video.id} className="morphic-card rounded-xl overflow-hidden">
+                <div className="relative aspect-square bg-white/5">
+                  {video.status === 'generating' && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Loader2 className="w-8 h-8 text-rose-gold-400 animate-spin" />
+                    </div>
+                  )}
+                  {video.status === 'error' && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="text-center px-3">
+                        <AlertCircle className="w-8 h-8 text-red-400 mx-auto mb-2" />
+                        <p className="text-xs text-red-400">{video.error}</p>
+                      </div>
+                    </div>
+                  )}
+                  {video.status === 'complete' && video.url && (
+                    video.url.startsWith('data:image/')
+                      ? <img src={video.url} alt={video.prompt} className="w-full h-full object-cover" />
+                      : <video src={video.url} className="w-full h-full object-cover" controls playsInline />
+                  )}
+                </div>
+                <div className="p-3">
+                  <p className="text-sm text-white truncate">{video.prompt}</p>
+                  <p className="text-xs text-white/40">{video.durationSeconds}s</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 
@@ -1144,6 +1307,7 @@ export default function CreativeStudioView() {
       {/* Main Content */}
       <div className="flex-1 overflow-hidden p-4">
         {activeTab === 'images' && renderImageTab()}
+        {activeTab === 'video' && renderVideoTab()}
         {activeTab === 'content' && renderContentTab()}
         {activeTab === 'design' && renderDesignTab()}
         {activeTab === 'gallery' && renderGalleryTab()}

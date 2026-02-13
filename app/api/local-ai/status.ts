@@ -5,8 +5,8 @@ export const config = {
 // Local AI Brain Status API
 // Checks connection status of Ollama and Qdrant services
 
-const OLLAMA_URL = 'http://localhost:11434';
-const QDRANT_URL = 'http://localhost:6333';
+const OLLAMA_URL = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
+const QDRANT_URL = process.env.QDRANT_URL || process.env.QDRANT_BASE_URL || 'http://localhost:6333';
 
 interface ServiceStatus {
   connected: boolean;
@@ -43,7 +43,7 @@ async function checkOllama(): Promise<ServiceStatus> {
       };
     }
 
-    const data = await response.json();
+    await response.json();
     return {
       connected: true,
       latencyMs,

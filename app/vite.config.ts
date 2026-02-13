@@ -12,6 +12,30 @@ export default defineConfig({
   server: {
     port: 3000,
     proxy: {
+      '/api/generate-image': {
+        target: 'http://127.0.0.1:8890',
+        changeOrigin: true,
+      },
+      '/api/generate-video': {
+        target: 'http://127.0.0.1:8890',
+        changeOrigin: true,
+      },
+      '/api/chat': {
+        target: 'http://127.0.0.1:8890',
+        changeOrigin: true,
+      },
+      '/api/local-ai': {
+        target: 'http://127.0.0.1:8890',
+        changeOrigin: true,
+      },
+      '/api/company': {
+        target: 'http://127.0.0.1:8890',
+        changeOrigin: true,
+      },
+      '/api/proxy': {
+        target: 'http://127.0.0.1:8890',
+        changeOrigin: true,
+      },
       '/api': {
         target: 'http://localhost:8888',
         changeOrigin: true,

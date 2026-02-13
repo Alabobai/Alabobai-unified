@@ -46,6 +46,7 @@ export default function ChatPanel() {
   const [interimTranscript, setInterimTranscript] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+  const cancelStreamRef = useRef(false)
 
   const {
     chats,
@@ -69,6 +70,8 @@ export default function ChatPanel() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!input.trim() || isStreaming) return
+
+    cancelStreamRef.current = false
 
     // Create chat if none exists
     if (!activeChat) {
@@ -111,6 +114,7 @@ export default function ChatPanel() {
 
     await aiService.chat(aiMessages, {
       onToken: (token) => {
+        if (cancelStreamRef.current) return
         streamedContent += token
         const currentChat = useAppStore.getState().chats.find(c => c.id === chatId)
         const lastMessage = currentChat?.messages.slice(-1)[0]
@@ -350,8 +354,17 @@ export default function ChatPanel() {
                 </button>
               </div>
               <button
-                type="submit"
-                disabled={!input.trim() || isStreaming}
+                type="button"
+                disabled={!input.trim() && !isStreaming}
+                onClick={(e) => {
+                  if (isStreaming) {
+                    e.preventDefault()
+                    cancelStreamRef.current = true
+                    setStreaming(false)
+                    return
+                  }
+                  handleSubmit(e as unknown as React.FormEvent)
+                }}
                 className="bg-gradient-to-r from-rose-gold-400 to-rose-gold-600 hover:from-rose-gold-300 hover:to-rose-gold-500 text-dark-500 font-medium py-2 px-4 rounded-xl text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-glow-sm transition-all duration-200"
               >
                 {isStreaming ? (

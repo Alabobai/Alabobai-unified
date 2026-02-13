@@ -198,12 +198,18 @@ export class QdrantService extends EventEmitter {
     const vectors = response.result.config.params.vectors;
     let vectorSize = 0;
 
-    if (typeof vectors === 'object' && 'size' in vectors) {
-      vectorSize = vectors.size;
-    } else if (typeof vectors === 'object') {
-      const firstKey = Object.keys(vectors)[0];
-      if (firstKey && vectors[firstKey]) {
-        vectorSize = vectors[firstKey].size;
+    if (
+      typeof vectors === 'object' &&
+      vectors !== null &&
+      'size' in vectors &&
+      typeof (vectors as { size?: unknown }).size === 'number'
+    ) {
+      vectorSize = (vectors as { size: number }).size;
+    } else if (typeof vectors === 'object' && vectors !== null) {
+      const namedVectors = vectors as Record<string, { size: number }>;
+      const firstKey = Object.keys(namedVectors)[0];
+      if (firstKey && namedVectors[firstKey]) {
+        vectorSize = namedVectors[firstKey].size;
       }
     }
 

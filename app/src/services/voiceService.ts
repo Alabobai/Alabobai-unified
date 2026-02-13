@@ -103,7 +103,6 @@ class VoiceService {
     useNeural: true
   }
 
-  private audioContext: AudioContext | null = null
   private currentAudio: HTMLAudioElement | null = null
   private isSpeaking: boolean = false
   private speechQueue: { text: string; onEnd?: SpeechEndCallback }[] = []

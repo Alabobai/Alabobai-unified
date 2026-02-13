@@ -5,7 +5,7 @@ export const config = {
 // Local AI Brain Knowledge Stats API
 // Get statistics about the knowledge base stored in Qdrant
 
-const QDRANT_URL = 'http://localhost:6333';
+const QDRANT_URL = process.env.QDRANT_URL || process.env.QDRANT_BASE_URL || 'http://localhost:6333';
 const DEFAULT_COLLECTION = 'knowledge';
 
 interface CollectionInfo {
@@ -108,19 +108,6 @@ async function getLastUpdated(collectionName: string): Promise<string | null> {
   } catch (error) {
     return null;
   }
-}
-
-function formatBytes(bytes: number): string {
-  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
-  let unitIndex = 0;
-  let value = bytes;
-
-  while (value >= 1024 && unitIndex < units.length - 1) {
-    value /= 1024;
-    unitIndex++;
-  }
-
-  return `${Math.round(value * 100) / 100} ${units[unitIndex]}`;
 }
 
 export default async function handler(req: Request) {

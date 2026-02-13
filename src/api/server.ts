@@ -25,6 +25,8 @@ import { createHealthRouter } from './routes/health.js';
 import { createDepartmentsRouter } from './routes/departments.js';
 import { createAuthRouter } from './routes/auth.js';
 import { createCompaniesRouter, attachCompaniesWebSocket } from './routes/companies.js';
+import { createLocalAIRouter } from './routes/local-ai.js';
+import { createProxyRouter } from './routes/proxy.js';
 
 // Import direct Claude chat API
 import {
@@ -52,6 +54,8 @@ import { initializeHealthMonitor, HealthMonitor } from '../services/health.js';
 const app = express();
 const server = createServer(app);
 const wss = new WebSocketServer({ server });
+const LOCAL_IMAGE_URL = process.env.IMAGE_INFERENCE_URL || 'http://127.0.0.1:7860';
+const LOCAL_VIDEO_URL = process.env.VIDEO_INFERENCE_URL || 'http://127.0.0.1:8000';
 
 // Middleware
 app.use(cors());
@@ -135,6 +139,8 @@ async function initialize(): Promise<void> {
   app.use('/api/departments', createDepartmentsRouter());
   app.use('/api/auth', createAuthRouter());
   app.use('/api/companies', createCompaniesRouter());
+  app.use('/api/local-ai', createLocalAIRouter());
+  app.use('/api/proxy', createProxyRouter());
 
   // Attach WebSocket handler for company creation progress
   attachCompaniesWebSocket(server, '/ws/companies');
@@ -196,6 +202,122 @@ function broadcast(event: string, data: unknown, sessionId?: string): void {
 // ============================================================================
 // REST API ROUTES
 // ============================================================================
+
+function enhanceImagePrompt(prompt: string, style?: string): string {
+  switch (style) {
+    case 'logo':
+      return `professional minimalist logo, vector style, clean lines, branding, ${prompt}`;
+    case 'hero':
+      return `cinematic hero image, high detail, modern commercial style, ${prompt}`;
+    case 'icon':
+      return `flat icon design, simple composition, transparent background, ${prompt}`;
+    default:
+      return prompt;
+  }
+}
+
+app.post('/api/generate-image', async (req: Request, res: Response) => {
+  try {
+    const { prompt, width = 512, height = 512, style = 'logo' } = req.body || {};
+
+    if (!prompt || typeof prompt !== 'string') {
+      return res.status(400).json({ error: 'Prompt is required' });
+    }
+
+    const enhancedPrompt = enhanceImagePrompt(prompt, style);
+    const inferenceRes = await fetch(`${LOCAL_IMAGE_URL}/sdapi/v1/txt2img`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prompt: enhancedPrompt,
+        width,
+        height,
+        steps: 24,
+        cfg_scale: 7,
+      }),
+    });
+
+    if (!inferenceRes.ok) {
+      return res.status(502).json({
+        error: 'Local image inference backend failed',
+        details: `HTTP ${inferenceRes.status}`,
+      });
+    }
+
+    const data = await inferenceRes.json() as { images?: string[] };
+    const image = data.images?.[0];
+
+    if (!image) {
+      return res.status(502).json({ error: 'Local image inference backend returned no image' });
+    }
+
+    res.json({
+      url: `data:image/png;base64,${image}`,
+      prompt: enhancedPrompt,
+      width,
+      height,
+      backend: 'local-media-inference',
+      fallback: false,
+    });
+  } catch (error) {
+    console.error('[API] generate-image error:', error);
+    res.status(500).json({
+      error: 'Failed to generate image',
+      details: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+app.post('/api/generate-video', async (req: Request, res: Response) => {
+  try {
+    const { prompt, durationSeconds = 4, fps = 12, width = 512, height = 512 } = req.body || {};
+
+    if (!prompt || typeof prompt !== 'string') {
+      return res.status(400).json({ error: 'Prompt is required' });
+    }
+
+    const inferenceRes = await fetch(`${LOCAL_VIDEO_URL}/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prompt,
+        durationSeconds,
+        fps,
+        width,
+        height,
+      }),
+    });
+
+    if (!inferenceRes.ok) {
+      return res.status(502).json({
+        error: 'Local video inference backend failed',
+        details: `HTTP ${inferenceRes.status}`,
+      });
+    }
+
+    const data = await inferenceRes.json() as { url?: string };
+    if (!data.url) {
+      return res.status(502).json({ error: 'Local video inference backend returned no URL' });
+    }
+
+    res.json({
+      url: data.url,
+      prompt,
+      durationSeconds,
+      fps,
+      width,
+      height,
+      backend: 'local-media-inference',
+      fallback: false,
+    });
+  } catch (error) {
+    console.error('[API] generate-video error:', error);
+    res.status(500).json({
+      error: 'Failed to generate video',
+      details: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
 
 // Health check
 app.get('/api/health', (req: Request, res: Response) => {

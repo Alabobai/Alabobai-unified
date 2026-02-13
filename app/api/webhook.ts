@@ -8,48 +8,7 @@ interface WebhookPayload {
   timestamp: string;
   data: Record<string, unknown>;
   webhookId?: string;
-}
-
-interface WebhookConfig {
-  id: string;
-  secret: string;
-  events: string[];
-  enabled: boolean;
-  url: string;
-}
-
-// HMAC signature verification for webhook security
-async function verifySignature(payload: string, signature: string, secret: string): Promise<boolean> {
-  try {
-    const encoder = new TextEncoder();
-    const key = await crypto.subtle.importKey(
-      'raw',
-      encoder.encode(secret),
-      { name: 'HMAC', hash: 'SHA-256' },
-      false,
-      ['sign', 'verify']
-    );
-
-    const signatureBuffer = encoder.encode(signature);
-    const payloadBuffer = encoder.encode(payload);
-    const expectedSignature = await crypto.subtle.sign('HMAC', key, payloadBuffer);
-
-    // Compare signatures (timing-safe comparison)
-    const expectedArray = new Uint8Array(expectedSignature);
-    const signatureArray = new Uint8Array(signatureBuffer.buffer);
-
-    if (expectedArray.length !== signatureArray.length) {
-      return false;
-    }
-
-    let result = 0;
-    for (let i = 0; i < expectedArray.length; i++) {
-      result |= expectedArray[i] ^ signatureArray[i];
-    }
-    return result === 0;
-  } catch {
-    return false;
-  }
+  [key: string]: unknown;
 }
 
 // Generate webhook signature
@@ -132,7 +91,6 @@ export default async function handler(req: Request) {
     // POST /api/webhook - Receive incoming webhook (from external services)
     if (req.method === 'POST' && pathParts.length === 2) {
       const body = await req.text();
-      const signature = req.headers.get('X-Webhook-Signature') || req.headers.get('x-hub-signature-256');
       const eventType = req.headers.get('X-Webhook-Event') || req.headers.get('X-GitHub-Event') || 'unknown';
 
       let payload: Record<string, unknown>;
@@ -228,7 +186,6 @@ export default async function handler(req: Request) {
     if (req.method === 'POST' && pathParts.length === 3) {
       const webhookId = pathParts[2];
       const body = await req.text();
-      const providedSecret = req.headers.get('X-Webhook-Secret');
       const eventType = req.headers.get('X-Webhook-Event') || 'custom';
 
       let payload: Record<string, unknown>;

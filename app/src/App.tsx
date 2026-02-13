@@ -1,23 +1,41 @@
-import { useEffect } from 'react'
+import { Suspense, lazy, useEffect } from 'react'
 import Sidebar from './components/Sidebar'
 import ChatPanel from './components/ChatPanel'
 import WorkspacePanel from './components/WorkspacePanel'
-import CompanyWizard from './components/CompanyWizard'
-import CompanyDashboard from './components/CompanyDashboard'
-import AutonomousAgentView from './components/AutonomousAgentView'
-import SelfAnnealingAgentView from './components/SelfAnnealingAgentView'
-import DeepResearchView from './components/DeepResearchView'
-import PrivacyFortressView from './components/PrivacyFortressView'
-import FinancialGuardianView from './components/FinancialGuardianView'
-import CreativeStudioView from './components/CreativeStudioView'
-import VoiceInterfaceView from './components/VoiceInterfaceView'
-import DataAnalystView from './components/DataAnalystView'
-import TrustArchitectView from './components/TrustArchitectView'
-import IntegrationHubView from './components/IntegrationHubView'
-import LocalAIBrainView from './components/LocalAIBrainView'
-import SettingsModal from './components/SettingsModal'
 import { useAppStore } from './stores/appStore'
 import { aiService } from './services/ai'
+import ViewErrorBoundary from './components/ViewErrorBoundary'
+
+const CompanyWizard = lazy(() => import('./components/CompanyWizard'))
+const CompanyDashboard = lazy(() => import('./components/CompanyDashboard'))
+const AutonomousAgentView = lazy(() => import('./components/AutonomousAgentView'))
+const SelfAnnealingAgentView = lazy(() => import('./components/SelfAnnealingAgentView'))
+const DeepResearchView = lazy(() => import('./components/DeepResearchView'))
+const PrivacyFortressView = lazy(() => import('./components/PrivacyFortressView'))
+const FinancialGuardianView = lazy(() => import('./components/FinancialGuardianView'))
+const CreativeStudioView = lazy(() => import('./components/CreativeStudioView'))
+const VoiceInterfaceView = lazy(() => import('./components/VoiceInterfaceView'))
+const DataAnalystView = lazy(() => import('./components/DataAnalystView'))
+const TrustArchitectView = lazy(() => import('./components/TrustArchitectView'))
+const IntegrationHubView = lazy(() => import('./components/IntegrationHubView'))
+const LocalAIBrainView = lazy(() => import('./components/LocalAIBrainView'))
+const SettingsModal = lazy(() => import('./components/SettingsModal'))
+
+function ViewLoading() {
+  return (
+    <div className="h-full w-full flex items-center justify-center bg-black">
+      <div className="text-white/60 text-sm">Loading view...</div>
+    </div>
+  )
+}
+
+function LazySettingsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  return (
+    <Suspense fallback={null}>
+      <SettingsModal isOpen={isOpen} onClose={onClose} />
+    </Suspense>
+  )
+}
 
 function App() {
   const { workspaceOpen, currentView, settingsOpen, toggleSettings } = useAppStore()
@@ -33,9 +51,11 @@ function App() {
       <div className="h-screen w-screen flex bg-black overflow-hidden">
         <Sidebar />
         <div className="flex-1 overflow-auto">
-          <CompanyWizard />
+          <Suspense fallback={<ViewLoading />}>
+            <CompanyWizard />
+          </Suspense>
         </div>
-        <SettingsModal isOpen={settingsOpen} onClose={toggleSettings} />
+        <LazySettingsModal isOpen={settingsOpen} onClose={toggleSettings} />
       </div>
     )
   }
@@ -46,9 +66,11 @@ function App() {
       <div className="h-screen w-screen flex bg-black overflow-hidden">
         <Sidebar />
         <div className="flex-1 overflow-hidden">
-          <CompanyDashboard />
+          <Suspense fallback={<ViewLoading />}>
+            <CompanyDashboard />
+          </Suspense>
         </div>
-        <SettingsModal isOpen={settingsOpen} onClose={toggleSettings} />
+        <LazySettingsModal isOpen={settingsOpen} onClose={toggleSettings} />
       </div>
     )
   }
@@ -59,9 +81,11 @@ function App() {
       <div className="h-screen w-screen flex bg-black overflow-hidden">
         <Sidebar />
         <div className="flex-1 overflow-hidden">
-          <AutonomousAgentView />
+          <Suspense fallback={<ViewLoading />}>
+            <AutonomousAgentView />
+          </Suspense>
         </div>
-        <SettingsModal isOpen={settingsOpen} onClose={toggleSettings} />
+        <LazySettingsModal isOpen={settingsOpen} onClose={toggleSettings} />
       </div>
     )
   }
@@ -72,9 +96,13 @@ function App() {
       <div className="h-screen w-screen flex bg-black overflow-hidden">
         <Sidebar />
         <div className="flex-1 overflow-hidden">
-          <LocalAIBrainView />
+          <ViewErrorBoundary title="Local AI Brain encountered an error">
+            <Suspense fallback={<ViewLoading />}>
+              <LocalAIBrainView />
+            </Suspense>
+          </ViewErrorBoundary>
         </div>
-        <SettingsModal isOpen={settingsOpen} onClose={toggleSettings} />
+        <LazySettingsModal isOpen={settingsOpen} onClose={toggleSettings} />
       </div>
     )
   }
@@ -85,9 +113,11 @@ function App() {
       <div className="h-screen w-screen flex bg-black overflow-hidden">
         <Sidebar />
         <div className="flex-1 overflow-hidden">
-          <SelfAnnealingAgentView />
+          <Suspense fallback={<ViewLoading />}>
+            <SelfAnnealingAgentView />
+          </Suspense>
         </div>
-        <SettingsModal isOpen={settingsOpen} onClose={toggleSettings} />
+        <LazySettingsModal isOpen={settingsOpen} onClose={toggleSettings} />
       </div>
     )
   }
@@ -98,9 +128,11 @@ function App() {
       <div className="h-screen w-screen flex bg-black overflow-hidden">
         <Sidebar />
         <div className="flex-1 overflow-hidden">
-          <DeepResearchView />
+          <Suspense fallback={<ViewLoading />}>
+            <DeepResearchView />
+          </Suspense>
         </div>
-        <SettingsModal isOpen={settingsOpen} onClose={toggleSettings} />
+        <LazySettingsModal isOpen={settingsOpen} onClose={toggleSettings} />
       </div>
     )
   }
@@ -111,9 +143,11 @@ function App() {
       <div className="h-screen w-screen flex bg-black overflow-hidden">
         <Sidebar />
         <div className="flex-1 overflow-hidden">
-          <PrivacyFortressView />
+          <Suspense fallback={<ViewLoading />}>
+            <PrivacyFortressView />
+          </Suspense>
         </div>
-        <SettingsModal isOpen={settingsOpen} onClose={toggleSettings} />
+        <LazySettingsModal isOpen={settingsOpen} onClose={toggleSettings} />
       </div>
     )
   }
@@ -124,9 +158,11 @@ function App() {
       <div className="h-screen w-screen flex bg-black overflow-hidden">
         <Sidebar />
         <div className="flex-1 overflow-hidden">
-          <FinancialGuardianView />
+          <Suspense fallback={<ViewLoading />}>
+            <FinancialGuardianView />
+          </Suspense>
         </div>
-        <SettingsModal isOpen={settingsOpen} onClose={toggleSettings} />
+        <LazySettingsModal isOpen={settingsOpen} onClose={toggleSettings} />
       </div>
     )
   }
@@ -137,9 +173,11 @@ function App() {
       <div className="h-screen w-screen flex bg-black overflow-hidden">
         <Sidebar />
         <div className="flex-1 overflow-hidden">
-          <CreativeStudioView />
+          <Suspense fallback={<ViewLoading />}>
+            <CreativeStudioView />
+          </Suspense>
         </div>
-        <SettingsModal isOpen={settingsOpen} onClose={toggleSettings} />
+        <LazySettingsModal isOpen={settingsOpen} onClose={toggleSettings} />
       </div>
     )
   }
@@ -150,9 +188,11 @@ function App() {
       <div className="h-screen w-screen flex bg-black overflow-hidden">
         <Sidebar />
         <div className="flex-1 overflow-hidden">
-          <VoiceInterfaceView />
+          <Suspense fallback={<ViewLoading />}>
+            <VoiceInterfaceView />
+          </Suspense>
         </div>
-        <SettingsModal isOpen={settingsOpen} onClose={toggleSettings} />
+        <LazySettingsModal isOpen={settingsOpen} onClose={toggleSettings} />
       </div>
     )
   }
@@ -163,9 +203,11 @@ function App() {
       <div className="h-screen w-screen flex bg-black overflow-hidden">
         <Sidebar />
         <div className="flex-1 overflow-hidden">
-          <DataAnalystView />
+          <Suspense fallback={<ViewLoading />}>
+            <DataAnalystView />
+          </Suspense>
         </div>
-        <SettingsModal isOpen={settingsOpen} onClose={toggleSettings} />
+        <LazySettingsModal isOpen={settingsOpen} onClose={toggleSettings} />
       </div>
     )
   }
@@ -176,9 +218,11 @@ function App() {
       <div className="h-screen w-screen flex bg-black overflow-hidden">
         <Sidebar />
         <div className="flex-1 overflow-hidden">
-          <TrustArchitectView />
+          <Suspense fallback={<ViewLoading />}>
+            <TrustArchitectView />
+          </Suspense>
         </div>
-        <SettingsModal isOpen={settingsOpen} onClose={toggleSettings} />
+        <LazySettingsModal isOpen={settingsOpen} onClose={toggleSettings} />
       </div>
     )
   }
@@ -189,9 +233,11 @@ function App() {
       <div className="h-screen w-screen flex bg-black overflow-hidden">
         <Sidebar />
         <div className="flex-1 overflow-hidden">
-          <IntegrationHubView />
+          <Suspense fallback={<ViewLoading />}>
+            <IntegrationHubView />
+          </Suspense>
         </div>
-        <SettingsModal isOpen={settingsOpen} onClose={toggleSettings} />
+        <LazySettingsModal isOpen={settingsOpen} onClose={toggleSettings} />
       </div>
     )
   }
@@ -218,7 +264,7 @@ function App() {
       </div>
 
       {/* Settings Modal */}
-      <SettingsModal isOpen={settingsOpen} onClose={toggleSettings} />
+      <LazySettingsModal isOpen={settingsOpen} onClose={toggleSettings} />
     </div>
   )
 }

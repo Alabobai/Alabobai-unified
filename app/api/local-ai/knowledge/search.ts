@@ -5,8 +5,8 @@ export const config = {
 // Local AI Brain Knowledge Search API
 // Search the Qdrant knowledge base using semantic similarity
 
-const OLLAMA_URL = 'http://localhost:11434';
-const QDRANT_URL = 'http://localhost:6333';
+const OLLAMA_URL = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
+const QDRANT_URL = process.env.QDRANT_URL || process.env.QDRANT_BASE_URL || 'http://localhost:6333';
 const DEFAULT_COLLECTION = 'knowledge';
 const EMBEDDING_MODEL = 'nomic-embed-text';
 
