@@ -12,7 +12,9 @@ import {
   Download, Trash2, RefreshCw, ChevronDown, ChevronRight,
   MessageSquare, BookOpen, Layers, Cpu,
   Thermometer, Copy, Check, X, Save,
-  File, Globe, Clipboard, Archive, Sparkles
+  File, Globe, Clipboard, Archive, Sparkles,
+  Plus, Key, Shield, ShieldCheck, ShieldAlert, Zap,
+  Gauge, Lock, Unlock
 } from 'lucide-react'
 import { useMemoryChat } from '../hooks/useMemoryChat'
 import { BRAND } from '@/config/brand'
@@ -729,6 +731,20 @@ function KnowledgeBaseTab({
   )
 }
 
+// ============== Thinking Level Type ==============
+type ThinkingLevel = 'low' | 'medium' | 'high'
+
+// ============== Permission Presets ==============
+type PermissionPreset = 'safe' | 'balanced' | 'full' | 'custom'
+
+interface PermissionSettings {
+  preset: PermissionPreset
+  allowFileAccess: boolean
+  allowWebBrowsing: boolean
+  allowCodeExecution: boolean
+  allowSystemCommands: boolean
+}
+
 // ============== Chat Tab ==============
 
 function ChatTab({
@@ -736,18 +752,35 @@ function ChatTab({
   onSendMessage,
   isStreaming,
   modelSettings,
-  ragSettings
+  ragSettings,
+  onUpdateModelSettings
 }: {
   messages: ChatMessage[]
   onSendMessage: (message: string) => void
   isStreaming: boolean
   modelSettings: ModelSettings
   ragSettings: RAGSettings
+  onUpdateModelSettings?: (settings: Partial<ModelSettings>) => void
 }) {
   const [input, setInput] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [expandedSources, setExpandedSources] = useState<Set<string>>(new Set())
+
+  // New state for controls
+  const [showModelSelector, setShowModelSelector] = useState(false)
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false)
+  const [thinkingLevel, setThinkingLevel] = useState<ThinkingLevel>('medium')
+  const [permissions, setPermissions] = useState<PermissionSettings>({
+    preset: 'balanced',
+    allowFileAccess: true,
+    allowWebBrowsing: true,
+    allowCodeExecution: false,
+    allowSystemCommands: false
+  })
+  const [showPermissions, setShowPermissions] = useState(false)
+  const [customApiKey, setCustomApiKey] = useState('')
+  const [customApiProvider, setCustomApiProvider] = useState<'openai' | 'anthropic' | 'groq' | 'custom'>('groq')
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -908,53 +941,317 @@ function ChatTab({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input */}
+      {/* Input - Smaller and Centered */}
       <div className="p-4 border-t border-white/10">
-        <form onSubmit={handleSubmit}>
-          <div className="morphic-card rounded-xl p-3 border border-white/10 focus-within:border-rose-gold-400/30 transition-colors">
-            <textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault()
-                  handleSubmit(e)
-                }
-              }}
-              placeholder="Ask your local AI brain..."
-              rows={1}
-              className="w-full bg-transparent text-white placeholder-white/30 resize-none outline-none text-sm"
-              style={{ minHeight: '24px', maxHeight: '120px' }}
-            />
-            <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/10">
-              <div className="flex items-center gap-2 text-xs text-white/40">
-                {ragSettings.enabled && (
-                  <span className="flex items-center gap-1 text-rose-gold-400">
-                    <BookOpen className="w-3 h-3" />
-                    RAG enabled
-                  </span>
+        <div className="max-w-2xl mx-auto">
+          {/* Control Bar */}
+          <div className="flex items-center justify-between mb-3 px-1">
+            {/* Left: Model & Thinking */}
+            <div className="flex items-center gap-2">
+              {/* Model Selector */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowModelSelector(!showModelSelector)}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 hover:border-rose-gold-400/30 text-xs text-white/70 hover:text-white transition-all"
+                >
+                  <Cpu className="w-3.5 h-3.5 text-rose-gold-400" />
+                  <span>{modelSettings.model || 'Local'}</span>
+                  <ChevronDown className="w-3 h-3" />
+                </button>
+
+                {/* Model Dropdown */}
+                {showModelSelector && (
+                  <div className="absolute bottom-full left-0 mb-2 w-64 bg-dark-400 border border-white/10 rounded-xl shadow-xl z-50 overflow-hidden">
+                    <div className="p-2 border-b border-white/10">
+                      <p className="text-xs text-white/40 px-2 mb-2">Local Models (Ollama)</p>
+                      {['llama3.2', 'mistral', 'codellama', 'phi3'].map(model => (
+                        <button
+                          key={model}
+                          onClick={() => {
+                            onUpdateModelSettings?.({ model })
+                            setShowModelSelector(false)
+                          }}
+                          className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
+                            modelSettings.model === model
+                              ? 'bg-rose-gold-400/20 text-rose-gold-400'
+                              : 'text-white/70 hover:bg-white/5'
+                          }`}
+                        >
+                          {model}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="p-2 border-b border-white/10">
+                      <p className="text-xs text-white/40 px-2 mb-2">Free Cloud Models</p>
+                      {['gemma-2-9b (Free)', 'llama-3.1-70b (Free)'].map(model => (
+                        <button
+                          key={model}
+                          onClick={() => {
+                            onUpdateModelSettings?.({ model: model.split(' ')[0] })
+                            setShowModelSelector(false)
+                          }}
+                          className="w-full text-left px-3 py-2 rounded-lg text-sm text-white/70 hover:bg-white/5 transition-colors"
+                        >
+                          {model}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="p-2">
+                      <button
+                        onClick={() => {
+                          setShowModelSelector(false)
+                          setShowApiKeyModal(true)
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-rose-gold-400 hover:bg-rose-gold-400/10 transition-colors"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Add Custom API
+                      </button>
+                    </div>
+                  </div>
                 )}
               </div>
+
+              {/* Thinking Level */}
+              <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-white/5 border border-white/10">
+                <Gauge className="w-3.5 h-3.5 text-white/40" />
+                {(['low', 'medium', 'high'] as ThinkingLevel[]).map(level => (
+                  <button
+                    key={level}
+                    onClick={() => setThinkingLevel(level)}
+                    className={`px-2 py-0.5 rounded text-xs font-medium transition-all ${
+                      thinkingLevel === level
+                        ? level === 'high'
+                          ? 'bg-rose-gold-400 text-dark-500'
+                          : level === 'medium'
+                          ? 'bg-rose-gold-400/60 text-dark-500'
+                          : 'bg-white/20 text-white'
+                        : 'text-white/40 hover:text-white/70'
+                    }`}
+                  >
+                    {level.charAt(0).toUpperCase() + level.slice(1)}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Right: Permissions */}
+            <div className="relative">
               <button
-                type="submit"
-                disabled={!input.trim() || isStreaming}
-                className="bg-gradient-to-r from-rose-gold-400 to-rose-gold-600 hover:from-rose-gold-300 hover:to-rose-gold-500 text-dark-500 font-medium py-2 px-4 rounded-xl text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-glow-sm transition-all"
+                onClick={() => setShowPermissions(!showPermissions)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs transition-all ${
+                  permissions.preset === 'full'
+                    ? 'bg-rose-gold-500/20 border-rose-gold-400/30 text-rose-gold-400'
+                    : permissions.preset === 'safe'
+                    ? 'bg-green-500/10 border-green-400/30 text-green-400'
+                    : 'bg-white/5 border-white/10 text-white/70 hover:text-white'
+                }`}
               >
-                {isStreaming ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Thinking...
-                  </>
+                {permissions.preset === 'full' ? (
+                  <Unlock className="w-3.5 h-3.5" />
+                ) : permissions.preset === 'safe' ? (
+                  <ShieldCheck className="w-3.5 h-3.5" />
                 ) : (
-                  <>
-                    <Send className="w-4 h-4" />
-                    Send
-                  </>
+                  <Shield className="w-3.5 h-3.5" />
                 )}
+                <span>{permissions.preset.charAt(0).toUpperCase() + permissions.preset.slice(1)}</span>
+                <ChevronDown className="w-3 h-3" />
               </button>
+
+              {/* Permissions Dropdown */}
+              {showPermissions && (
+                <div className="absolute bottom-full right-0 mb-2 w-72 bg-dark-400 border border-white/10 rounded-xl shadow-xl z-50 overflow-hidden">
+                  <div className="p-3 border-b border-white/10">
+                    <p className="text-xs text-white/40 mb-2">Permission Presets</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      {(['safe', 'balanced', 'full'] as PermissionPreset[]).map(preset => (
+                        <button
+                          key={preset}
+                          onClick={() => {
+                            const presetSettings = {
+                              safe: { allowFileAccess: false, allowWebBrowsing: false, allowCodeExecution: false, allowSystemCommands: false },
+                              balanced: { allowFileAccess: true, allowWebBrowsing: true, allowCodeExecution: false, allowSystemCommands: false },
+                              full: { allowFileAccess: true, allowWebBrowsing: true, allowCodeExecution: true, allowSystemCommands: true }
+                            }
+                            setPermissions({ preset, ...presetSettings[preset] })
+                          }}
+                          className={`px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                            permissions.preset === preset
+                              ? preset === 'full'
+                                ? 'bg-rose-gold-400/20 text-rose-gold-400 border border-rose-gold-400/30'
+                                : preset === 'safe'
+                                ? 'bg-green-500/20 text-green-400 border border-green-400/30'
+                                : 'bg-rose-gold-400/10 text-rose-gold-300 border border-rose-gold-400/20'
+                              : 'bg-white/5 text-white/60 hover:bg-white/10'
+                          }`}
+                        >
+                          {preset.charAt(0).toUpperCase() + preset.slice(1)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="p-3 space-y-2">
+                    <p className="text-xs text-white/40 mb-2">Custom Permissions</p>
+                    {[
+                      { key: 'allowFileAccess', label: 'File Access', icon: File },
+                      { key: 'allowWebBrowsing', label: 'Web Browsing', icon: Globe },
+                      { key: 'allowCodeExecution', label: 'Code Execution', icon: Zap },
+                      { key: 'allowSystemCommands', label: 'System Commands', icon: ShieldAlert }
+                    ].map(({ key, label, icon: Icon }) => (
+                      <div key={key} className="flex items-center justify-between py-1">
+                        <div className="flex items-center gap-2">
+                          <Icon className="w-3.5 h-3.5 text-white/40" />
+                          <span className="text-xs text-white/70">{label}</span>
+                        </div>
+                        <button
+                          onClick={() => setPermissions(prev => ({
+                            ...prev,
+                            preset: 'custom',
+                            [key]: !prev[key as keyof PermissionSettings]
+                          }))}
+                          className={`w-8 h-4 rounded-full transition-colors ${
+                            permissions[key as keyof PermissionSettings]
+                              ? 'bg-rose-gold-400'
+                              : 'bg-white/20'
+                          }`}
+                        >
+                          <div className={`w-3 h-3 rounded-full bg-white transition-transform ${
+                            permissions[key as keyof PermissionSettings]
+                              ? 'translate-x-4'
+                              : 'translate-x-0.5'
+                          }`} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="p-2 border-t border-white/10">
+                    <button
+                      onClick={() => setShowPermissions(false)}
+                      className="w-full py-2 text-xs text-white/50 hover:text-white transition-colors"
+                    >
+                      Close
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-        </form>
+
+          {/* Input Form */}
+          <form onSubmit={handleSubmit}>
+            <div className="morphic-card rounded-xl p-3 border border-white/10 focus-within:border-rose-gold-400/30 transition-colors">
+              <textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault()
+                    handleSubmit(e)
+                  }
+                }}
+                placeholder="Ask your local AI brain..."
+                rows={1}
+                className="w-full bg-transparent text-white placeholder-white/30 resize-none outline-none text-sm"
+                style={{ minHeight: '24px', maxHeight: '80px' }}
+              />
+              <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/10">
+                <div className="flex items-center gap-2 text-xs text-white/40">
+                  {ragSettings.enabled && (
+                    <span className="flex items-center gap-1 text-rose-gold-400">
+                      <BookOpen className="w-3 h-3" />
+                      RAG enabled
+                    </span>
+                  )}
+                </div>
+                <button
+                  type="submit"
+                  disabled={!input.trim() || isStreaming}
+                  className="bg-gradient-to-r from-rose-gold-400 to-rose-gold-600 hover:from-rose-gold-300 hover:to-rose-gold-500 text-dark-500 font-medium py-1.5 px-4 rounded-lg text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-glow-sm transition-all"
+                >
+                  {isStreaming ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Thinking...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4" />
+                      Send
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        {/* API Key Modal */}
+        {showApiKeyModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+            <div className="bg-dark-400 border border-white/10 rounded-2xl p-6 w-full max-w-md mx-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                  <Key className="w-5 h-5 text-rose-gold-400" />
+                  Add Custom API
+                </h3>
+                <button onClick={() => setShowApiKeyModal(false)} className="text-white/40 hover:text-white">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs text-white/60 mb-2 block">Provider</label>
+                  <div className="grid grid-cols-4 gap-2">
+                    {(['groq', 'openai', 'anthropic', 'custom'] as const).map(provider => (
+                      <button
+                        key={provider}
+                        onClick={() => setCustomApiProvider(provider)}
+                        className={`px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                          customApiProvider === provider
+                            ? 'bg-rose-gold-400/20 text-rose-gold-400 border border-rose-gold-400/30'
+                            : 'bg-white/5 text-white/60 hover:bg-white/10'
+                        }`}
+                      >
+                        {provider.charAt(0).toUpperCase() + provider.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs text-white/60 mb-2 block">API Key</label>
+                  <input
+                    type="password"
+                    value={customApiKey}
+                    onChange={(e) => setCustomApiKey(e.target.value)}
+                    placeholder={customApiProvider === 'groq' ? 'gsk_...' : customApiProvider === 'openai' ? 'sk-...' : 'Enter API key'}
+                    className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white text-sm placeholder-white/30 focus:outline-none focus:border-rose-gold-400/50"
+                  />
+                </div>
+
+                <p className="text-xs text-white/40">
+                  {customApiProvider === 'groq' && 'Get free API key at console.groq.com'}
+                  {customApiProvider === 'openai' && 'Get API key at platform.openai.com'}
+                  {customApiProvider === 'anthropic' && 'Get API key at console.anthropic.com'}
+                  {customApiProvider === 'custom' && 'Enter your custom API endpoint key'}
+                </p>
+
+                <button
+                  onClick={() => {
+                    // Save API key logic here
+                    setShowApiKeyModal(false)
+                  }}
+                  disabled={!customApiKey.trim()}
+                  className="w-full bg-rose-gold-400 text-dark-500 font-medium py-3 rounded-xl text-sm disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  <Check className="w-4 h-4" />
+                  Save API Key
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
@@ -1956,6 +2253,7 @@ export default function LocalAIBrainView() {
             isStreaming={isStreaming}
             modelSettings={modelSettings}
             ragSettings={ragSettings}
+            onUpdateModelSettings={(settings) => setModelSettings(prev => ({ ...prev, ...settings }))}
           />
         ) : (
           <div className="h-full overflow-y-auto morphic-scrollbar p-6">
