@@ -11,9 +11,11 @@ import {
   Settings, Send, Loader2, CheckCircle2, AlertCircle,
   Download, Trash2, RefreshCw, ChevronDown, ChevronRight,
   MessageSquare, BookOpen, Layers, Cpu,
-  Thermometer, Copy, Check, X,
-  File, Globe, Clipboard, Archive
+  Thermometer, Copy, Check, X, Save,
+  File, Globe, Clipboard, Archive, Sparkles
 } from 'lucide-react'
+import { useMemoryChat } from '../hooks/useMemoryChat'
+import { BRAND } from '@/config/brand'
 
 // ============== Types ==============
 
@@ -77,6 +79,10 @@ interface ModelSettings {
   temperature: number
   maxTokens: number
   embeddingModel: string
+  // Gemini settings for 1M+ context
+  geminiApiKey?: string
+  useGemini?: boolean
+  geminiModel?: 'gemini-2.0-flash' | 'gemini-1.5-pro' | 'gemini-1.5-flash'
 }
 
 // ============== Tab Button Component ==============
@@ -154,7 +160,7 @@ function ModelCard({
         </div>
         <button
           onClick={(e) => { e.stopPropagation(); onDelete(); }}
-          className="p-1.5 rounded-lg text-white/40 hover:text-red-400 hover:bg-red-400/10 transition-colors"
+          className="p-1.5 rounded-lg text-white/40 hover:text-rose-gold-400 hover:bg-rose-gold-500/10 transition-colors"
         >
           <Trash2 className="w-4 h-4" />
         </button>
@@ -242,7 +248,7 @@ function PullModelModal({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-dark-400/80 backdrop-blur-sm">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -310,7 +316,7 @@ function PullModelModal({
           <button
             onClick={handlePull}
             disabled={!modelName.trim() || isPulling}
-            className="w-full morphic-btn bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 py-3 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full morphic-btn py-3 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {isPulling ? (
               <>
@@ -367,7 +373,7 @@ function ModelsTab({
           </button>
           <button
             onClick={() => setShowPullModal(true)}
-            className="morphic-btn bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 px-3 py-2 text-sm flex items-center gap-2"
+            className="morphic-btn-ghost bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 px-3 py-2 text-sm flex items-center gap-2"
           >
             <Download className="w-4 h-4" />
             Pull Model
@@ -399,7 +405,7 @@ function ModelsTab({
           </p>
           <button
             onClick={() => setShowPullModal(true)}
-            className="morphic-btn bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 px-6 py-3 text-sm font-semibold flex items-center gap-2 mx-auto"
+            className="morphic-btn-ghost bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 px-6 py-3 text-sm font-semibold flex items-center gap-2 mx-auto"
           >
             <Download className="w-4 h-4" />
             Pull Your First Model
@@ -626,7 +632,7 @@ function KnowledgeBaseTab({
               <button
                 onClick={handleUrlIngest}
                 disabled={!urlInput.trim() || isIngesting}
-                className="morphic-btn bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 px-4 py-3 text-sm font-semibold disabled:opacity-50"
+                className="morphic-btn-ghost bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 px-4 py-3 text-sm font-semibold disabled:opacity-50"
               >
                 {isIngesting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
               </button>
@@ -655,7 +661,7 @@ function KnowledgeBaseTab({
             <button
               onClick={handleTextIngest}
               disabled={!textInput.trim() || isIngesting}
-              className="w-full morphic-btn bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 py-3 text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full morphic-btn py-3 text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {isIngesting ? (
                 <>
@@ -681,8 +687,8 @@ function KnowledgeBaseTab({
               exit={{ opacity: 0, y: -10 }}
               className={`mt-4 p-3 rounded-lg flex items-center gap-2 ${
                 ingestStatus.type === 'success'
-                  ? 'bg-green-400/10 border border-green-400/30 text-green-400'
-                  : 'bg-red-400/10 border border-red-400/30 text-red-400'
+                  ? 'bg-rose-gold-400/10 border border-rose-gold-400/30 text-rose-gold-400'
+                  : 'bg-rose-gold-500/10 border border-rose-gold-400/30 text-rose-gold-400'
               }`}
             >
               {ingestStatus.type === 'success' ? (
@@ -888,7 +894,7 @@ function ChatTab({
                       className="p-1.5 rounded-lg text-white/40 hover:text-white hover:bg-white/10 transition-colors"
                     >
                       {copiedId === message.id ? (
-                        <Check className="w-3.5 h-3.5 text-green-400" />
+                        <Check className="w-3.5 h-3.5 text-rose-gold-400" />
                       ) : (
                         <Copy className="w-3.5 h-3.5" />
                       )}
@@ -1053,6 +1059,81 @@ function SettingsTab({
         </div>
       </div>
 
+      {/* Gemini 2.0 Integration - 1M+ Context */}
+      <div className="morphic-card p-6 rounded-xl border border-rose-gold-400/20">
+        <h3 className="text-lg font-semibold text-white mb-2 flex items-center gap-2">
+          <Sparkles className="w-5 h-5 text-rose-gold-400" />
+          Gemini 2.0 - 1M+ Context
+        </h3>
+        <p className="text-xs text-white/50 mb-4">
+          Enable Google Gemini for unlimited conversation memory (1 million+ tokens)
+        </p>
+
+        <div className="space-y-4">
+          {/* Enable Gemini Toggle */}
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-white">Use Gemini</p>
+              <p className="text-xs text-white/40">Primary AI with 1M+ context window</p>
+            </div>
+            <button
+              onClick={() => onUpdateModelSettings({ useGemini: !modelSettings.useGemini })}
+              className={`w-12 h-6 rounded-full transition-colors ${
+                modelSettings.useGemini ? 'bg-rose-gold-400' : 'bg-white/20'
+              }`}
+            >
+              <div className={`w-5 h-5 rounded-full bg-white shadow-md transform transition-transform ${
+                modelSettings.useGemini ? 'translate-x-6' : 'translate-x-0.5'
+              }`} />
+            </button>
+          </div>
+
+          {/* Gemini Model Selection */}
+          <div>
+            <label className="text-xs text-white/60 mb-2 block">Gemini Model</label>
+            <select
+              value={modelSettings.geminiModel || 'gemini-2.0-flash'}
+              onChange={(e) => onUpdateModelSettings({ geminiModel: e.target.value as ModelSettings['geminiModel'] })}
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-rose-gold-400/50 appearance-none cursor-pointer"
+            >
+              <option value="gemini-2.0-flash">Gemini 2.0 Flash (Fastest)</option>
+              <option value="gemini-1.5-pro">Gemini 1.5 Pro (1M context)</option>
+              <option value="gemini-1.5-flash">Gemini 1.5 Flash (Fast)</option>
+            </select>
+          </div>
+
+          {/* API Key Input */}
+          <div>
+            <label className="text-xs text-white/60 mb-2 block">Gemini API Key</label>
+            <input
+              type="password"
+              value={modelSettings.geminiApiKey || ''}
+              onChange={(e) => onUpdateModelSettings({ geminiApiKey: e.target.value })}
+              placeholder="AIza..."
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white text-sm placeholder-white/30 focus:outline-none focus:border-rose-gold-400/50"
+            />
+            <p className="text-xs text-white/30 mt-2">
+              Get your free API key at{' '}
+              <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" className="text-rose-gold-400 hover:underline">
+                Google AI Studio
+              </a>
+            </p>
+          </div>
+
+          {/* Status Indicator */}
+          {modelSettings.useGemini && (
+            <div className={`p-3 rounded-lg ${modelSettings.geminiApiKey ? 'bg-rose-gold-400/10 border border-rose-gold-400/30' : 'bg-white/5 border border-white/10'}`}>
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full ${modelSettings.geminiApiKey ? 'bg-rose-gold-400 animate-pulse' : 'bg-white/30'}`} />
+                <span className="text-sm text-white/70">
+                  {modelSettings.geminiApiKey ? 'Gemini enabled - Full memory active' : 'Enter API key to enable'}
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* RAG Settings */}
       <div className="morphic-card p-6 rounded-xl">
         <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
@@ -1139,7 +1220,48 @@ function SettingsTab({
           </div>
         </div>
       </div>
+
+      {/* Save Button */}
+      <div className="pt-4 border-t border-white/10">
+        <SaveSettingsButton />
+      </div>
     </div>
+  )
+}
+
+// ============== Save Settings Button Component ==============
+
+function SaveSettingsButton() {
+  const [showSaved, setShowSaved] = useState(false)
+
+  const handleSave = useCallback(() => {
+    // Settings are already auto-saved via useEffect, but show visual feedback
+    setShowSaved(true)
+    setTimeout(() => setShowSaved(false), 2000)
+  }, [])
+
+  return (
+    <button
+      onClick={handleSave}
+      disabled={showSaved}
+      className={`w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-medium transition-all ${
+        showSaved
+          ? 'bg-green-500/20 text-green-400 border border-green-400/30'
+          : 'bg-rose-gold-400 text-dark-500 hover:bg-rose-gold-300 shadow-glow-sm'
+      }`}
+    >
+      {showSaved ? (
+        <>
+          <Check className="w-4 h-4" />
+          Settings Saved!
+        </>
+      ) : (
+        <>
+          <Save className="w-4 h-4" />
+          Save Settings
+        </>
+      )}
+    </button>
   )
 }
 
@@ -1164,16 +1286,61 @@ export default function LocalAIBrainView() {
   // Knowledge base
   const [knowledgeStats, setKnowledgeStats] = useState<KnowledgeStats | null>(null)
 
-  // Chat
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
-
-  // Settings
-  const [modelSettings, setModelSettings] = useState<ModelSettings>({
-    model: '',
-    temperature: 0.7,
-    maxTokens: 2048,
-    embeddingModel: ''
+  // Chat with persistent storage (survives page refresh)
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('alabobai-chat-history')
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved)
+          // Restore dates and limit to last 500 messages
+          return parsed.slice(-500).map((msg: ChatMessage) => ({
+            ...msg,
+            timestamp: new Date(msg.timestamp)
+          }))
+        } catch { return [] }
+      }
+    }
+    return []
   })
+
+  // Save chat history to localStorage whenever it changes
+  useEffect(() => {
+    if (chatMessages.length > 0) {
+      const toSave = chatMessages.slice(-500) // Keep last 500 messages
+      localStorage.setItem('alabobai-chat-history', JSON.stringify(toSave))
+    }
+  }, [chatMessages])
+
+  // Clear chat history
+  const clearChatHistory = useCallback(() => {
+    setChatMessages([])
+    localStorage.removeItem('alabobai-chat-history')
+  }, [])
+
+  // Settings with Gemini support (persisted)
+  const [modelSettings, setModelSettings] = useState<ModelSettings>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('alabobai-model-settings')
+      if (saved) {
+        try { return JSON.parse(saved) } catch { /* use default */ }
+      }
+    }
+    return {
+      model: 'llama3:latest',
+      temperature: 0.7,
+      maxTokens: 2048,
+      embeddingModel: 'nomic-embed-text',
+      geminiApiKey: '',
+      useGemini: false,
+      geminiModel: 'gemini-2.0-flash' as const
+    }
+  })
+
+  // Save model settings
+  useEffect(() => {
+    localStorage.setItem('alabobai-model-settings', JSON.stringify(modelSettings))
+  }, [modelSettings])
 
   const [ragSettings, setRAGSettings] = useState<RAGSettings>({
     enabled: true,
@@ -1181,6 +1348,22 @@ export default function LocalAIBrainView() {
     minScore: 0.5,
     includeMetadata: true
   })
+
+  // Memory system integration
+  const {
+    getContextForQuery,
+    buildContextPrompt,
+    rememberUserMessage,
+    rememberAssistantResponse,
+    startNewConversation
+  } = useMemoryChat({ projectId: 'local-ai-brain' })
+
+  // Track if memory context was used
+  const [memoryContext, setMemoryContext] = useState<{
+    used: boolean
+    memoriesFound: number
+    solutionsFound: number
+  }>({ used: false, memoriesFound: 0, solutionsFound: 0 })
 
   // Fetch service status
   const fetchStatus = useCallback(async () => {
@@ -1332,7 +1515,7 @@ export default function LocalAIBrainView() {
     await fetchKnowledgeStats()
   }
 
-  // Send chat message
+  // Send chat message with memory integration
   const sendMessage = async (content: string) => {
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
@@ -1353,50 +1536,324 @@ export default function LocalAIBrainView() {
     setChatMessages(prev => [...prev, userMessage, assistantMessage])
     setIsStreaming(true)
 
+    // Remember user message (non-blocking)
+    rememberUserMessage(content).catch(console.error)
+
+    // Start memory context lookup in background (non-blocking for faster response)
+    const memoryPromise = getContextForQuery(content).catch(() => null)
+
+    // Strip markdown from response
+    const cleanResponse = (text: string) => {
+      return text
+        .replace(/\*\*([^*]+)\*\*/g, '$1')  // **bold**
+        .replace(/\*([^*]+)\*/g, '$1')       // *italic*
+        .replace(/__([^_]+)__/g, '$1')       // __bold__
+        .replace(/_([^_]+)_/g, '$1')         // _italic_
+        .replace(/^[\s]*[-*+]\s/gm, '- ')    // bullet points to dashes
+        .replace(/^[\s]*\d+\.\s/gm, '')      // numbered lists
+        .replace(/`([^`]+)`/g, '$1')         // `code`
+        .replace(/```[\s\S]*?```/g, '')      // code blocks
+        .replace(/#{1,6}\s/g, '')            // headers
+        .trim()
+    }
+
+    // System prompt for fast, clean responses with full memory
+    const systemPrompt = {
+      role: 'system',
+      content: 'You are a fast, helpful AI assistant with perfect memory. RULES: 1) NO markdown - no asterisks, stars, bold, italic. Plain text only. 2) Be concise. 3) You remember EVERYTHING from our conversation. 4) Reference previous messages naturally.'
+    }
+
+    // Get ALL conversation history (unlimited for full memory)
+    const allCompletedMessages = chatMessages
+      .filter(msg => msg.status === 'complete' && msg.content)
+      .map(msg => ({
+        role: msg.role as 'user' | 'assistant',
+        content: msg.content
+      }))
+
+    // Calculate approximate token count (rough estimate: 4 chars = 1 token)
+    const estimateTokens = (messages: Array<{role: string, content: string}>) => {
+      return messages.reduce((sum, msg) => sum + Math.ceil(msg.content.length / 4), 0)
+    }
+
+    // Context window limits by model type
+    const getContextLimit = (model: string) => {
+      if (model.includes('llama3.1') || model.includes('llama-3.1')) return 128000
+      if (model.includes('llama3.2') || model.includes('llama-3.2')) return 128000
+      if (model.includes('mistral')) return 32000
+      if (model.includes('mixtral')) return 32000
+      if (model.includes('qwen')) return 32000
+      if (model.includes('gemma')) return 8000
+      return 8000 // Default for llama3 and others
+    }
+
+    const modelName = modelSettings.model || 'llama3:latest'
+    const contextLimit = getContextLimit(modelName)
+    const reservedTokens = 2000 // Reserve for response
+
+    // Smart context management: include as many messages as fit
+    let conversationHistory = allCompletedMessages
+    let totalTokens = estimateTokens(conversationHistory)
+
+    // If too many tokens, create a summary of older messages + keep recent ones
+    if (totalTokens > contextLimit - reservedTokens) {
+      const recentCount = Math.min(50, allCompletedMessages.length) // Keep last 50 messages
+      const recentMessages = allCompletedMessages.slice(-recentCount)
+      const olderMessages = allCompletedMessages.slice(0, -recentCount)
+
+      if (olderMessages.length > 0) {
+        // Create a condensed summary of older conversation
+        const summaryContent = olderMessages
+          .map(m => `${m.role === 'user' ? 'User' : 'AI'}: ${m.content.slice(0, 200)}${m.content.length > 200 ? '...' : ''}`)
+          .join('\n')
+
+        const summaryMessage = {
+          role: 'system' as const,
+          content: `[CONVERSATION HISTORY SUMMARY - ${olderMessages.length} earlier messages]\n${summaryContent.slice(0, 4000)}\n[END SUMMARY]`
+        }
+
+        conversationHistory = [summaryMessage, ...recentMessages] as Array<{role: 'user' | 'assistant', content: string}>
+      } else {
+        conversationHistory = recentMessages
+      }
+    }
+
+    // Build final message array
+    const allMessages = [
+      systemPrompt,
+      ...conversationHistory,
+      { role: 'user', content }
+    ]
+
+    console.log(`Memory: ${allCompletedMessages.length} total messages, ${conversationHistory.length} in context, ~${estimateTokens(conversationHistory)} tokens`)
+
+    // ========== GEMINI 2.0 WITH 1M+ CONTEXT ==========
+    if (modelSettings.useGemini && modelSettings.geminiApiKey) {
+      try {
+        console.log('Using Gemini with FULL conversation history (1M+ context)')
+
+        // Gemini uses ALL messages - no summarization needed!
+        const geminiMessages = [
+          ...allCompletedMessages.map(msg => ({
+            role: msg.role === 'user' ? 'user' : 'model',
+            parts: [{ text: msg.content }]
+          })),
+          { role: 'user', parts: [{ text: content }] }
+        ]
+
+        const geminiModel = modelSettings.geminiModel || 'gemini-2.0-flash'
+        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:streamGenerateContent?key=${modelSettings.geminiApiKey}`
+
+        const geminiResponse = await fetch(geminiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: geminiMessages,
+            systemInstruction: {
+              parts: [{ text: 'You are a fast, helpful AI assistant with perfect memory. RULES: 1) NO markdown - no asterisks, stars, bold, italic. Plain text only. 2) Be concise and direct. 3) You remember EVERYTHING from our conversation.' }]
+            },
+            generationConfig: {
+              temperature: 0.3,
+              maxOutputTokens: 2048,
+              topP: 0.9
+            }
+          })
+        })
+
+        if (geminiResponse.ok && geminiResponse.body) {
+          const reader = geminiResponse.body.getReader()
+          const decoder = new TextDecoder()
+          let fullContent = ''
+
+          while (true) {
+            const { done, value } = await reader.read()
+            if (done) break
+
+            const chunk = decoder.decode(value, { stream: true })
+            // Parse Gemini streaming response
+            const lines = chunk.split('\n').filter(line => line.trim())
+
+            for (const line of lines) {
+              try {
+                // Handle Gemini's JSON array streaming format
+                const cleanLine = line.replace(/^\[|\]$/g, '').replace(/^,/, '')
+                if (!cleanLine.trim()) continue
+
+                const json = JSON.parse(cleanLine)
+                const text = json.candidates?.[0]?.content?.parts?.[0]?.text
+                if (text) {
+                  fullContent += text
+                  const cleaned = cleanResponse(fullContent)
+                  setChatMessages(prev => prev.map(msg =>
+                    msg.id === assistantMessage.id
+                      ? { ...msg, content: cleaned, status: 'streaming' }
+                      : msg
+                  ))
+                }
+              } catch {
+                // Skip unparseable chunks
+              }
+            }
+          }
+
+          const finalContent = cleanResponse(fullContent)
+          rememberAssistantResponse(content, finalContent).catch(console.error)
+
+          setChatMessages(prev => prev.map(msg =>
+            msg.id === assistantMessage.id
+              ? { ...msg, content: finalContent, status: 'complete' }
+              : msg
+          ))
+          setIsStreaming(false)
+          return // Success with Gemini!
+        }
+        throw new Error('Gemini response failed')
+      } catch (geminiError) {
+        console.warn('Gemini failed, falling back to Ollama:', geminiError)
+      }
+    }
+
+    // ========== OLLAMA LOCAL MODEL ==========
+    // Try Ollama with TRUE streaming for instant response
     try {
-      const response = await fetch('/api/local-ai/chat', {
+      console.log('Calling Ollama with streaming...', allMessages.length, 'messages')
+      const ollamaResponse = await fetch('/ollama/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: [{ role: 'user', content }],
-          model: modelSettings.model,
-          stream: false,
-          temperature: modelSettings.temperature,
-          useKnowledge: ragSettings.enabled,
-          topK: ragSettings.topK
+          model: modelName,
+          messages: allMessages,
+          stream: true,
+          options: {
+            temperature: 0.3,
+            num_ctx: Math.min(contextLimit, 32768), // Set context window
+            num_predict: 512,
+            top_p: 0.9,
+            repeat_penalty: 1.1
+          }
         })
       })
 
-      if (!response.ok) throw new Error('Chat request failed')
+      if (ollamaResponse.ok && ollamaResponse.body) {
+        const reader = ollamaResponse.body.getReader()
+        const decoder = new TextDecoder()
+        let fullContent = ''
 
-      const data = await response.json()
+        // Update memory context in background
+        memoryPromise.then(memContext => {
+          if (memContext) {
+            setMemoryContext({
+              used: memContext.relevantMemories.length > 0 || memContext.suggestedSolutions.length > 0,
+              memoriesFound: memContext.relevantMemories.length,
+              solutionsFound: memContext.suggestedSolutions.length
+            })
+          }
+        })
 
-      const finalContent = data?.response ?? data?.content ?? ''
-      setChatMessages(prev => prev.map(msg =>
-        msg.id === assistantMessage.id
-          ? { ...msg, content: finalContent || 'No response generated.', sources: data?.sources, status: 'complete' }
-          : msg
-      ))
-    } catch (error) {
-      console.error('Chat error:', error)
-      // Demo response for development
-      const demoResponse = ragSettings.enabled
-        ? "Based on your knowledge base, I found relevant information about this topic. Here's what I know: The documents in your collection suggest that this is an important concept with several key aspects to consider. Let me elaborate on the main points I found in your ingested content."
-        : "I'm your local AI assistant powered by Ollama. I can help you with various tasks including answering questions, analyzing data, and generating content. How can I assist you today?"
+        // Read stream chunks
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
 
-      const demoSources = ragSettings.enabled ? [
-        { title: 'Document 1', content: 'Relevant excerpt from document 1...', score: 0.92 },
-        { title: 'Document 2', content: 'Another relevant excerpt...', score: 0.85 },
-      ] : undefined
+          const chunk = decoder.decode(value, { stream: true })
+          const lines = chunk.split('\n').filter(line => line.trim())
 
-      setChatMessages(prev => prev.map(msg =>
-        msg.id === assistantMessage.id
-          ? { ...msg, content: demoResponse, sources: demoSources, status: 'complete' }
-          : msg
-      ))
-    } finally {
-      setIsStreaming(false)
+          for (const line of lines) {
+            try {
+              const json = JSON.parse(line)
+              if (json.message?.content) {
+                fullContent += json.message.content
+                const cleaned = cleanResponse(fullContent)
+                setChatMessages(prev => prev.map(msg =>
+                  msg.id === assistantMessage.id
+                    ? { ...msg, content: cleaned, status: 'streaming' }
+                    : msg
+                ))
+              }
+            } catch {
+              // Skip invalid JSON lines
+            }
+          }
+        }
+
+        // Clean and save final response
+        const finalContent = cleanResponse(fullContent)
+        rememberAssistantResponse(content, finalContent).catch(console.error)
+
+        setChatMessages(prev => prev.map(msg =>
+          msg.id === assistantMessage.id
+            ? { ...msg, content: finalContent, status: 'complete' }
+            : msg
+        ))
+        setIsStreaming(false)
+        return // Success!
+      }
+      throw new Error('Ollama streaming failed')
+    } catch (ollamaError) {
+      console.warn('Ollama streaming failed:', ollamaError)
     }
+
+    // Try cloud fallback APIs (fast, no artificial delay)
+    try {
+      console.log('Trying cloud fallback...')
+
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 10000) // 10s timeout
+
+      const cloudResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'HTTP-Referer': window.location.origin,
+          'X-Title': `${BRAND.name} Local AI`,
+        },
+        body: JSON.stringify({
+          model: 'google/gemma-2-9b-it:free',
+          messages: [
+            { role: 'system', content: 'You are a fast, helpful assistant. Never use markdown, asterisks, or stars. Write plain text only. Be concise. You have full memory of the conversation.' },
+            ...conversationHistory,
+            { role: 'user', content }
+          ],
+          max_tokens: 512,
+          temperature: 0.3,
+        }),
+        signal: controller.signal
+      })
+
+      clearTimeout(timeoutId)
+
+      if (cloudResponse.ok) {
+        const cloudData = await cloudResponse.json()
+        const cloudContent = cleanResponse(cloudData.choices?.[0]?.message?.content || '')
+
+        if (cloudContent) {
+          // Show response immediately (no artificial delay)
+          rememberAssistantResponse(content, cloudContent).catch(console.error)
+
+          setChatMessages(prev => prev.map(msg =>
+            msg.id === assistantMessage.id
+              ? { ...msg, content: cloudContent, status: 'complete' }
+              : msg
+          ))
+          setIsStreaming(false)
+          return
+        }
+      }
+    } catch (cloudError) {
+      console.warn('Cloud fallback failed:', cloudError)
+    }
+
+    // Final fallback: demo response
+    const demoResponse = ragSettings.enabled
+      ? "Based on your knowledge base, I found relevant information. The documents suggest this is an important concept with several key aspects to consider."
+      : "I'm your local AI assistant powered by Ollama. I can help with questions, analysis, and content generation. How can I assist you today?"
+
+    setChatMessages(prev => prev.map(msg =>
+      msg.id === assistantMessage.id
+        ? { ...msg, content: demoResponse, status: 'complete' }
+        : msg
+    ))
+    setIsStreaming(false)
   }
 
   // Initial fetch
@@ -1420,14 +1877,14 @@ export default function LocalAIBrainView() {
   }, [models, modelSettings.model])
 
   return (
-    <div className="h-full flex flex-col bg-dark-500 overflow-hidden">
+    <div className="h-full w-full flex flex-col bg-dark-500 overflow-hidden">
       {/* Header */}
       <div className="glass-morphic-header p-4 border-b border-rose-gold-400/20">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-4">
-            {/* Alabobai Logo */}
+            {/* Brand Logo */}
             <div className="flex items-center gap-2">
-              <img src="/logo.png" alt="Alabobai" className="w-8 h-8 rounded-lg" />
+              <img src={BRAND.assets.logo} alt={BRAND.name} className="w-8 h-8 object-contain logo-render" />
               <div className="h-6 w-px bg-white/10" />
             </div>
             {/* View Header */}
@@ -1446,13 +1903,13 @@ export default function LocalAIBrainView() {
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5">
               <div className={`w-2 h-2 rounded-full ${
-                serviceStatus.ollama.connected ? 'bg-green-400' : 'bg-red-400'
+                serviceStatus.ollama.connected ? 'bg-rose-gold-400' : 'bg-rose-gold-500'
               }`} />
               <span className="text-xs text-white/60">Ollama</span>
             </div>
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5">
               <div className={`w-2 h-2 rounded-full ${
-                serviceStatus.qdrant.connected ? 'bg-green-400' : 'bg-red-400'
+                serviceStatus.qdrant.connected ? 'bg-rose-gold-400' : 'bg-rose-gold-500'
               }`} />
               <span className="text-xs text-white/60">Qdrant</span>
             </div>

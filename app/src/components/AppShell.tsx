@@ -31,6 +31,7 @@ import {
   DEFAULT_SHORTCUTS,
   getViewShortcut
 } from '@/hooks/useKeyboardShortcuts'
+import FilePreviewModal from './FilePreviewModal'
 
 // Lazy-loaded views
 const OnboardingModal = lazy(() => import('./OnboardingModal'))
@@ -50,6 +51,7 @@ const TrustArchitectView = lazy(() => import('./TrustArchitectView'))
 const IntegrationHubView = lazy(() => import('./IntegrationHubView'))
 const LocalAIBrainView = lazy(() => import('./LocalAIBrainView'))
 const MemoryDashboard = lazy(() => import('./MemoryDashboard'))
+const CodeSandboxView = lazy(() => import('./CodeSandboxView'))
 const SettingsModal = lazy(() => import('./SettingsModal'))
 
 // ============================================================================
@@ -98,7 +100,7 @@ function LazyOnboardingModal() {
 type AppView = 'home' | 'chat' | 'company-wizard' | 'company-dashboard' | 'autonomous-agents' |
                'command-center' | 'local-ai-brain' | 'self-annealing' | 'deep-research' | 'privacy-fortress' |
                'financial-guardian' | 'creative-studio' | 'data-analyst' | 'voice-interface' |
-               'trust-architect' | 'integration-hub' | 'memory-dashboard'
+               'trust-architect' | 'integration-hub' | 'memory-dashboard' | 'code-sandbox'
 
 const VIEW_COMPONENTS: Record<string, { component: React.LazyExoticComponent<React.ComponentType<object>>; title: string }> = {
   'home': { component: HomeView, title: 'Home Dashboard' },
@@ -116,7 +118,8 @@ const VIEW_COMPONENTS: Record<string, { component: React.LazyExoticComponent<Rea
   'data-analyst': { component: DataAnalystView, title: 'Data Analyst' },
   'trust-architect': { component: TrustArchitectView, title: 'Trust Architect' },
   'integration-hub': { component: IntegrationHubView, title: 'Integration Hub' },
-  'memory-dashboard': { component: MemoryDashboard, title: 'Memory Dashboard' }
+  'memory-dashboard': { component: MemoryDashboard, title: 'Memory Dashboard' },
+  'code-sandbox': { component: CodeSandboxView, title: 'Code Sandbox' }
 }
 
 const VIEW_ORDER: AppView[] = [
@@ -410,6 +413,9 @@ export default function AppShell() {
 
         {/* Keyboard Shortcuts Modal */}
         <KeyboardShortcutsModal />
+
+        {/* File Preview Modal */}
+        <FilePreviewModal />
       </div>
     </>
   )

@@ -93,7 +93,7 @@ export class AgenticLoop extends EventEmitter {
       while (this.shouldContinue()) {
         const iteration = await this.executeIteration();
         this.state.iterations.push(iteration);
-        this.state.currentIteration++;
+        this.state.currentIteration = (this.state.currentIteration ?? 0) + 1;
 
         this.emit('iteration-complete', iteration);
 
@@ -132,23 +132,30 @@ export class AgenticLoop extends EventEmitter {
 
   private async executeIteration(): Promise<LoopIteration> {
     const iteration: LoopIteration = {
-      number: this.state.currentIteration,
-      phases: {},
+      number: this.state.currentIteration ?? 0,
+      phases: {
+        think: undefined,
+        plan: undefined,
+        act: undefined,
+        observe: undefined,
+      },
       startTime: Date.now(),
       isComplete: false,
     };
 
     try {
+      const phases = iteration.phases!;
+
       // THINK: Analyze the current state and task
       this.state.currentPhase = 'think';
       this.emit('phase-start', { phase: 'think', iteration: iteration.number });
-      iteration.phases.think = await this.think();
-      this.emit('phase-complete', { phase: 'think', result: iteration.phases.think });
+      phases.think = await this.think();
+      this.emit('phase-complete', { phase: 'think', result: phases.think });
 
       // Check if clarification is needed
-      if (iteration.phases.think.clarificationNeeded) {
+      if (phases.think?.clarificationNeeded) {
         this.emit('clarification-needed', {
-          question: iteration.phases.think.clarificationQuestion
+          question: phases.think.clarificationQuestion
         });
         return iteration;
       }
@@ -156,12 +163,12 @@ export class AgenticLoop extends EventEmitter {
       // PLAN: Create a plan of action
       this.state.currentPhase = 'plan';
       this.emit('phase-start', { phase: 'plan', iteration: iteration.number });
-      iteration.phases.plan = await this.plan(iteration.phases.think);
-      this.emit('phase-complete', { phase: 'plan', result: iteration.phases.plan });
+      phases.plan = await this.plan(phases.think!);
+      this.emit('phase-complete', { phase: 'plan', result: phases.plan });
 
       // Check if confirmation is needed
-      if (this.config.requireConfirmation && iteration.phases.plan.steps.length > 0) {
-        const confirmed = await this.requestConfirmation(iteration.phases.plan);
+      if (this.config.requireConfirmation && phases.plan && phases.plan.steps.length > 0) {
+        const confirmed = await this.requestConfirmation(phases.plan);
         if (!confirmed) {
           iteration.cancelled = true;
           return iteration;
@@ -171,19 +178,19 @@ export class AgenticLoop extends EventEmitter {
       // ACT: Execute the plan
       this.state.currentPhase = 'act';
       this.emit('phase-start', { phase: 'act', iteration: iteration.number });
-      iteration.phases.act = await this.act(iteration.phases.plan);
-      this.emit('phase-complete', { phase: 'act', result: iteration.phases.act });
+      phases.act = await this.act(phases.plan!);
+      this.emit('phase-complete', { phase: 'act', result: phases.act });
 
       // OBSERVE: Analyze the results
       this.state.currentPhase = 'observe';
       this.emit('phase-start', { phase: 'observe', iteration: iteration.number });
-      iteration.phases.observe = await this.observe(iteration.phases.act);
-      this.emit('phase-complete', { phase: 'observe', result: iteration.phases.observe });
+      phases.observe = await this.observe(phases.act!);
+      this.emit('phase-complete', { phase: 'observe', result: phases.observe });
 
       // Check if task is complete
-      iteration.isComplete = iteration.phases.observe.taskComplete;
+      iteration.isComplete = phases.observe?.taskComplete ?? false;
       if (iteration.isComplete) {
-        this.state.finalAnswer = iteration.phases.observe.summary;
+        this.state.finalAnswer = phases.observe?.summary;
       }
 
     } catch (error) {
@@ -192,7 +199,7 @@ export class AgenticLoop extends EventEmitter {
     }
 
     iteration.endTime = Date.now();
-    iteration.duration = iteration.endTime - iteration.startTime;
+    iteration.duration = iteration.endTime - (iteration.startTime ?? iteration.endTime);
 
     return iteration;
   }
@@ -232,7 +239,7 @@ ${this.formatToolsDescription()}
 ${recentActions || 'None yet - this is the first iteration.'}
 
 ## Current State
-Iteration: ${this.state.currentIteration + 1}
+Iteration: ${(this.state.currentIteration ?? 0) + 1}
 Progress: Analyzing the task and determining next steps.
 
 Please analyze this task and provide your thinking about how to approach it.
@@ -480,7 +487,7 @@ ${actionResult.stepsFailed} failed
 ${actionResult.output || 'No output'}
 
 ## Errors
-${actionResult.errors.length > 0 ? actionResult.errors.join('\n') : 'None'}
+${(actionResult.errors?.length ?? 0) > 0 ? actionResult.errors!.join('\n') : 'None'}
 
 ## Instructions
 Analyze the results and determine:
@@ -533,10 +540,10 @@ Respond with a JSON object containing:
   // ============================================================================
 
   private shouldContinue(): boolean {
-    return (
+    return Boolean(
       this.state.isRunning &&
       !this.state.isComplete &&
-      this.state.currentIteration < this.config.maxIterations &&
+      (this.state.currentIteration ?? 0) < this.config.maxIterations &&
       !this.state.error
     );
   }
@@ -556,11 +563,11 @@ Respond with a JSON object containing:
 
   private buildResult(): LoopResult {
     return {
-      success: this.state.isComplete && !this.state.error,
-      task: this.state.task,
+      success: Boolean(this.state.isComplete && !this.state.error),
+      task: this.state.task ?? '',
       answer: this.state.finalAnswer,
       iterations: this.state.iterations.length,
-      totalDuration: (this.state.endTime || Date.now()) - this.state.startTime,
+      totalDuration: (this.state.endTime || Date.now()) - (this.state.startTime ?? 0),
       error: this.state.error,
       history: this.state.iterations,
     };
@@ -586,12 +593,13 @@ Respond with a JSON object containing:
   }
 
   private summarizeIteration(iteration: LoopIteration): string {
-    const phases = [];
-    if (iteration.phases.think) phases.push(`Think: ${iteration.phases.think.intent}`);
-    if (iteration.phases.plan) phases.push(`Plan: ${iteration.phases.plan.steps.length} steps`);
-    if (iteration.phases.act) phases.push(`Act: ${iteration.phases.act.stepsSucceeded}/${iteration.phases.act.stepsExecuted} succeeded`);
-    if (iteration.phases.observe) phases.push(`Observe: ${iteration.phases.observe.summary.slice(0, 100)}`);
-    return `**Iteration ${iteration.number + 1}**\n${phases.join('\n')}`;
+    const phaseSummary = [];
+    const phases = iteration.phases;
+    if (phases?.think) phaseSummary.push(`Think: ${phases.think.intent}`);
+    if (phases?.plan) phaseSummary.push(`Plan: ${phases.plan.steps.length} steps`);
+    if (phases?.act) phaseSummary.push(`Act: ${phases.act.stepsSucceeded ?? 0}/${phases.act.stepsExecuted ?? 0} succeeded`);
+    if (phases?.observe) phaseSummary.push(`Observe: ${phases.observe.summary.slice(0, 100)}`);
+    return `**Iteration ${(iteration.number ?? 0) + 1}**\n${phaseSummary.join('\n')}`;
   }
 
   private extractJSON(text: string): any {

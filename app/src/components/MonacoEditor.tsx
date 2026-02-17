@@ -1,22 +1,31 @@
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useState } from 'react'
 import Editor, { OnMount } from '@monaco-editor/react'
 import { useAppStore } from '@/stores/appStore'
+import { usePresenceStore } from '@/stores/presenceStore'
+import { EditorPresenceBar } from './ui/EditorPresence'
 
 interface MonacoEditorProps {
   value?: string
   language?: string
   onChange?: (value: string) => void
   readOnly?: boolean
+  filePath?: string
+  showPresence?: boolean
 }
 
 export default function MonacoEditor({
   value = '',
   language = 'typescript',
   onChange,
-  readOnly = false
+  readOnly = false,
+  filePath,
+  showPresence = true
 }: MonacoEditorProps) {
   const editorRef = useRef<any>(null)
+  const monacoRef = useRef<any>(null)
   const { generatedCode } = useAppStore()
+  const { users, getUsersViewingFile } = usePresenceStore()
+  const [decorations, setDecorations] = useState<string[]>([])
 
   // Use generated code if available
   const displayValue = value || generatedCode || ''
@@ -24,8 +33,12 @@ export default function MonacoEditor({
   // Detect language from content
   const detectedLanguage = detectLanguage(displayValue) || language
 
+  // Get users editing this file
+  const usersEditing = filePath ? getUsersViewingFile(filePath) : users.filter(u => u.activity === 'editing')
+
   const handleEditorMount: OnMount = (editor, monaco) => {
     editorRef.current = editor
+    monacoRef.current = monaco
 
     // Configure Monaco theme
     monaco.editor.defineTheme('alabobai', {
@@ -78,24 +91,133 @@ export default function MonacoEditor({
     }
   }, [displayValue])
 
-  return (
-    <Editor
-      height="100%"
-      defaultLanguage={detectedLanguage}
-      language={detectedLanguage}
-      value={displayValue}
-      onMount={handleEditorMount}
-      onChange={(val) => onChange?.(val || '')}
-      options={{
-        readOnly,
-        domReadOnly: readOnly,
-      }}
-      loading={
-        <div className="h-full flex items-center justify-center bg-dark-400">
-          <div className="text-white/50">Loading editor...</div>
-        </div>
+  // Update remote cursor decorations
+  useEffect(() => {
+    if (!editorRef.current || !monacoRef.current || !showPresence) return
+
+    const newDecorations: any[] = []
+
+    usersEditing.forEach(user => {
+      if (user.cursor && user.cursor.lineNumber) {
+        // Add cursor line decoration
+        newDecorations.push({
+          range: new monacoRef.current.Range(
+            user.cursor.lineNumber,
+            user.cursor.column || 1,
+            user.cursor.lineNumber,
+            (user.cursor.column || 1) + 1
+          ),
+          options: {
+            className: `remote-cursor-${user.id}`,
+            beforeContentClassName: `remote-cursor-line`,
+            after: {
+              content: ` ${user.name}`,
+              inlineClassName: 'remote-cursor-label',
+            },
+            stickiness: 1,
+          }
+        })
       }
-    />
+
+      // Add selection decoration
+      if (user.selection) {
+        newDecorations.push({
+          range: new monacoRef.current.Range(
+            user.selection.startLine,
+            user.selection.startColumn,
+            user.selection.endLine,
+            user.selection.endColumn
+          ),
+          options: {
+            className: `remote-selection`,
+            inlineClassName: 'remote-selection-inline',
+            stickiness: 1,
+          }
+        })
+      }
+    })
+
+    // Apply decorations
+    const newDecIds = editorRef.current.deltaDecorations(decorations, newDecorations)
+    setDecorations(newDecIds)
+
+    // Inject CSS for remote cursors
+    const styleId = 'monaco-presence-styles'
+    let styleEl = document.getElementById(styleId)
+    if (!styleEl) {
+      styleEl = document.createElement('style')
+      styleEl.id = styleId
+      document.head.appendChild(styleEl)
+    }
+
+    const css = usersEditing.map(user => `
+      .remote-cursor-${user.id}::before {
+        content: '';
+        position: absolute;
+        width: 2px;
+        height: 18px;
+        background-color: ${user.color};
+        animation: blink 1s ease-in-out infinite;
+      }
+      .remote-cursor-${user.id}::after {
+        content: '${user.name}';
+        position: absolute;
+        top: -20px;
+        left: 0;
+        background-color: ${user.color};
+        color: white;
+        padding: 2px 6px;
+        font-size: 10px;
+        border-radius: 4px;
+        white-space: nowrap;
+        z-index: 100;
+      }
+    `).join('\n') + `
+      .remote-selection {
+        background-color: rgba(255, 255, 255, 0.1);
+      }
+      @keyframes blink {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+      }
+    `
+    styleEl.textContent = css
+
+    return () => {
+      if (editorRef.current && decorations.length > 0) {
+        editorRef.current.deltaDecorations(decorations, [])
+      }
+    }
+  }, [usersEditing, showPresence])
+
+  return (
+    <div className="h-full flex flex-col">
+      {/* Presence bar showing who's editing */}
+      {showPresence && usersEditing.length > 0 && (
+        <EditorPresenceBar filePath={filePath} />
+      )}
+
+      {/* Editor */}
+      <div className="flex-1 relative">
+        <Editor
+          height="100%"
+          defaultLanguage={detectedLanguage}
+          language={detectedLanguage}
+          value={displayValue}
+          onMount={handleEditorMount}
+          onChange={(val) => onChange?.(val || '')}
+          options={{
+            readOnly,
+            domReadOnly: readOnly,
+          }}
+          loading={
+            <div className="h-full flex items-center justify-center bg-dark-400">
+              <div className="text-white/50">Loading editor...</div>
+            </div>
+          }
+        />
+      </div>
+    </div>
   )
 }
 

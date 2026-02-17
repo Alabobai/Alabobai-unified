@@ -9,6 +9,7 @@ import {
   getHealthMonitor,
   initializeHealthMonitor
 } from '../../services/health.js';
+import { getAuditLogs } from '../middleware/index.js';
 
 // ============================================================================
 // TYPES
@@ -100,6 +101,34 @@ export function createHealthRouter(config: HealthRouterConfig = {}): Router {
       res.status(503).json({
         ready: false,
         error: error instanceof Error ? error.message : 'Readiness check failed'
+      });
+    }
+  });
+
+  // Dependency readiness matrix for ops dashboards
+  router.get('/readiness', async (_req: Request, res: Response) => {
+    try {
+      const monitor = await getMonitor();
+      const status = monitor.getHealthStatus();
+      const dependencies = status.services.map(s => ({
+        name: s.name,
+        status: s.status,
+        latencyMs: s.latencyMs || 0,
+        lastCheck: s.lastCheck,
+        error: s.error || null,
+      }));
+
+      const ready = status.status !== 'unhealthy';
+      res.status(ready ? 200 : 503).json({
+        ready,
+        overall: status.status,
+        timestamp: status.timestamp,
+        dependencies,
+      });
+    } catch (error) {
+      res.status(503).json({
+        ready: false,
+        error: error instanceof Error ? error.message : 'Readiness matrix failed',
       });
     }
   });
@@ -205,6 +234,40 @@ export function createHealthRouter(config: HealthRouterConfig = {}): Router {
       }
     });
 
+    // SLO/Error-budget summary endpoint
+    router.get('/slo', async (_req: Request, res: Response) => {
+      try {
+        const monitor = await getMonitor();
+        const m = monitor.getPerformanceMetrics();
+
+        const availability = Math.max(0, 1 - m.requests.errorRate);
+        const latencyTargetMs = 500;
+        const latencyBreaching = m.requests.p95LatencyMs > latencyTargetMs;
+        const errorBudget = 0.001; // 99.9% availability target
+        const budgetBurn = m.requests.errorRate / errorBudget;
+
+        res.json({
+          timestamp: m.timestamp,
+          slo: {
+            availabilityTarget: 0.999,
+            observedAvailability: availability,
+            p95LatencyTargetMs: latencyTargetMs,
+            observedP95LatencyMs: m.requests.p95LatencyMs,
+          },
+          status: {
+            latencyBreaching,
+            errorBudgetBurnRatio: budgetBurn,
+            healthy: !latencyBreaching && budgetBurn <= 1,
+          },
+        });
+      } catch (error) {
+        res.status(500).json({
+          error: 'Failed to calculate SLOs',
+          message: error instanceof Error ? error.message : 'Unknown error',
+        });
+      }
+    });
+
     // Prometheus-style metrics endpoint
     router.get('/metrics/prometheus', async (req: Request, res: Response) => {
       try {
@@ -272,11 +335,34 @@ export function createHealthRouter(config: HealthRouterConfig = {}): Router {
     });
   }
 
+  const requireAdminKey = (req: Request, res: Response): boolean => {
+    const key = req.headers['x-api-key'] as string | undefined;
+    const adminKey = process.env.ADMIN_API_KEY;
+    if (adminKey && key !== adminKey) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return false;
+    }
+    return true;
+  };
+
+  // ============================================================================
+  // GET /api/health/audit - Structured audit logs (admin key required)
+  // ============================================================================
+
+  router.get('/audit', (req: Request, res: Response) => {
+    if (!requireAdminKey(req, res)) return;
+
+    const limit = Math.min(parseInt(req.query.limit as string) || 100, 1000);
+    const logs = getAuditLogs(limit);
+    return res.json({ count: logs.length, logs });
+  });
+
   // ============================================================================
   // POST /api/health/check - Trigger manual health check
   // ============================================================================
 
   router.post('/check', async (req: Request, res: Response) => {
+    if (!requireAdminKey(req, res)) return;
     try {
       const monitor = await getMonitor();
       await monitor.performHealthCheck();

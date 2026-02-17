@@ -1,9 +1,17 @@
 import React from 'react'
-import { User, Bot, Copy, Check, Eye, Code2 } from 'lucide-react'
-import { useState, useMemo } from 'react'
+import { User, Bot, Copy, Check, Eye, Code2, Play, Loader2, Terminal, X } from 'lucide-react'
+import { useState, useMemo, useCallback } from 'react'
 import type { Message } from '@/stores/appStore'
 import { useAppStore } from '@/stores/appStore'
 import codeBuilder from '@/services/codeBuilder'
+import { BRAND_GRADIENT_ACCENT, BRAND_TOKENS } from '@/config/brandTokens'
+import { BRAND } from '@/config/brand'
+import codeSandbox, {
+  isExecutableLanguage,
+  normalizeLanguage,
+  formatDuration,
+  type ExecutionOutput
+} from '@/services/codeSandbox'
 
 interface ChatMessageProps {
   message: Message
@@ -59,30 +67,30 @@ function highlightCode(code: string, language: string): React.ReactElement {
   if (language === 'html' || language === 'xml') {
     patterns.push(
       { pattern: /(&lt;[\/]?[\w-]+)/g, className: 'text-rose-gold-400' }, // Tags
-      { pattern: /([\w-]+)=/g, className: 'text-yellow-400' }, // Attributes
-      { pattern: /"([^"]*)"/g, className: 'text-green-400' }, // Strings
+      { pattern: /([\w-]+)=/g, className: 'text-rose-gold-400' }, // Attributes
+      { pattern: /"([^"]*)"/g, className: 'text-rose-gold-400' }, // Strings
       { pattern: /(&lt;!--[\s\S]*?--&gt;)/g, className: 'text-white/40 italic' }, // Comments
     )
   } else if (language === 'javascript' || language === 'typescript' || language === 'jsx' || language === 'tsx') {
     patterns.push(
-      { pattern: /\b(const|let|var|function|return|if|else|for|while|import|export|from|default|async|await|class|extends|new|this|try|catch|throw)\b/g, className: 'text-purple-400' }, // Keywords
-      { pattern: /\b(true|false|null|undefined)\b/g, className: 'text-orange-400' }, // Literals
-      { pattern: /"([^"]*)"|'([^']*)'/g, className: 'text-green-400' }, // Strings
-      { pattern: /\b(\d+\.?\d*)\b/g, className: 'text-orange-400' }, // Numbers
+      { pattern: /\b(const|let|var|function|return|if|else|for|while|import|export|from|default|async|await|class|extends|new|this|try|catch|throw)\b/g, className: 'text-rose-gold-400' }, // Keywords
+      { pattern: /\b(true|false|null|undefined)\b/g, className: 'text-rose-gold-400' }, // Literals
+      { pattern: /"([^"]*)"|'([^']*)'/g, className: 'text-rose-gold-400' }, // Strings
+      { pattern: /\b(\d+\.?\d*)\b/g, className: 'text-rose-gold-400' }, // Numbers
       { pattern: /(\/\/.*$)/gm, className: 'text-white/40 italic' }, // Comments
     )
   } else if (language === 'python') {
     patterns.push(
-      { pattern: /\b(def|class|return|if|elif|else|for|while|import|from|as|try|except|finally|with|lambda|and|or|not|in|is|True|False|None)\b/g, className: 'text-purple-400' }, // Keywords
-      { pattern: /"([^"]*)"|'([^']*)'/g, className: 'text-green-400' }, // Strings
-      { pattern: /\b(\d+\.?\d*)\b/g, className: 'text-orange-400' }, // Numbers
+      { pattern: /\b(def|class|return|if|elif|else|for|while|import|from|as|try|except|finally|with|lambda|and|or|not|in|is|True|False|None)\b/g, className: 'text-rose-gold-400' }, // Keywords
+      { pattern: /"([^"]*)"|'([^']*)'/g, className: 'text-rose-gold-400' }, // Strings
+      { pattern: /\b(\d+\.?\d*)\b/g, className: 'text-rose-gold-400' }, // Numbers
       { pattern: /(#.*$)/gm, className: 'text-white/40 italic' }, // Comments
     )
   } else if (language === 'css') {
     patterns.push(
-      { pattern: /([\w-]+):/g, className: 'text-cyan-400' }, // Properties
-      { pattern: /\.([\w-]+)/g, className: 'text-green-400' }, // Classes
-      { pattern: /#([\w-]+)/g, className: 'text-yellow-400' }, // IDs
+      { pattern: /([\w-]+):/g, className: 'text-rose-gold-400' }, // Properties
+      { pattern: /\.([\w-]+)/g, className: 'text-rose-gold-400' }, // Classes
+      { pattern: /#([\w-]+)/g, className: 'text-rose-gold-400' }, // IDs
     )
   }
 
@@ -97,11 +105,113 @@ function highlightCode(code: string, language: string): React.ReactElement {
   )
 }
 
+// Code Execution State for individual code blocks
+interface CodeBlockExecutionState {
+  isRunning: boolean;
+  showOutput: boolean;
+  outputs: ExecutionOutput[];
+  error: string | null;
+  result: { success: boolean; duration: number } | null;
+}
+
 export default function ChatMessage({ message }: ChatMessageProps) {
   const [copied, setCopied] = useState(false)
   const [copiedCode, setCopiedCode] = useState<string | null>(null)
+  const [codeExecutions, setCodeExecutions] = useState<Map<number, CodeBlockExecutionState>>(new Map())
   const { setGeneratedCode, setActiveTab, workspaceOpen, toggleWorkspace } = useAppStore()
   const isUser = message.role === 'user'
+
+  // Handle running code from a code block
+  const handleRunCode = useCallback(async (code: string, language: string, blockIndex: number) => {
+    if (!isExecutableLanguage(language)) return;
+
+    const normalizedLang = normalizeLanguage(language);
+
+    // Initialize execution state
+    setCodeExecutions(prev => {
+      const newMap = new Map(prev);
+      newMap.set(blockIndex, {
+        isRunning: true,
+        showOutput: true,
+        outputs: [],
+        error: null,
+        result: null
+      });
+      return newMap;
+    });
+
+    try {
+      await codeSandbox.executeWithStream(
+        { language: normalizedLang, code },
+        {
+          onStart: () => {},
+          onOutput: (output) => {
+            setCodeExecutions(prev => {
+              const newMap = new Map(prev);
+              const state = newMap.get(blockIndex);
+              if (state) {
+                newMap.set(blockIndex, {
+                  ...state,
+                  outputs: [...state.outputs, output]
+                });
+              }
+              return newMap;
+            });
+          },
+          onComplete: (res) => {
+            setCodeExecutions(prev => {
+              const newMap = new Map(prev);
+              const state = newMap.get(blockIndex);
+              if (state) {
+                newMap.set(blockIndex, {
+                  ...state,
+                  isRunning: false,
+                  result: { success: res.success, duration: res.duration }
+                });
+              }
+              return newMap;
+            });
+          },
+          onError: (err) => {
+            setCodeExecutions(prev => {
+              const newMap = new Map(prev);
+              const state = newMap.get(blockIndex);
+              if (state) {
+                newMap.set(blockIndex, {
+                  ...state,
+                  isRunning: false,
+                  error: err
+                });
+              }
+              return newMap;
+            });
+          }
+        }
+      );
+    } catch (err) {
+      setCodeExecutions(prev => {
+        const newMap = new Map(prev);
+        const state = newMap.get(blockIndex);
+        if (state) {
+          newMap.set(blockIndex, {
+            ...state,
+            isRunning: false,
+            error: err instanceof Error ? err.message : 'Execution failed'
+          });
+        }
+        return newMap;
+      });
+    }
+  }, []);
+
+  // Close code output panel
+  const handleCloseOutput = useCallback((blockIndex: number) => {
+    setCodeExecutions(prev => {
+      const newMap = new Map(prev);
+      newMap.delete(blockIndex);
+      return newMap;
+    });
+  }, []);
 
   // Parse content into text and code parts
   const contentParts = useMemo(() => {
@@ -170,23 +280,24 @@ export default function ChatMessage({ message }: ChatMessageProps) {
       }`}>
         <div className="flex gap-3">
           {/* Avatar */}
-          <div className={`flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center ${
-            isUser
-              ? 'bg-rose-gold-400/20 text-rose-gold-400'
-              : 'bg-gradient-to-br from-rose-gold-300 to-rose-gold-600 text-dark-500 shadow-glow-sm'
-          }`}>
-            {isUser ? (
+          {isUser ? (
+            <div className="flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center bg-rose-gold-400/20 text-rose-gold-400">
               <User className="w-4 h-4" />
-            ) : (
-              <Bot className="w-4 h-4" />
-            )}
-          </div>
+            </div>
+          ) : (
+            <div
+              className="flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center shadow-glow-sm"
+              style={{ background: BRAND_GRADIENT_ACCENT }}
+            >
+              <Bot className="w-4 h-4 text-dark-500" />
+            </div>
+          )}
 
           {/* Content */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <span className={`text-sm font-medium ${isUser ? 'text-rose-gold-400' : 'text-white'}`}>
-                {isUser ? 'You' : 'Alabobai'}
+                {isUser ? 'You' : BRAND.name}
               </span>
               <span className="text-xs text-rose-gold-400/40">
                 {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -197,6 +308,9 @@ export default function ChatMessage({ message }: ChatMessageProps) {
           <div className="text-sm text-white/80 leading-relaxed">
             {contentParts.map((part, index) => {
               if (part.type === 'code') {
+                const execState = codeExecutions.get(index);
+                const canExecute = isExecutableLanguage(part.language || '');
+
                 return (
                   <div key={index} className="my-3 rounded-xl overflow-hidden border border-rose-gold-400/10 morphic-glass">
                     {/* Code Header */}
@@ -204,22 +318,49 @@ export default function ChatMessage({ message }: ChatMessageProps) {
                       <span className="text-xs text-rose-gold-400/60 font-mono">
                         {part.language?.toUpperCase() || 'CODE'}
                       </span>
-                      <button
-                        onClick={() => handleCopyCode(part.content)}
-                        className="flex items-center gap-1 text-xs text-rose-gold-400/50 hover:text-rose-gold-400 transition-colors"
-                      >
-                        {copiedCode === part.content ? (
-                          <>
-                            <Check className="w-3 h-3 text-rose-gold-400" />
-                            <span>Copied</span>
-                          </>
-                        ) : (
-                          <>
-                            <Copy className="w-3 h-3" />
-                            <span>Copy</span>
-                          </>
+                      <div className="flex items-center gap-2">
+                        {/* Run Code Button */}
+                        {canExecute && (
+                          <button
+                            onClick={() => handleRunCode(part.content, part.language || '', index)}
+                            disabled={execState?.isRunning}
+                            className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-all disabled:opacity-50 hover:opacity-90"
+                            style={{
+                              background: BRAND_GRADIENT_ACCENT,
+                              color: BRAND_TOKENS.text.onAccent
+                            }}
+                          >
+                            {execState?.isRunning ? (
+                              <>
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                                <span>Running</span>
+                              </>
+                            ) : (
+                              <>
+                                <Play className="w-3 h-3" />
+                                <span>Run</span>
+                              </>
+                            )}
+                          </button>
                         )}
-                      </button>
+                        {/* Copy Button */}
+                        <button
+                          onClick={() => handleCopyCode(part.content)}
+                          className="flex items-center gap-1 text-xs text-rose-gold-400/50 hover:text-rose-gold-400 transition-colors"
+                        >
+                          {copiedCode === part.content ? (
+                            <>
+                              <Check className="w-3 h-3 text-rose-gold-400" />
+                              <span>Copied</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-3 h-3" />
+                              <span>Copy</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
                     </div>
                     {/* Code Content */}
                     <div className="p-4 bg-dark-400/50 overflow-x-auto morphic-scrollbar">
@@ -227,6 +368,46 @@ export default function ChatMessage({ message }: ChatMessageProps) {
                         {highlightCode(part.content, part.language || 'text')}
                       </pre>
                     </div>
+                    {/* Execution Output */}
+                    {execState?.showOutput && (
+                      <div className="border-t border-rose-gold-400/10">
+                        <div className="flex items-center justify-between px-3 py-2 bg-dark-400/30">
+                          <div className="flex items-center gap-2">
+                            <Terminal className="w-3 h-3" style={{ color: BRAND_TOKENS.accent.base }} />
+                            <span className="text-xs text-white/60">Output</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {execState.result && (
+                              <span className={`text-xs ${execState.result.success ? 'text-rose-gold-400' : 'text-rose-400'}`}>
+                                {execState.result.success ? 'Success' : 'Failed'} ({formatDuration(execState.result.duration)})
+                              </span>
+                            )}
+                            <button
+                              onClick={() => handleCloseOutput(index)}
+                              className="p-1 rounded hover:bg-rose-gold-400/10 transition-colors"
+                            >
+                              <X className="w-3 h-3 text-white/50" />
+                            </button>
+                          </div>
+                        </div>
+                        <div className="px-3 py-2 max-h-40 overflow-auto font-mono text-xs morphic-scrollbar bg-dark-500/50">
+                          {execState.outputs.map((output, i) => (
+                            <div
+                              key={i}
+                              className={`whitespace-pre-wrap ${
+                                output.type === 'stderr' ? 'text-rose-400' :
+                                output.type === 'system' ? 'text-white/50 italic' : 'text-white/80'
+                              }`}
+                            >
+                              {output.content}
+                            </div>
+                          ))}
+                          {execState.error && (
+                            <div className="text-rose-400">{execState.error}</div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )
               }
@@ -255,7 +436,7 @@ export default function ChatMessage({ message }: ChatMessageProps) {
                   <div className={`w-2 h-2 rounded-full ${
                     tool.status === 'complete' ? 'bg-rose-gold-400' :
                     tool.status === 'running' ? 'bg-rose-gold-400 animate-pulse shadow-glow-sm' :
-                    tool.status === 'error' ? 'bg-red-400' :
+                    tool.status === 'error' ? 'bg-rose-gold-500' :
                     'bg-rose-gold-400/30'
                   }`} />
                   <span className="font-mono text-rose-gold-400">{tool.name}</span>
@@ -276,7 +457,8 @@ export default function ChatMessage({ message }: ChatMessageProps) {
                 <>
                   <button
                     onClick={handlePreview}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs bg-gradient-to-r from-rose-gold-400 to-rose-gold-600 text-dark-500 font-medium hover:from-rose-gold-300 hover:to-rose-gold-500 transition-all shadow-glow-sm"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs text-dark-500 font-medium hover:opacity-90 transition-all shadow-glow-sm"
+                    style={{ background: BRAND_GRADIENT_ACCENT }}
                   >
                     <Eye className="w-3 h-3" />
                     <span>Preview</span>

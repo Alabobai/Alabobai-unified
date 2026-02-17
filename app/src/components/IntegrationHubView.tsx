@@ -27,6 +27,7 @@ import {
   Zap,
   Globe
 } from 'lucide-react'
+import { BRAND } from '@/config/brand'
 
 // ============================================================================
 // Types and Interfaces
@@ -133,7 +134,7 @@ const AVAILABLE_INTEGRATIONS: Integration[] = [
     name: 'GitHub',
     description: 'Connect your GitHub repositories for code management and CI/CD',
     icon: <Github className="w-6 h-6" />,
-    color: 'from-gray-700 to-gray-900',
+    color: 'from-dark-100 to-dark-400',
     category: 'version-control',
     status: 'disconnected',
     connectionType: 'oauth',
@@ -169,7 +170,7 @@ const AVAILABLE_INTEGRATIONS: Integration[] = [
     name: 'Discord',
     description: 'Post updates and notifications to Discord servers',
     icon: <MessageSquare className="w-6 h-6" />,
-    color: 'from-indigo-500 to-indigo-700',
+    color: 'from-rose-gold-500 to-rose-gold-700',
     category: 'communication',
     status: 'disconnected',
     connectionType: 'webhook',
@@ -187,7 +188,7 @@ const AVAILABLE_INTEGRATIONS: Integration[] = [
     name: 'Notion',
     description: 'Sync tasks and documents with your Notion workspace',
     icon: <FileText className="w-6 h-6" />,
-    color: 'from-gray-800 to-black',
+    color: 'from-dark-200 to-dark-500',
     category: 'productivity',
     status: 'disconnected',
     connectionType: 'api-key',
@@ -206,7 +207,7 @@ const AVAILABLE_INTEGRATIONS: Integration[] = [
     name: 'Linear',
     description: 'Track issues and manage projects with Linear integration',
     icon: <Zap className="w-6 h-6" />,
-    color: 'from-violet-500 to-violet-700',
+    color: 'from-rose-gold-400 to-rose-gold-600',
     category: 'productivity',
     status: 'disconnected',
     connectionType: 'api-key',
@@ -224,7 +225,7 @@ const AVAILABLE_INTEGRATIONS: Integration[] = [
     name: 'Google',
     description: 'Access Google Workspace: Drive, Calendar, Sheets, and more',
     icon: <Globe className="w-6 h-6" />,
-    color: 'from-blue-500 to-red-500',
+    color: 'from-rose-gold-300 to-rose-gold-500',
     category: 'authentication',
     status: 'disconnected',
     connectionType: 'oauth',
@@ -455,7 +456,7 @@ function IntegrationCard({ integration, apiKeys, onConnect, onDisconnect, isConn
             <div className="flex items-center gap-2">
               <h3 className="text-white font-semibold">{integration.name}</h3>
               {isConnected ? (
-                <span className="px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 text-xs flex items-center gap-1">
+                <span className="px-2 py-0.5 rounded-full bg-rose-gold-400/20 text-rose-gold-400 text-xs flex items-center gap-1">
                   <CheckCircle className="w-3 h-3" />
                   Connected
                 </span>
@@ -477,7 +478,7 @@ function IntegrationCard({ integration, apiKeys, onConnect, onDisconnect, isConn
             {isConnected ? (
               <button
                 onClick={() => onDisconnect(integration.id)}
-                className="px-3 py-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors text-sm"
+                className="px-3 py-1.5 rounded-lg bg-rose-gold-500/10 text-rose-gold-400 hover:bg-rose-gold-500/20 transition-colors text-sm"
               >
                 Disconnect
               </button>
@@ -533,8 +534,8 @@ function IntegrationCard({ integration, apiKeys, onConnect, onDisconnect, isConn
           </div>
 
           {relevantKey && (
-            <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20 mb-3">
-              <div className="flex items-center gap-2 text-green-400 text-sm">
+            <div className="p-3 rounded-lg bg-rose-gold-400/10 border border-rose-gold-400/20 mb-3">
+              <div className="flex items-center gap-2 text-rose-gold-400 text-sm">
                 <CheckCircle className="w-4 h-4" />
                 <span>API key configured: {relevantKey.name}</span>
               </div>
@@ -715,7 +716,7 @@ function WebhookCard({ webhook, events, onToggle, onDelete, onTest, isTesting }:
               </h3>
               <span className={`px-2 py-0.5 rounded-full text-xs ${
                 webhook.enabled
-                  ? 'bg-green-500/20 text-green-400'
+                  ? 'bg-rose-gold-400/20 text-rose-gold-400'
                   : 'bg-white/10 text-white/40'
               }`}>
                 {webhook.enabled ? 'Active' : 'Disabled'}
@@ -732,7 +733,7 @@ function WebhookCard({ webhook, events, onToggle, onDelete, onTest, isTesting }:
                   onClick={() => copyToClipboard(webhookUrl, 'url')}
                   className="text-white/40 hover:text-white transition-colors"
                 >
-                  {copied === 'url' ? <Check className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}
+                  {copied === 'url' ? <Check className="w-3 h-3 text-rose-gold-400" /> : <Copy className="w-3 h-3" />}
                 </button>
               </div>
 
@@ -751,7 +752,7 @@ function WebhookCard({ webhook, events, onToggle, onDelete, onTest, isTesting }:
                   onClick={() => copyToClipboard(webhook.secret, 'secret')}
                   className="text-white/40 hover:text-white transition-colors"
                 >
-                  {copied === 'secret' ? <Check className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}
+                  {copied === 'secret' ? <Check className="w-3 h-3 text-rose-gold-400" /> : <Copy className="w-3 h-3" />}
                 </button>
               </div>
             </div>
@@ -769,11 +770,11 @@ function WebhookCard({ webhook, events, onToggle, onDelete, onTest, isTesting }:
 
             <div className="flex items-center gap-4 mt-2 text-xs text-white/40">
               <span className="flex items-center gap-1">
-                <CheckCircle className="w-3 h-3 text-green-400" />
+                <CheckCircle className="w-3 h-3 text-rose-gold-400" />
                 {webhook.successCount} successful
               </span>
               <span className="flex items-center gap-1">
-                <AlertCircle className="w-3 h-3 text-red-400" />
+                <AlertCircle className="w-3 h-3 text-rose-gold-400" />
                 {webhook.errorCount} errors
               </span>
               {webhook.lastTriggered && (
@@ -789,7 +790,7 @@ function WebhookCard({ webhook, events, onToggle, onDelete, onTest, isTesting }:
             <button
               onClick={() => onTest(webhook.id)}
               disabled={isTesting || !webhook.enabled}
-              className="p-2 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition-colors disabled:opacity-50"
+              className="p-2 rounded-lg bg-rose-gold-400/10 text-rose-gold-400 hover:bg-rose-gold-400/20 transition-colors disabled:opacity-50"
               title="Test webhook"
             >
               {isTesting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
@@ -798,7 +799,7 @@ function WebhookCard({ webhook, events, onToggle, onDelete, onTest, isTesting }:
               onClick={() => onToggle(webhook.id)}
               className={`p-2 rounded-lg transition-colors ${
                 webhook.enabled
-                  ? 'bg-green-500/10 text-green-400 hover:bg-green-500/20'
+                  ? 'bg-rose-gold-400/10 text-rose-gold-400 hover:bg-rose-gold-400/20'
                   : 'bg-white/5 text-white/40 hover:bg-white/10'
               }`}
               title={webhook.enabled ? 'Disable' : 'Enable'}
@@ -807,7 +808,7 @@ function WebhookCard({ webhook, events, onToggle, onDelete, onTest, isTesting }:
             </button>
             <button
               onClick={() => onDelete(webhook.id)}
-              className="p-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors"
+              className="p-2 rounded-lg bg-rose-gold-500/10 text-rose-gold-400 hover:bg-rose-gold-500/20 transition-colors"
               title="Delete"
             >
               <Trash2 className="w-4 h-4" />
@@ -833,17 +834,17 @@ function WebhookCard({ webhook, events, onToggle, onDelete, onTest, isTesting }:
               >
                 <div className="flex items-center gap-2">
                   {event.status === 'success' ? (
-                    <CheckCircle className="w-4 h-4 text-green-400" />
+                    <CheckCircle className="w-4 h-4 text-rose-gold-400" />
                   ) : event.status === 'error' ? (
-                    <AlertCircle className="w-4 h-4 text-red-400" />
+                    <AlertCircle className="w-4 h-4 text-rose-gold-400" />
                   ) : (
-                    <Loader2 className="w-4 h-4 text-yellow-400 animate-spin" />
+                    <Loader2 className="w-4 h-4 text-rose-gold-400 animate-spin" />
                   )}
                   <span className="text-white/70 text-sm">{event.event}</span>
                 </div>
                 <div className="flex items-center gap-3 text-xs text-white/40">
                   {event.responseCode && (
-                    <span className={event.responseCode < 400 ? 'text-green-400' : 'text-red-400'}>
+                    <span className={event.responseCode < 400 ? 'text-rose-gold-400' : 'text-rose-gold-400'}>
                       {event.responseCode}
                     </span>
                   )}
@@ -1018,7 +1019,7 @@ export default function IntegrationHubView() {
       event: 'test.ping',
       payload: {
         type: 'test',
-        message: 'This is a test webhook from Alabobai',
+        message: `This is a test webhook from ${BRAND.name}`,
         timestamp: new Date().toISOString()
       },
       status: 'pending'
@@ -1134,7 +1135,7 @@ export default function IntegrationHubView() {
         await fetch(key.key, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: 'Test from Alabobai Integration Hub' }),
+          body: JSON.stringify({ text: `Test from ${BRAND.name} Integration Hub` }),
           mode: 'no-cors'
         })
         isValid = true
@@ -1227,19 +1228,19 @@ export default function IntegrationHubView() {
   const connectedCount = Object.values(integrationStatus).filter(s => s.connected).length
 
   return (
-    <div className="h-full flex flex-col bg-dark-500">
+    <div className="h-full w-full flex flex-col bg-dark-500">
       {/* Header */}
       <div className="flex-shrink-0 p-6 border-b border-white/10">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            {/* Alabobai Logo */}
+            {/* Brand Logo */}
             <div className="flex items-center gap-3">
-              <img src="/logo.png" alt="Alabobai" className="w-10 h-10 rounded-lg" />
+              <img src={BRAND.assets.logo} alt={BRAND.name} className="w-10 h-10 object-contain logo-render" />
               <div className="h-8 w-px bg-white/10" />
             </div>
             {/* View Header */}
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-rose-gold-400 to-rose-gold-600 flex items-center justify-center">
                 <Plug className="w-6 h-6 text-white" />
               </div>
               <div>
@@ -1268,8 +1269,8 @@ export default function IntegrationHubView() {
       {notification && (
         <div className={`mx-6 mt-4 p-3 rounded-lg flex items-center gap-2 ${
           notification.type === 'success'
-            ? 'bg-green-500/10 border border-green-500/20 text-green-400'
-            : 'bg-red-500/10 border border-red-500/20 text-red-400'
+            ? 'bg-rose-gold-400/10 border border-rose-gold-400/20 text-rose-gold-400'
+            : 'bg-rose-gold-500/10 border border-rose-gold-400/20 text-rose-gold-400'
         }`}>
           {notification.type === 'success' ? (
             <CheckCircle className="w-4 h-4" />
@@ -1314,7 +1315,7 @@ export default function IntegrationHubView() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto morphic-scrollbar p-6">
         {/* Integrations Tab */}
         {activeTab === 'integrations' && (
           <div className="space-y-4">
@@ -1367,7 +1368,7 @@ export default function IntegrationHubView() {
                 <Webhook className="w-12 h-12 text-white/20 mx-auto mb-4" />
                 <h3 className="text-white/60 font-medium mb-2">No webhooks configured</h3>
                 <p className="text-white/40 text-sm mb-4">
-                  Create a webhook to receive real-time notifications from Alabobai
+                  Create a webhook to receive real-time notifications from {BRAND.name}
                 </p>
                 <button
                   onClick={() => setShowWebhookForm(true)}
@@ -1409,12 +1410,12 @@ export default function IntegrationHubView() {
               </button>
             </div>
 
-            <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20 mb-4">
+            <div className="p-4 rounded-xl bg-rose-gold-400/10 border border-rose-gold-400/20 mb-4">
               <div className="flex items-start gap-3">
-                <Shield className="w-5 h-5 text-blue-400 mt-0.5" />
+                <Shield className="w-5 h-5 text-rose-gold-400 mt-0.5" />
                 <div>
-                  <h4 className="text-blue-400 font-medium">Secure Storage</h4>
-                  <p className="text-blue-400/70 text-sm">
+                  <h4 className="text-rose-gold-400 font-medium">Secure Storage</h4>
+                  <p className="text-rose-gold-400/70 text-sm">
                     API keys are encrypted before storing in your browser's local storage.
                     Keys never leave your device unless explicitly used for API calls.
                   </p>
@@ -1461,8 +1462,8 @@ export default function IntegrationHubView() {
                           <span className="text-white font-medium">{key.name}</span>
                           <span className={`px-2 py-0.5 rounded-full text-xs ${
                             key.isValid
-                              ? 'bg-green-500/20 text-green-400'
-                              : 'bg-red-500/20 text-red-400'
+                              ? 'bg-rose-gold-400/20 text-rose-gold-400'
+                              : 'bg-rose-gold-500/20 text-rose-gold-400'
                           }`}>
                             {key.isValid ? 'Valid' : 'Invalid'}
                           </span>
@@ -1480,7 +1481,7 @@ export default function IntegrationHubView() {
                         <button
                           onClick={() => handleTestApiKey(key.id)}
                           disabled={testingApiKey === key.id}
-                          className="p-2 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition-colors disabled:opacity-50"
+                          className="p-2 rounded-lg bg-rose-gold-400/10 text-rose-gold-400 hover:bg-rose-gold-400/20 transition-colors disabled:opacity-50"
                           title="Test connection"
                         >
                           {testingApiKey === key.id ? (
@@ -1491,7 +1492,7 @@ export default function IntegrationHubView() {
                         </button>
                         <button
                           onClick={() => handleDeleteApiKey(key.id)}
-                          className="p-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors"
+                          className="p-2 rounded-lg bg-rose-gold-500/10 text-rose-gold-400 hover:bg-rose-gold-500/20 transition-colors"
                           title="Delete"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -1555,13 +1556,13 @@ export default function IntegrationHubView() {
                           {key && (
                             <span className={`px-2 py-0.5 rounded-full text-xs ${
                               key.isValid
-                                ? 'bg-green-500/20 text-green-400'
-                                : 'bg-red-500/20 text-red-400'
+                                ? 'bg-rose-gold-400/20 text-rose-gold-400'
+                                : 'bg-rose-gold-500/20 text-rose-gold-400'
                             }`}>
                               {key.isValid ? 'Healthy' : 'Error'}
                             </span>
                           )}
-                          <CheckCircle className="w-5 h-5 text-green-400" />
+                          <CheckCircle className="w-5 h-5 text-rose-gold-400" />
                         </div>
                       </div>
                     )
@@ -1603,9 +1604,9 @@ export default function IntegrationHubView() {
                         <div className="flex items-center gap-3">
                           <div className="text-right">
                             <div className={`text-sm font-medium ${
-                              successRate >= 90 ? 'text-green-400' :
-                              successRate >= 70 ? 'text-yellow-400' :
-                              'text-red-400'
+                              successRate >= 90 ? 'text-rose-gold-400' :
+                              successRate >= 70 ? 'text-rose-gold-400' :
+                              'text-rose-gold-400'
                             }`}>
                               {successRate}% success
                             </div>
@@ -1615,9 +1616,9 @@ export default function IntegrationHubView() {
                           </div>
                           <div className={`w-3 h-3 rounded-full ${
                             !webhook.enabled ? 'bg-white/30' :
-                            successRate >= 90 ? 'bg-green-400' :
-                            successRate >= 70 ? 'bg-yellow-400' :
-                            'bg-red-400'
+                            successRate >= 90 ? 'bg-rose-gold-400' :
+                            successRate >= 70 ? 'bg-rose-gold-500' :
+                            'bg-rose-gold-500'
                           }`} />
                         </div>
                       </div>
@@ -1646,11 +1647,11 @@ export default function IntegrationHubView() {
                       >
                         <div className="flex items-center gap-3">
                           {event.status === 'success' ? (
-                            <CheckCircle className="w-4 h-4 text-green-400" />
+                            <CheckCircle className="w-4 h-4 text-rose-gold-400" />
                           ) : event.status === 'error' ? (
-                            <AlertCircle className="w-4 h-4 text-red-400" />
+                            <AlertCircle className="w-4 h-4 text-rose-gold-400" />
                           ) : (
-                            <Loader2 className="w-4 h-4 text-yellow-400 animate-spin" />
+                            <Loader2 className="w-4 h-4 text-rose-gold-400 animate-spin" />
                           )}
                           <div>
                             <div className="text-white/70 text-sm">{event.event}</div>

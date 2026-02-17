@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   Eye, Code2, Terminal, FolderTree, Undo2, Redo2,
-  Play, RefreshCw, ExternalLink, X, ChevronRight,
+  Play, RefreshCw, ExternalLink, X, ChevronRight, ChevronDown,
   File, Folder, FileCode, FileJson, FileText,
   Globe, Zap, Loader2, StopCircle, Copy, Check,
   Download, Maximize2, Minimize2
@@ -11,6 +11,10 @@ import TaskExecutionPanel, { type TaskExecution, type Source } from './TaskExecu
 import BrowserPreview, { type BrowserState } from './BrowserPreview'
 import taskRunner from '@/services/taskRunner'
 import browserAutomation from '@/services/browserAutomation'
+import { Spinner, ProgressBar } from './ui/LoadingSpinner'
+import { SkeletonCodeBlock, SkeletonWorkspace } from './ui/Skeleton'
+import { useMobile } from '@/hooks/useMobile'
+import { useSwipeGesture } from '@/hooks/useTouchGestures'
 
 const fileIcons: Record<string, typeof File> = {
   tsx: FileCode,
@@ -30,13 +34,25 @@ export default function WorkspacePanel() {
     canUndo,
     canRedo,
     undo,
-    redo
+    redo,
+    closeWorkspace
   } = useAppStore()
 
+  const { isMobile, isTablet, isMobileOrTablet } = useMobile()
   const [currentExecution, setCurrentExecution] = useState<TaskExecution | null>(null)
   const [browserState, setBrowserState] = useState<BrowserState | null>(null)
   const [isDemoRunning, setIsDemoRunning] = useState(false)
   const [demoStep, setDemoStep] = useState('')
+
+  // Swipe down to close on mobile
+  const swipeRef = useSwipeGesture<HTMLDivElement>(
+    (direction) => {
+      if (direction === 'down' && isMobileOrTablet) {
+        closeWorkspace()
+      }
+    },
+    { enabled: isMobileOrTablet }
+  )
 
   // Extended tabs - Preview and Code first for Code Builder focus
   const tabs = [
@@ -47,6 +63,16 @@ export default function WorkspacePanel() {
     { id: 'terminal', label: 'Terminal', icon: Terminal },
     { id: 'files', label: 'Files', icon: FolderTree },
   ] as const
+
+  // Mobile tab navigation - cycle through tabs with swipe
+  const currentTabIndex = tabs.findIndex(t => t.id === activeTab)
+  const handleSwipeTab = useCallback((direction: 'left' | 'right') => {
+    if (direction === 'left' && currentTabIndex < tabs.length - 1) {
+      setActiveTab(tabs[currentTabIndex + 1].id as any)
+    } else if (direction === 'right' && currentTabIndex > 0) {
+      setActiveTab(tabs[currentTabIndex - 1].id as any)
+    }
+  }, [currentTabIndex, setActiveTab, tabs])
 
   // Set up browser automation callbacks
   useEffect(() => {
@@ -185,67 +211,144 @@ export default function WorkspacePanel() {
   }
 
   return (
-    <div className="workspace-panel h-full bg-dark-400 flex flex-col">
+    <div
+      ref={swipeRef}
+      className={`
+        workspace-panel h-full bg-dark-400 flex flex-col
+        ${isMobileOrTablet ? 'workspace-panel-mobile open' : ''}
+      `}
+    >
+      {/* Mobile swipe indicator */}
+      {isMobileOrTablet && (
+        <div className="flex justify-center pt-2">
+          <div className="swipe-indicator" />
+        </div>
+      )}
+
       {/* Header with Tabs */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-rose-gold-400/20 bg-dark-300">
-        <div className="workspace-tabs flex gap-1 overflow-x-auto">
-          {tabs.map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`workspace-tab flex items-center gap-1.5 whitespace-nowrap ${activeTab === tab.id ? 'active' : ''}`}
-            >
-              <tab.icon className="w-3.5 h-3.5" />
-              <span>{tab.label}</span>
-              {tab.id === 'tasks' && currentExecution?.status === 'running' && (
-                <span className="w-2 h-2 rounded-full bg-rose-gold-400 animate-pulse" />
-              )}
-            </button>
-          ))}
-        </div>
-        <div className="flex items-center gap-1">
-          <button
-            onClick={undo}
-            disabled={!canUndo()}
-            className="p-1.5 rounded text-white/40 hover:text-white hover:bg-white/5 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-            title="Undo"
-          >
-            <Undo2 className="w-4 h-4" />
-          </button>
-          <button
-            onClick={redo}
-            disabled={!canRedo()}
-            className="p-1.5 rounded text-white/40 hover:text-white hover:bg-white/5 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-            title="Redo"
-          >
-            <Redo2 className="w-4 h-4" />
-          </button>
-        </div>
+      <div className={`flex items-center justify-between px-2 sm:px-4 py-2 border-b border-rose-gold-400/20 bg-dark-300/85 backdrop-blur-md ${
+        isMobileOrTablet ? 'flex-wrap' : ''
+      }`}>
+        {/* Mobile: Tab bar at bottom, Desktop: inline tabs */}
+        {isMobileOrTablet ? (
+          <>
+            <div className="flex items-center justify-between w-full mb-2">
+              <span className="text-xs text-white/50 font-medium uppercase tracking-wider">
+                {tabs.find(t => t.id === activeTab)?.label || 'Workspace'}
+              </span>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={undo}
+                  disabled={!canUndo()}
+                  className="p-2 rounded text-white/40 hover:text-white hover:bg-white/5 transition-all duration-200 framer-btn disabled:opacity-30 disabled:cursor-not-allowed touch-target"
+                  title="Undo"
+                >
+                  <Undo2 className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={redo}
+                  disabled={!canRedo()}
+                  className="p-2 rounded text-white/40 hover:text-white hover:bg-white/5 transition-all duration-200 framer-btn disabled:opacity-30 disabled:cursor-not-allowed touch-target"
+                  title="Redo"
+                >
+                  <Redo2 className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={closeWorkspace}
+                  className="p-2 rounded text-white/40 hover:text-white hover:bg-white/5 transition-all duration-200 framer-btn touch-target"
+                  title="Close"
+                >
+                  <ChevronDown className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+            <div className="workspace-tabs flex gap-1 overflow-x-auto w-full pb-1 -mx-2 px-2">
+              {tabs.map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as any)}
+                  className={`
+                    workspace-tab-animated flex items-center gap-1.5 whitespace-nowrap btn-press touch-target
+                    px-3 py-2 text-xs
+                    ${activeTab === tab.id ? 'active' : ''}
+                  `}
+                >
+                  <tab.icon className={`w-4 h-4 transition-transform duration-200 ${activeTab === tab.id ? 'scale-110' : ''}`} />
+                  <span className="hidden sm:inline">{tab.label}</span>
+                  {tab.id === 'tasks' && currentExecution?.status === 'running' && (
+                    <span className="w-2 h-2 rounded-full bg-rose-gold-400 animate-pulse" />
+                  )}
+                </button>
+              ))}
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="workspace-tabs flex gap-1 overflow-x-auto">
+              {tabs.map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as any)}
+                  className={`
+                    workspace-tab-animated flex items-center gap-1.5 whitespace-nowrap btn-press
+                    ${activeTab === tab.id ? 'active' : ''}
+                  `}
+                >
+                  <tab.icon className={`w-3.5 h-3.5 transition-transform duration-200 ${activeTab === tab.id ? 'scale-110' : ''}`} />
+                  <span>{tab.label}</span>
+                  {tab.id === 'tasks' && currentExecution?.status === 'running' && (
+                    <span className="w-2 h-2 rounded-full bg-rose-gold-400 animate-pulse" />
+                  )}
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={undo}
+                disabled={!canUndo()}
+                className="p-1.5 rounded text-white/40 hover:text-white hover:bg-white/5 transition-all duration-200 framer-btn disabled:opacity-30 disabled:cursor-not-allowed btn-press icon-hover-glow"
+                title="Undo"
+              >
+                <Undo2 className="w-4 h-4" />
+              </button>
+              <button
+                onClick={redo}
+                disabled={!canRedo()}
+                className="p-1.5 rounded text-white/40 hover:text-white hover:bg-white/5 transition-all duration-200 framer-btn disabled:opacity-30 disabled:cursor-not-allowed btn-press icon-hover-glow"
+                title="Redo"
+              >
+                <Redo2 className="w-4 h-4" />
+              </button>
+            </div>
+          </>
+        )}
       </div>
 
-      {/* Content */}
+      {/* Content with tab transition */}
       <div className="flex-1 overflow-hidden">
-        {activeTab === 'browser' && (
-          <BrowserTab
-            browserState={browserState}
-            execution={currentExecution}
-            onStartDemo={startRealDemoTask}
-            onStopDemo={stopDemo}
-            isDemoRunning={isDemoRunning}
-            demoStep={demoStep}
-          />
-        )}
-        {activeTab === 'tasks' && (
-          <TaskExecutionPanel
-            execution={currentExecution}
-            onPause={() => taskRunner.pauseExecution()}
-            onResume={() => taskRunner.resumeExecution()}
-          />
-        )}
-        {activeTab === 'preview' && <PreviewTab />}
-        {activeTab === 'code' && <CodeTab />}
-        {activeTab === 'terminal' && <TerminalTab />}
-        {activeTab === 'files' && <FilesTab />}
+        <div className="h-full tab-content-enter framer-panel" key={activeTab}>
+          {activeTab === 'browser' && (
+            <BrowserTab
+              browserState={browserState}
+              execution={currentExecution}
+              onStartDemo={startRealDemoTask}
+              onStopDemo={stopDemo}
+              isDemoRunning={isDemoRunning}
+              demoStep={demoStep}
+            />
+          )}
+          {activeTab === 'tasks' && (
+            <TaskExecutionPanel
+              execution={currentExecution}
+              onPause={() => taskRunner.pauseExecution()}
+              onResume={() => taskRunner.resumeExecution()}
+            />
+          )}
+          {activeTab === 'preview' && <PreviewTab />}
+          {activeTab === 'code' && <CodeTab />}
+          {activeTab === 'terminal' && <TerminalTab />}
+          {activeTab === 'files' && <FilesTab />}
+        </div>
       </div>
 
       {/* Sources Summary (shown when there are sources) */}
@@ -328,7 +431,7 @@ function BrowserTab({ browserState, execution, onStartDemo, onStopDemo, isDemoRu
             </div>
             <button
               onClick={onStopDemo}
-              className="flex items-center gap-1 px-2 py-1 rounded bg-red-500/20 text-red-400 text-xs hover:bg-red-500/30 transition-colors"
+              className="flex items-center gap-1 px-2 py-1 rounded bg-rose-gold-500/20 text-rose-gold-400 text-xs hover:bg-rose-gold-500/30 transition-colors"
             >
               <StopCircle className="w-3 h-3" />
               Stop
@@ -345,7 +448,7 @@ function BrowserTab({ browserState, execution, onStartDemo, onStopDemo, isDemoRu
               {execution.status === 'running' ? (
                 <span className="w-2 h-2 rounded-full bg-rose-gold-400 animate-pulse" />
               ) : execution.status === 'complete' ? (
-                <span className="w-2 h-2 rounded-full bg-green-400" />
+                <span className="w-2 h-2 rounded-full bg-rose-gold-400" />
               ) : (
                 <span className="w-2 h-2 rounded-full bg-white/30" />
               )}
@@ -438,12 +541,12 @@ function PreviewTab() {
       <div className="flex items-center gap-2 px-4 py-2 bg-dark-300 border-b border-rose-gold-400/20">
         <div className="flex gap-1.5">
           <span
-            className="w-3 h-3 rounded-full bg-red-500/80 cursor-pointer hover:bg-red-500 transition-colors"
+            className="w-3 h-3 rounded-full bg-rose-gold-500/80 cursor-pointer hover:bg-rose-gold-500 transition-colors"
             onClick={handleClear}
             title="Clear preview"
           />
-          <span className="w-3 h-3 rounded-full bg-yellow-500/80" />
-          <span className="w-3 h-3 rounded-full bg-green-500/80" />
+          <span className="w-3 h-3 rounded-full bg-rose-gold-500/80" />
+          <span className="w-3 h-3 rounded-full bg-rose-gold-500/80" />
         </div>
         <div className="flex-1 mx-4">
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-dark-200 border border-white/10 text-xs">
@@ -471,7 +574,7 @@ function PreviewTab() {
             className="p-1.5 rounded text-white/40 hover:text-white hover:bg-white/5 transition-colors disabled:opacity-30"
             title="Copy HTML"
           >
-            {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+            {copied ? <Check className="w-4 h-4 text-rose-gold-400" /> : <Copy className="w-4 h-4" />}
           </button>
           <button
             onClick={handleDownload}
@@ -606,7 +709,7 @@ function CodeTab() {
               </span>
             )}
             {hasChanges && (
-              <span className="px-1.5 py-0.5 rounded bg-yellow-500/20 text-yellow-400 text-[10px]">
+              <span className="px-1.5 py-0.5 rounded bg-rose-gold-500/20 text-rose-gold-400 text-[10px]">
                 MODIFIED
               </span>
             )}
@@ -635,13 +738,22 @@ function CodeTab() {
             onChange={handleCodeChange}
             readOnly={false}
           />
+        ) : content && !MonacoEditor ? (
+          /* Loading Monaco - show skeleton */
+          <div className="h-full bg-dark-400 p-4">
+            <div className="flex items-center gap-2 mb-4">
+              <Spinner size="sm" />
+              <span className="text-xs text-white/50">Loading editor...</span>
+            </div>
+            <SkeletonCodeBlock lines={15} />
+          </div>
         ) : content ? (
           <div className="h-full overflow-auto morphic-scrollbar p-4 font-mono text-sm bg-dark-400">
             <pre className="text-white/80 whitespace-pre-wrap">{content}</pre>
           </div>
         ) : (
           <div className="h-full flex items-center justify-center text-white/30 bg-dark-400">
-            <div className="text-center">
+            <div className="text-center animate-fade-in-up">
               <Code2 className="w-12 h-12 mx-auto mb-3 opacity-50" />
               <p className="text-sm">No code to display</p>
               <p className="text-xs mt-1">Ask AI to build something or select a file</p>
@@ -671,8 +783,12 @@ function TerminalTab() {
 
   if (!TerminalComponent) {
     return (
-      <div className="h-full flex items-center justify-center bg-black text-white/50">
-        Loading terminal...
+      <div className="h-full flex flex-col items-center justify-center bg-dark-400 animate-fade-in-up">
+        <div className="mb-4">
+          <Spinner size="lg" />
+        </div>
+        <p className="text-white/50 text-sm">Loading terminal...</p>
+        <ProgressBar size="sm" className="w-48 mt-4" />
       </div>
     )
   }

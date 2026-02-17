@@ -1,4 +1,4 @@
-import { MessageSquare, Plus, FolderOpen, Settings, ChevronLeft, ChevronRight, Rocket, LayoutDashboard, Brain, Zap, Flame, Search, Shield, Wallet, Palette, Mic, BarChart3, ShieldCheck, Plug, Cpu } from 'lucide-react'
+import { MessageSquare, Plus, FolderOpen, Settings, ChevronLeft, ChevronRight, Rocket, LayoutDashboard, Brain, Zap, Flame, Search, Shield, Wallet, Palette, Mic, BarChart3, ShieldCheck, Plug, Cpu, Terminal } from 'lucide-react'
 import { useAppStore } from '@/stores/appStore'
 import AgentsPanel from './AgentsPanel'
 
@@ -271,6 +271,24 @@ export default function Sidebar() {
               currentView === 'trust-architect'
                 ? 'bg-rose-gold-400/30 text-rose-gold-300'
                 : 'bg-rose-gold-400/20 text-rose-gold-400 opacity-0 group-hover:opacity-100'
+            } transition-opacity`}>
+              NEW
+            </span>
+          </button>
+          <button
+            onClick={() => setView('code-sandbox')}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group ${
+              currentView === 'code-sandbox'
+                ? 'bg-rose-gold-400/12 text-rose-gold-300 border border-rose-gold-400/35'
+                : 'text-white/75 bg-dark-300/70 border border-rose-gold-400/15 hover:bg-rose-gold-400/10 hover:text-rose-gold-300'
+            }`}
+          >
+            <Terminal className={`w-4 h-4 ${currentView === 'code-sandbox' ? 'animate-pulse text-rose-gold-400' : ''}`} />
+            <span className="text-sm">Code Sandbox</span>
+            <span className={`ml-auto text-[10px] px-1.5 py-0.5 rounded-full ${
+              currentView === 'code-sandbox'
+                ? 'bg-rose-gold-400/30 text-rose-gold-300'
+                : 'bg-green-500/20 text-green-400 opacity-0 group-hover:opacity-100'
             } transition-opacity`}>
               NEW
             </span>

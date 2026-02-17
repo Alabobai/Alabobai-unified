@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
-import { Send, Paperclip, Mic, MicOff, StopCircle, PanelRight, Sparkles, Code2, Eye, ChevronUp, Zap, Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
+import { useState, useRef, useEffect, useCallback, DragEvent, ChangeEvent } from 'react'
+import { Send, Paperclip, Mic, MicOff, StopCircle, PanelRight, Sparkles, Code2, Eye, ChevronUp, Zap, Loader2, CheckCircle2, AlertCircle, X, FileText, Image } from 'lucide-react'
 import { useAppStore } from '@/stores/appStore'
 // presence features removed for focused single-user UX
 import ChatMessage from './ChatMessage'
@@ -10,6 +10,9 @@ import { voiceService } from '@/services/voiceService'
 import { toast } from '@/stores/toastStore'
 import { ThinkingIndicator, ProgressBar } from './ui/LoadingSpinner'
 import { SkeletonChatMessage } from './ui/Skeleton'
+import { useFileStore, AttachedFile } from '@/stores/fileStore'
+import { FileAttachmentList } from './FileAttachment'
+import fileUploadService from '@/services/fileUpload'
 // presence indicators removed for luxury-focused single-user UX
 import { useMobile, useViewportHeight } from '@/hooks/useMobile'
 import { BRAND_GRADIENT_ACCENT } from '@/config/brandTokens'
@@ -144,10 +147,22 @@ export default function ChatPanel() {
   const [executeTaskStatus, setExecuteTaskStatus] = useState<'idle' | 'running' | 'success' | 'error'>('idle')
   const [executeTaskResult, setExecuteTaskResult] = useState<ExecuteTaskResponse | null>(null)
   const [executeTaskError, setExecuteTaskError] = useState<string | null>(null)
+  const [isDraggingFile, setIsDraggingFile] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const composerFormRef = useRef<HTMLFormElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const cancelStreamRef = useRef(false)
+  const dragCounterRef = useRef(0)
+
+  // File store
+  const {
+    attachments,
+    isUploading: isUploadingFiles,
+    uploadFiles,
+    removeAttachment,
+    clearAttachments,
+  } = useFileStore()
 
   const { isMobile, isMobileOrTablet, isKeyboardOpen } = useMobile()
   const viewportHeight = useViewportHeight()
@@ -183,10 +198,84 @@ export default function ChatPanel() {
     }
   }, [currentChat?.messages.length])
 
+  // File drag and drop handlers
+  const handleDragEnter = useCallback((e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    dragCounterRef.current++
+    if (fileUploadService.isDragEventWithFiles(e.nativeEvent)) {
+      setIsDraggingFile(true)
+    }
+  }, [])
+
+  const handleDragLeave = useCallback((e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    dragCounterRef.current--
+    if (dragCounterRef.current === 0) {
+      setIsDraggingFile(false)
+    }
+  }, [])
+
+  const handleDragOver = useCallback((e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+  }, [])
+
+  const handleDrop = useCallback((e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDraggingFile(false)
+    dragCounterRef.current = 0
+
+    const files = fileUploadService.getFilesFromDragEvent(e.nativeEvent)
+    if (files.length > 0) {
+      handleFilesSelected(files)
+    }
+  }, [])
+
+  const handleFileInputChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    if (files.length > 0) {
+      handleFilesSelected(files)
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }, [])
+
+  const handleFilesSelected = useCallback(async (files: File[]) => {
+    // Validate and upload files
+    const validFiles: File[] = []
+    for (const file of files) {
+      const validation = fileUploadService.validateFile(file)
+      if (validation.valid) {
+        validFiles.push(file)
+      } else {
+        toast.warning('Invalid File', validation.error || 'File type not supported')
+      }
+    }
+
+    if (validFiles.length > 0) {
+      try {
+        await uploadFiles(validFiles, activeChat || undefined)
+      } catch (error) {
+        toast.error('Upload Failed', error instanceof Error ? error.message : 'Failed to upload files')
+      }
+    }
+  }, [uploadFiles, activeChat])
+
+  const triggerFileInput = useCallback(() => {
+    fileInputRef.current?.click()
+  }, [])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const taskInput = input.trim()
-    if (!taskInput || isStreaming) return
+    const hasAttachments = attachments.filter(a => a.status === 'complete').length > 0
+
+    // Allow submit if there's text or completed attachments
+    if ((!taskInput && !hasAttachments) || isStreaming) return
 
     cancelStreamRef.current = false
 
@@ -195,16 +284,26 @@ export default function ChatPanel() {
       createChat()
     }
 
+    // Build attachment context for the message
+    const completedAttachments = attachments.filter(a => a.status === 'complete')
+    const attachmentContext = completedAttachments.length > 0
+      ? `\n\n[Attached files: ${completedAttachments.map(a => a.name).join(', ')}]`
+      : ''
+
     const chatId = activeChat || useAppStore.getState().activeChat!
+
+    // Build message content with attachment info
+    const messageContent = taskInput + attachmentContext
 
     // Add user message
     addMessage(chatId, {
       role: 'user',
-      content: taskInput,
+      content: messageContent,
       status: 'complete',
     })
 
     setInput('')
+    clearAttachments()
     setStreaming(true)
 
     // streaming state handles user feedback
@@ -443,11 +542,37 @@ export default function ChatPanel() {
 
   return (
     <div
-      className={`h-full flex flex-col bg-gradient-to-br from-dark-500/95 via-dark-400/90 to-dark-500/95 ${
+      className={`h-full flex flex-col bg-gradient-to-br from-dark-500/95 via-dark-400/90 to-dark-500/95 relative ${
         isKeyboardOpen ? 'keyboard-open' : ''
-      }`}
+      } ${isDraggingFile ? 'ring-2 ring-rose-gold-400 ring-inset' : ''}`}
       style={containerStyle}
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
     >
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        accept=".pdf,.txt,.md,.csv,.xlsx,.xls,.png,.jpg,.jpeg,.gif,.webp,.js,.ts,.jsx,.tsx,.html,.css,.json,.py"
+        onChange={handleFileInputChange}
+        className="hidden"
+      />
+
+      {/* Drag overlay */}
+      {isDraggingFile && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-dark-500/90 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-4 p-8 rounded-2xl border-2 border-dashed border-rose-gold-400 bg-rose-gold-400/10">
+            <div className="w-16 h-16 rounded-xl flex items-center justify-center" style={{ background: BRAND_GRADIENT_ACCENT }}>
+              <Paperclip className="w-8 h-8 text-dark-500" />
+            </div>
+            <p className="text-white font-medium">Drop files here to attach</p>
+            <p className="text-rose-gold-400/50 text-sm">PDF, Images, Spreadsheets, Code files</p>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <div className={`glass-morphic-header flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 ${
         isMobileOrTablet ? 'pl-16' : '' // Leave space for hamburger menu
@@ -681,13 +806,26 @@ export default function ChatPanel() {
       }`}>
         <form ref={composerFormRef} onSubmit={handleSubmit} className="relative">
           <div className="morphic-glass framer-input rounded-xl p-2 sm:p-3 border border-rose-gold-400/10 focus-within:border-rose-gold-400/30 transition-colors">
+            {/* Attachments Preview */}
+            {attachments.length > 0 && (
+              <div className="mb-2 pb-2 border-b border-rose-gold-400/10">
+                <FileAttachmentList
+                  files={attachments}
+                  onRemove={removeAttachment}
+                  removable={true}
+                  interactive={false}
+                  size="sm"
+                />
+              </div>
+            )}
+
             <div className="relative">
               <textarea
                 ref={inputRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder={isListening ? 'Listening... Speak now' : 'Describe what you want to build...'}
+                placeholder={isListening ? 'Listening... Speak now' : attachments.length > 0 ? 'Add a message about your files...' : 'Describe what you want to build...'}
                 rows={1}
                 className="w-full bg-transparent text-white placeholder-rose-gold-400/40 resize-none outline-none text-sm sm:text-base focus:placeholder-rose-gold-400/60 py-1"
                 style={{ minHeight: '28px', maxHeight: isMobile ? '120px' : '200px' }}
@@ -700,10 +838,20 @@ export default function ChatPanel() {
               <div className="flex items-center gap-1 sm:gap-2">
                 <button
                   type="button"
-                  className="p-2 sm:p-2.5 rounded-xl text-rose-gold-400/60 hover:text-rose-gold-400 hover:bg-rose-gold-400/10 border border-transparent hover:border-rose-gold-400/20 transition-all framer-btn touch-target"
+                  onClick={triggerFileInput}
+                  disabled={isUploadingFiles}
+                  className={`p-2 sm:p-2.5 rounded-xl transition-all framer-btn touch-target ${
+                    isUploadingFiles
+                      ? 'text-rose-gold-400 bg-rose-gold-400/10'
+                      : 'text-rose-gold-400/60 hover:text-rose-gold-400 hover:bg-rose-gold-400/10 border border-transparent hover:border-rose-gold-400/20'
+                  }`}
                   title="Attach file"
                 >
-                  <Paperclip className="w-4 h-4 sm:w-5 sm:h-5" />
+                  {isUploadingFiles ? (
+                    <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
+                  ) : (
+                    <Paperclip className="w-4 h-4 sm:w-5 sm:h-5" />
+                  )}
                 </button>
                 <button
                   type="button"
@@ -721,7 +869,7 @@ export default function ChatPanel() {
               </div>
               <button
                 type="button"
-                disabled={!input.trim() && !isStreaming}
+                disabled={(!input.trim() && attachments.filter(a => a.status === 'complete').length === 0) && !isStreaming}
                 onClick={(e) => {
                   if (isStreaming) {
                     e.preventDefault()

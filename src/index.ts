@@ -15,6 +15,7 @@ import 'dotenv/config';
 import { startServer } from './api/server.js';
 import { SystemIntegrator, createSystemIntegrator } from './unified/SystemIntegrator.js';
 import { UnifiedAgent, createUnifiedAgent } from './unified/UnifiedAgent.js';
+import { validateEnv } from './config/env.js';
 
 // ============================================================================
 // BANNER
@@ -145,6 +146,9 @@ async function gracefulShutdown(signal: string): Promise<void> {
 
 async function main(): Promise<void> {
   try {
+    // Validate env early so production misconfig fails fast.
+    validateEnv();
+
     // Initialize the unified platform first
     await initializePlatform();
 

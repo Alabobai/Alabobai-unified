@@ -20,3 +20,6 @@ export type { AuthRouterConfig, UserStore, TokenBlacklist, EmailService } from '
 
 export { createCompaniesRouter, attachCompaniesWebSocket, default as companiesRouter } from './companies.js';
 export type { CompaniesRouterConfig, CompanyCreationRequest, StoredCompany, GeneratedAssets } from './companies.js';
+
+export { createSandboxRouter, default as sandboxRouter } from './sandbox.js';
+export type { SandboxRouterConfig } from './sandbox.js';

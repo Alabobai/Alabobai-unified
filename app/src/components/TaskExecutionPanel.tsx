@@ -96,7 +96,7 @@ export default function TaskExecutionPanel({ execution, onPause, onResume }: Tas
               execution.status === 'running'
                 ? 'bg-rose-gold-400/20 text-rose-gold-400'
                 : execution.status === 'complete'
-                ? 'bg-green-500/20 text-green-400'
+                ? 'bg-rose-gold-400/20 text-rose-gold-400'
                 : 'bg-white/10 text-white/60'
             }`}>
               {execution.status === 'running' ? (
@@ -157,9 +157,9 @@ export default function TaskExecutionPanel({ execution, onPause, onResume }: Tas
                   isActive
                     ? 'bg-rose-gold-400/10 border-rose-gold-400/30 shadow-glow-sm'
                     : step.status === 'complete'
-                    ? 'bg-green-500/5 border-green-500/20'
+                    ? 'bg-rose-gold-400/5 border-rose-gold-400/20'
                     : step.status === 'error'
-                    ? 'bg-red-500/5 border-red-500/20'
+                    ? 'bg-rose-gold-500/5 border-rose-gold-400/20'
                     : 'bg-white/5 border-white/10'
                 }`}
               >
@@ -168,9 +168,9 @@ export default function TaskExecutionPanel({ execution, onPause, onResume }: Tas
                     isActive
                       ? 'bg-rose-gold-400/20 text-rose-gold-400'
                       : step.status === 'complete'
-                      ? 'bg-green-500/20 text-green-400'
+                      ? 'bg-rose-gold-400/20 text-rose-gold-400'
                       : step.status === 'error'
-                      ? 'bg-red-500/20 text-red-400'
+                      ? 'bg-rose-gold-500/20 text-rose-gold-400'
                       : 'bg-white/10 text-white/40'
                   }`}>
                     {isActive ? (

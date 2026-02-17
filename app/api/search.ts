@@ -1,3 +1,5 @@
+import { degradedEnvelope, healthGate, runWithReliability } from './_lib/reliability'
+
 export const config = {
   runtime: 'edge',
 };
@@ -30,15 +32,31 @@ export default async function handler(req: Request) {
 
     // Use DuckDuckGo HTML search (no API key needed)
     const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
+    const ddgGate = await healthGate('search.duckduckgo', {
+      url: 'https://html.duckduckgo.com/html/?q=ping',
+      timeoutMs: 1600,
+      cacheTtlMs: 5000,
+    })
 
-    const response = await fetch(searchUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; Alabobai/2.0; +https://alabobai.com)',
-      },
-    });
+    const response = ddgGate.allow
+      ? (
+          await runWithReliability(
+            'search.duckduckgo',
+            () =>
+              fetch(searchUrl, {
+                headers: {
+                  'User-Agent': 'Mozilla/5.0 (compatible; Alabobai/2.0; +https://alabobai.com)',
+                },
+              }),
+            { attempts: 2 }
+          )
+        ).value
+      : new Response('', { status: 503 });
 
     // Parse search results from HTML
     const results: Array<{ title: string; url: string; snippet: string }> = [];
+    let fallbackUsed = false
+    let fallbackWarning = ''
     if (response.ok) {
       const html = await response.text();
 
@@ -86,14 +104,23 @@ export default async function handler(req: Request) {
 
     // Secondary fallback for environments where DDG blocks requests.
     if (results.length === 0) {
-      const wikiRes = await fetch(
-        `https://en.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(query)}&limit=${encodeURIComponent(String(limit))}&namespace=0&format=json`,
-        {
-          headers: {
-            'User-Agent': 'Alabobai/2.0',
-          },
-        }
-      );
+      fallbackUsed = true
+      fallbackWarning = ddgGate.allow ? 'duckduckgo returned no parseable results' : (ddgGate.reason || 'duckduckgo unavailable')
+      const wikiRes = (
+        await runWithReliability(
+          'search.wikipedia',
+          () =>
+            fetch(
+              `https://en.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(query)}&limit=${encodeURIComponent(String(limit))}&namespace=0&format=json`,
+              {
+                headers: {
+                  'User-Agent': 'Alabobai/2.0',
+                },
+              }
+            ),
+          { attempts: 2 }
+        )
+      ).value
 
       if (wikiRes.ok) {
         const wikiData = await wikiRes.json() as [string, string[], string[], string[]];
@@ -108,13 +135,33 @@ export default async function handler(req: Request) {
           });
         }
       }
+
+      // Deterministic local fallback to guarantee at least one useful result for broad queries.
+      if (results.length === 0) {
+        results.push({
+          title: `Market brief: ${String(query).slice(0, 80)}`,
+          url: `https://docs.alabobai.local/research?q=${encodeURIComponent(String(query))}`,
+          snippet: 'Generated local fallback research stub. Use as seed context and enrich with live provider data when available.',
+        });
+      }
     }
 
-    return new Response(JSON.stringify({
+    const payload = {
       query,
       results,
       count: results.length,
-    }), {
+    }
+
+    return new Response(JSON.stringify(
+      fallbackUsed
+        ? degradedEnvelope(payload, {
+            route: 'search.wikipedia-fallback',
+            warning: fallbackWarning,
+            fallback: 'wikipedia-opensearch',
+            health: ddgGate.health,
+          })
+        : payload
+    ), {
       headers: {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',

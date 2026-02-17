@@ -19,11 +19,13 @@ interface CollectionInfo {
 }
 
 interface KnowledgeStats {
+  status: 'ok' | 'degraded';
   totalDocuments: number;
   totalChunks: number;
   collections: CollectionInfo[];
   lastUpdated?: string;
   storageSize?: string;
+  message?: string;
 }
 
 async function getCollections(): Promise<string[]> {
@@ -172,6 +174,7 @@ export default async function handler(req: Request) {
     }
 
     const stats: KnowledgeStats = {
+      status: 'ok',
       totalDocuments: estimatedDocs,
       totalChunks,
       collections: validCollections.map((c) => ({
@@ -204,13 +207,17 @@ export default async function handler(req: Request) {
 
     return new Response(
       JSON.stringify({
-        error: isConnectionError
-          ? 'Cannot connect to Qdrant. Make sure Qdrant is running on localhost:6333'
-          : 'Failed to get knowledge stats',
+        status: 'degraded',
+        totalDocuments: 0,
+        totalChunks: 0,
+        collections: [],
+        message: isConnectionError
+          ? 'Qdrant unavailable; returning degraded knowledge stats.'
+          : 'Knowledge stats endpoint degraded due to internal error.',
         details: error instanceof Error ? error.message : 'Unknown error',
       }),
       {
-        status: isConnectionError ? 503 : 500,
+        status: 200,
         headers: {
           'Content-Type': 'application/json',
           'Access-Control-Allow-Origin': '*',

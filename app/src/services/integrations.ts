@@ -2,6 +2,7 @@
  * Integration Service
  * Handles webhook dispatching, API key management, and integration testing
  */
+import { BRAND } from '@/config/brand'
 
 // ============================================================================
 // Types
@@ -125,13 +126,13 @@ export async function testSlackWebhook(webhookUrl: string): Promise<APITestResul
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        text: 'Test message from Alabobai Integration Hub',
+        text: `Test message from ${BRAND.name} Integration Hub`,
         blocks: [
           {
             type: 'section',
             text: {
               type: 'mrkdwn',
-              text: '*Alabobai Integration Test*\nThis is a test message to verify your Slack webhook is working correctly.',
+              text: `*${BRAND.name} Integration Test*\nThis is a test message to verify your Slack webhook is working correctly.`,
             },
           },
         ],
@@ -163,14 +164,14 @@ export async function testDiscordWebhook(webhookUrl: string): Promise<APITestRes
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        content: 'Test message from Alabobai Integration Hub',
+        content: `Test message from ${BRAND.name} Integration Hub`,
         embeds: [
           {
             title: 'Integration Test',
             description: 'This is a test message to verify your Discord webhook is working correctly.',
             color: 0xD4A574, // Rose gold color
             footer: {
-              text: 'Alabobai Integration Hub',
+              text: `${BRAND.name} Integration Hub`,
             },
             timestamp: new Date().toISOString(),
           },

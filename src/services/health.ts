@@ -210,9 +210,12 @@ export class HealthMonitor extends EventEmitter {
     try {
       const health = await this.orchestratorService!.healthCheck();
 
+      const orchestratorStatus: 'healthy' | 'degraded' | 'unhealthy' =
+        health.healthy ? 'healthy' : (health.llmHealthy ? 'unhealthy' : 'degraded');
+
       this.serviceStatuses.set(name, {
         name: 'Orchestrator Service',
-        status: health.healthy ? 'healthy' : 'unhealthy',
+        status: orchestratorStatus,
         latencyMs: Date.now() - startTime,
         lastCheck: new Date(),
         metadata: {

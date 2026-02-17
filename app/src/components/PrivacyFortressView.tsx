@@ -11,6 +11,7 @@ import {
   FileText, Settings, Zap, ChevronRight, ChevronDown,
   Search, ClipboardCheck, Info, Check
 } from 'lucide-react'
+import { BRAND } from '@/config/brand'
 
 // ============== Types ==============
 
@@ -124,7 +125,7 @@ function checkPasswordStrength(password: string): PasswordStrength {
   score = Math.max(0, Math.min(7, score))
 
   const labels = ['Very Weak', 'Very Weak', 'Weak', 'Fair', 'Good', 'Strong', 'Very Strong', 'Excellent']
-  const colors = ['red', 'red', 'orange', 'yellow', 'lime', 'green', 'emerald', 'cyan']
+  const colors = ['red', 'red', 'orange', 'yellow', 'rose-gold-400', 'rose-gold-500', 'rose-gold-500', 'rose-gold-600']
 
   if (feedback.length === 0) feedback.push('Great password!')
 
@@ -275,9 +276,9 @@ function StatCard({ icon: Icon, label, value, color = 'rose' }: {
 }) {
   const colorClasses: Record<string, string> = {
     rose: 'from-rose-gold-400/20 to-rose-gold-600/20 border-rose-gold-400/30 text-rose-gold-400',
-    yellow: 'from-yellow-400/20 to-yellow-600/20 border-yellow-500/30 text-yellow-400',
-    red: 'from-red-400/20 to-red-600/20 border-red-500/30 text-red-400',
-    blue: 'from-blue-400/20 to-blue-600/20 border-blue-500/30 text-blue-400',
+    yellow: 'from-rose-gold-500/20 to-rose-gold-600/20 border-rose-gold-400/30 text-rose-gold-400',
+    red: 'from-rose-gold-500/20 to-rose-gold-600/20 border-rose-gold-400/30 text-rose-gold-400',
+    blue: 'from-rose-gold-300/20 to-rose-gold-500/20 border-rose-gold-400/30 text-rose-gold-400',
   }
 
   return (
@@ -455,7 +456,7 @@ function PrivacyDashboard() {
         {selectedItems.size > 0 && (
           <button
             onClick={deleteSelected}
-            className="morphic-btn bg-red-500/20 text-red-400 border-red-500/30 hover:bg-red-500/30 px-4 py-2 text-sm flex items-center gap-2"
+            className="morphic-btn-ghost bg-rose-gold-500/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-500/30 px-4 py-2 text-sm flex items-center gap-2"
           >
             <Trash2 className="w-4 h-4" />
             Delete Selected ({selectedItems.size})
@@ -465,7 +466,7 @@ function PrivacyDashboard() {
         <div className="ml-auto flex items-center gap-2">
           <button
             onClick={() => clearAllStorage('all')}
-            className="morphic-btn bg-red-500/20 text-red-400 border-red-500/30 hover:bg-red-500/30 px-4 py-2 text-sm flex items-center gap-2"
+            className="morphic-btn-ghost bg-rose-gold-500/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-500/30 px-4 py-2 text-sm flex items-center gap-2"
           >
             <Trash2 className="w-4 h-4" />
             Clear All Data
@@ -477,8 +478,11 @@ function PrivacyDashboard() {
       <div className="space-y-4">
         {/* LocalStorage */}
         <div className="morphic-card rounded-xl overflow-hidden">
-          <button
+          <div
             onClick={() => toggleSection('localStorage')}
+            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && toggleSection('localStorage')}
+            role="button"
+            tabIndex={0}
             className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors"
           >
             <div className="flex items-center gap-3">
@@ -489,13 +493,13 @@ function PrivacyDashboard() {
             <div className="flex items-center gap-3">
               <button
                 onClick={(e) => { e.stopPropagation(); clearAllStorage('localStorage') }}
-                className="text-xs text-red-400 hover:text-red-300 px-2 py-1 rounded hover:bg-red-400/10"
+                className="text-xs text-rose-gold-400 hover:text-rose-gold-400 px-2 py-1 rounded hover:bg-rose-gold-500/10"
               >
                 Clear
               </button>
               {expandedSections.has('localStorage') ? <ChevronDown className="w-4 h-4 text-white/40" /> : <ChevronRight className="w-4 h-4 text-white/40" />}
             </div>
-          </button>
+          </div>
 
           {expandedSections.has('localStorage') && localStorageItems.length > 0 && (
             <div className="border-t border-white/10 max-h-60 overflow-y-auto morphic-scrollbar">
@@ -529,8 +533,11 @@ function PrivacyDashboard() {
 
         {/* SessionStorage */}
         <div className="morphic-card rounded-xl overflow-hidden">
-          <button
+          <div
             onClick={() => toggleSection('sessionStorage')}
+            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && toggleSection('sessionStorage')}
+            role="button"
+            tabIndex={0}
             className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors"
           >
             <div className="flex items-center gap-3">
@@ -541,13 +548,13 @@ function PrivacyDashboard() {
             <div className="flex items-center gap-3">
               <button
                 onClick={(e) => { e.stopPropagation(); clearAllStorage('sessionStorage') }}
-                className="text-xs text-red-400 hover:text-red-300 px-2 py-1 rounded hover:bg-red-400/10"
+                className="text-xs text-rose-gold-400 hover:text-rose-gold-400 px-2 py-1 rounded hover:bg-rose-gold-500/10"
               >
                 Clear
               </button>
               {expandedSections.has('sessionStorage') ? <ChevronDown className="w-4 h-4 text-white/40" /> : <ChevronRight className="w-4 h-4 text-white/40" />}
             </div>
-          </button>
+          </div>
 
           {expandedSections.has('sessionStorage') && sessionStorageItems.length > 0 && (
             <div className="border-t border-white/10 max-h-60 overflow-y-auto morphic-scrollbar">
@@ -581,8 +588,11 @@ function PrivacyDashboard() {
 
         {/* Cookies */}
         <div className="morphic-card rounded-xl overflow-hidden">
-          <button
+          <div
             onClick={() => toggleSection('cookie')}
+            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && toggleSection('cookie')}
+            role="button"
+            tabIndex={0}
             className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors"
           >
             <div className="flex items-center gap-3">
@@ -593,13 +603,13 @@ function PrivacyDashboard() {
             <div className="flex items-center gap-3">
               <button
                 onClick={(e) => { e.stopPropagation(); clearAllStorage('cookie') }}
-                className="text-xs text-red-400 hover:text-red-300 px-2 py-1 rounded hover:bg-red-400/10"
+                className="text-xs text-rose-gold-400 hover:text-rose-gold-400 px-2 py-1 rounded hover:bg-rose-gold-500/10"
               >
                 Clear
               </button>
               {expandedSections.has('cookie') ? <ChevronDown className="w-4 h-4 text-white/40" /> : <ChevronRight className="w-4 h-4 text-white/40" />}
             </div>
-          </button>
+          </div>
 
           {expandedSections.has('cookie') && cookieItems.length > 0 && (
             <div className="border-t border-white/10 max-h-60 overflow-y-auto morphic-scrollbar">
@@ -683,8 +693,8 @@ function PrivacyTools() {
   }
 
   const getStrengthColor = (score: number) => {
-    const colors = ['bg-red-500', 'bg-red-500', 'bg-orange-500', 'bg-yellow-500', 'bg-lime-500', 'bg-green-500', 'bg-emerald-500', 'bg-cyan-500']
-    return colors[score] || 'bg-gray-500'
+    const colors = ['bg-rose-gold-500', 'bg-rose-gold-500', 'bg-rose-gold-500', 'bg-rose-gold-500', 'bg-rose-gold-400', 'bg-rose-gold-500', 'bg-rose-gold-500', 'bg-rose-gold-600']
+    return colors[score] || 'bg-white/30'
   }
 
   return (
@@ -725,7 +735,7 @@ function PrivacyTools() {
 
           <button
             onClick={handleGeneratePassword}
-            className="w-full morphic-btn bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 py-2.5 text-sm font-semibold flex items-center justify-center gap-2"
+            className="w-full morphic-btn py-2.5 text-sm font-semibold flex items-center justify-center gap-2"
           >
             <Zap className="w-4 h-4" />
             Generate Password
@@ -789,7 +799,7 @@ function PrivacyTools() {
                   <span className="text-sm text-white/60">Strength</span>
                   <span className={`text-sm font-medium ${
                     passwordStrength.score >= 5 ? 'text-rose-gold-400' :
-                    passwordStrength.score >= 3 ? 'text-yellow-400' : 'text-red-400'
+                    passwordStrength.score >= 3 ? 'text-rose-gold-400' : 'text-rose-gold-400'
                   }`}>
                     {passwordStrength.label}
                   </span>
@@ -808,7 +818,7 @@ function PrivacyTools() {
                     {passwordStrength.score >= 5 && tip === 'Great password!' ? (
                       <CheckCircle2 className="w-3 h-3 text-rose-gold-400" />
                     ) : (
-                      <AlertCircle className="w-3 h-3 text-yellow-400" />
+                      <AlertCircle className="w-3 h-3 text-rose-gold-400" />
                     )}
                     {tip}
                   </div>
@@ -934,17 +944,17 @@ function SecurityAnalysis() {
   }
 
   const getScoreColor = (score: number) => {
-    if (score >= 80) return 'text-emerald-400'
-    if (score >= 60) return 'text-yellow-400'
-    if (score >= 40) return 'text-orange-400'
-    return 'text-red-400'
+    if (score >= 80) return 'text-rose-gold-400'
+    if (score >= 60) return 'text-rose-gold-400'
+    if (score >= 40) return 'text-rose-gold-400'
+    return 'text-rose-gold-400'
   }
 
   const getScoreBg = (score: number) => {
-    if (score >= 80) return 'from-emerald-500/20 to-emerald-600/20 border-emerald-500/30'
-    if (score >= 60) return 'from-yellow-500/20 to-yellow-600/20 border-yellow-500/30'
-    if (score >= 40) return 'from-orange-500/20 to-orange-600/20 border-orange-500/30'
-    return 'from-red-500/20 to-red-600/20 border-red-500/30'
+    if (score >= 80) return 'from-rose-gold-400/20 to-rose-gold-600/20 border-rose-gold-400/30'
+    if (score >= 60) return 'from-rose-gold-500/20 to-rose-gold-600/20 border-rose-gold-400/30'
+    if (score >= 40) return 'from-rose-gold-500/20 to-rose-gold-600/20 border-rose-gold-400/30'
+    return 'from-rose-gold-500/20 to-rose-gold-600/20 border-rose-gold-400/30'
   }
 
   return (
@@ -968,7 +978,7 @@ function SecurityAnalysis() {
           <button
             onClick={handleAnalyze}
             disabled={!url.trim() || analyzing}
-            className="morphic-btn bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 px-6 py-3 text-sm font-semibold flex items-center gap-2 disabled:opacity-50"
+            className="morphic-btn-ghost bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 px-6 py-3 text-sm font-semibold flex items-center gap-2 disabled:opacity-50"
           >
             {analyzing ? (
               <>
@@ -1002,7 +1012,7 @@ function SecurityAnalysis() {
                     HTTPS Secure
                   </span>
                 ) : (
-                  <span className="flex items-center gap-1 text-red-400 text-sm">
+                  <span className="flex items-center gap-1 text-rose-gold-400 text-sm">
                     <AlertTriangle className="w-4 h-4" />
                     Not HTTPS
                   </span>
@@ -1033,14 +1043,14 @@ function SecurityAnalysis() {
           {/* Risks */}
           <div className="morphic-card p-6 rounded-xl">
             <h4 className="text-sm font-medium text-white/60 mb-3 flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-yellow-400" />
+              <AlertTriangle className="w-4 h-4 text-rose-gold-400" />
               Potential Risks
             </h4>
             {analysis.risks.length > 0 ? (
               <div className="space-y-2">
                 {analysis.risks.map((risk, i) => (
                   <div key={i} className="flex items-start gap-2 text-sm">
-                    <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+                    <AlertCircle className="w-4 h-4 text-rose-gold-400 flex-shrink-0 mt-0.5" />
                     <span className="text-white/80">{risk}</span>
                   </div>
                 ))}
@@ -1193,10 +1203,10 @@ function DataManagement() {
         </div>
 
         {/* Clear All Data */}
-        <div className="morphic-card p-6 rounded-xl border border-red-500/20">
+        <div className="morphic-card p-6 rounded-xl border border-rose-gold-400/20">
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-xl bg-red-500/20 border border-red-500/30 flex items-center justify-center">
-              <Trash2 className="w-6 h-6 text-red-400" />
+            <div className="w-12 h-12 rounded-xl bg-rose-gold-500/20 border border-rose-gold-400/30 flex items-center justify-center">
+              <Trash2 className="w-6 h-6 text-rose-gold-400" />
             </div>
             <div className="flex-1">
               <h3 className="text-lg font-semibold text-white mb-1">Clear All Platform Data</h3>
@@ -1205,7 +1215,7 @@ function DataManagement() {
               </p>
               <button
                 onClick={clearAllPlatformData}
-                className="morphic-btn bg-red-500/20 text-red-400 border-red-500/30 hover:bg-red-500/30 px-4 py-2 text-sm flex items-center gap-2"
+                className="morphic-btn-ghost bg-rose-gold-500/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-500/30 px-4 py-2 text-sm flex items-center gap-2"
               >
                 <Trash2 className="w-4 h-4" />
                 Clear All Data
@@ -1307,7 +1317,7 @@ function PrivacyChecklist() {
           <span className="text-sm text-white/60">{completedCount}/{checklist.length} completed</span>
           <div className="w-24 h-2 bg-white/10 rounded-full overflow-hidden">
             <div
-              className="h-full bg-emerald-500 rounded-full transition-all duration-300"
+              className="h-full bg-rose-gold-500 rounded-full transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -1364,7 +1374,7 @@ export default function PrivacyFortressView() {
   const [activeTab, setActiveTab] = useState<TabType>('dashboard')
 
   return (
-    <div className="h-full flex flex-col bg-dark-500 overflow-hidden">
+    <div className="h-full w-full flex flex-col bg-dark-500 overflow-hidden">
       {/* Header */}
       <div className="glass-morphic-header p-4 border-b border-rose-gold-400/20">
         <div className="flex items-center justify-between mb-4">
@@ -1374,7 +1384,7 @@ export default function PrivacyFortressView() {
             </div>
             <div>
               <h2 className="text-lg font-bold text-white">Privacy Fortress</h2>
-              <p className="text-xs text-rose-gold-400/70">Alabobai - Data security and privacy management</p>
+              <p className="text-xs text-rose-gold-400/70">{BRAND.name} - Data security and privacy management</p>
             </div>
           </div>
         </div>

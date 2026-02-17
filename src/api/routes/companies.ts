@@ -10,6 +10,7 @@ import { Server as HTTPServer } from 'http';
 import { v4 as uuid } from 'uuid';
 import { z } from 'zod';
 import { EventEmitter } from 'events';
+import jwt from 'jsonwebtoken';
 
 import {
   CompanyBuilderOrchestrator,
@@ -247,6 +248,23 @@ class CompanyWebSocketManager extends EventEmitter {
     this.wss.on('connection', (ws: WebSocket, req) => {
       const url = new URL(req.url || '', 'http://localhost');
       const companyId = url.searchParams.get('companyId');
+      const wsToken = url.searchParams.get('wsToken');
+      const sessionSecret = process.env.SESSION_TOKEN_SECRET || process.env.ADMIN_API_KEY || 'dev-session-secret';
+
+      // Require websocket token auth in production (and when secrets are configured).
+      if (process.env.NODE_ENV === 'production' || process.env.ADMIN_API_KEY || process.env.SESSION_TOKEN_SECRET) {
+        try {
+          if (!wsToken) throw new Error('missing token');
+          const payload = jwt.verify(wsToken, sessionSecret, {
+            issuer: 'alabobai',
+            audience: 'companies-ws',
+          }) as { type?: string };
+          if (payload.type !== 'companies_ws') throw new Error('invalid token type');
+        } catch {
+          ws.close(4001, 'unauthorized');
+          return;
+        }
+      }
 
       if (companyId) {
         this.subscribe(companyId, ws);
@@ -465,6 +483,21 @@ export function createCompaniesRouter(config: CompaniesRouterConfig = {}): Route
         }
       });
     }
+  });
+
+  // ============================================================================
+  // POST /api/companies/ws-token - Mint websocket auth token
+  // ============================================================================
+
+  router.post('/ws-token', (req: Request, res: Response) => {
+    const secret = process.env.SESSION_TOKEN_SECRET || process.env.ADMIN_API_KEY || 'dev-session-secret';
+    const token = jwt.sign({ type: 'companies_ws' }, secret, {
+      expiresIn: '1h',
+      issuer: 'alabobai',
+      audience: 'companies-ws',
+    });
+
+    res.json({ success: true, data: { wsToken: token, expiresIn: 3600 } });
   });
 
   // ============================================================================

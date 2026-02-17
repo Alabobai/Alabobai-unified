@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, KeyboardEvent } from 'react'
 import { useAppStore } from '../stores/appStore'
+import { BRAND } from '../config/brand'
 
 // Types for terminal entries
 interface OutputLine {
@@ -69,7 +70,7 @@ export default function TerminalComponent() {
       input: '',
       output: [
         heading('╭─────────────────────────────────────────────────────╮'),
-        heading('│  Alabobai Terminal v2.0                             │'),
+        heading(`│  ${BRAND.name} Terminal v2.0                             │`),
         heading('│  Type "help" for available commands                 │'),
         heading('│  AI-powered terminal with web search & code gen     │'),
         heading('╰─────────────────────────────────────────────────────╯'),
@@ -696,21 +697,21 @@ export default function TerminalComponent() {
   const getLineStyle = (type: OutputLine['type']): string => {
     switch (type) {
       case 'success':
-        return 'text-green-400'
+        return 'text-rose-gold-400'
       case 'error':
-        return 'text-red-400'
+        return 'text-rose-gold-400'
       case 'warning':
-        return 'text-yellow-400'
+        return 'text-rose-gold-400'
       case 'info':
-        return 'text-blue-400'
+        return 'text-rose-gold-400'
       case 'muted':
         return 'text-white/50'
       case 'heading':
         return 'text-rose-gold-400 font-semibold'
       case 'link':
-        return 'text-cyan-400 underline'
+        return 'text-rose-gold-400 underline'
       case 'code':
-        return 'text-purple-400 font-mono'
+        return 'text-rose-gold-400 font-mono'
       default:
         return 'text-white/80'
     }
@@ -719,7 +720,7 @@ export default function TerminalComponent() {
   return (
     <div
       ref={containerRef}
-      className="h-full bg-black overflow-auto morphic-scrollbar p-4 font-mono text-sm cursor-text"
+      className="h-full bg-dark-500 overflow-auto morphic-scrollbar p-4 font-mono text-sm cursor-text"
       onClick={() => inputRef.current?.focus()}
     >
       {history.map((entry, i) => (

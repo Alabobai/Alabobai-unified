@@ -1,10 +1,17 @@
 /**
  * Deep Research Service
- * Performs real web research by:
- * 1. Searching using DuckDuckGo (via /api/search)
- * 2. Fetching and extracting content from web pages
- * 3. Using AI to analyze and synthesize information
- * 4. Generating comprehensive research reports with citations
+ * Performs real web research using multiple strategies:
+ *
+ * Primary Strategy (when backend available):
+ * 1. Search using DuckDuckGo (via /api/search)
+ * 2. Fetch and extract content from web pages
+ * 3. Use AI to analyze and synthesize information
+ *
+ * Fallback Strategy (client-side, no backend needed):
+ * 1. Search using Wikipedia API (CORS-friendly)
+ * 2. Search using DuckDuckGo Instant Answer API
+ * 3. Use client-side text extraction and summarization
+ * 4. Generate reports from gathered information
  */
 
 export type ResearchPhase =
@@ -21,6 +28,7 @@ export interface SearchResult {
   title: string
   url: string
   snippet: string
+  source?: string
 }
 
 export interface ResearchSource {
@@ -32,6 +40,7 @@ export interface ResearchSource {
   relevanceScore?: number
   fetchedAt: Date
   error?: string
+  sourceType?: 'wikipedia' | 'web' | 'news' | 'instant'
 }
 
 export interface ResearchProgress {
@@ -71,13 +80,29 @@ export interface ResearchCallbacks {
   onError?: (error: Error) => void
 }
 
+// Check if backend API is available
+async function isBackendAvailable(): Promise<boolean> {
+  try {
+    const response = await fetch('/api/search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: 'test', limit: 1 }),
+      signal: AbortSignal.timeout(3000)
+    })
+    return response.ok
+  } catch {
+    return false
+  }
+}
+
 /**
  * Deep Research Engine
- * Orchestrates the entire research process
+ * Orchestrates the entire research process with backend fallback
  */
 export class DeepResearchEngine {
   private abortController: AbortController | null = null
   private isRunning = false
+  private useBackend = true // Will be determined at runtime
 
   /**
    * Perform comprehensive research on a topic
@@ -102,6 +127,18 @@ export class DeepResearchEngine {
     const sources: ResearchSource[] = []
 
     try {
+      // Check if backend is available
+      callbacks?.onProgress?.({
+        phase: 'searching',
+        message: 'Initializing research...',
+        progress: 2,
+        sourcesFound: 0,
+        sourcesProcessed: 0
+      })
+
+      this.useBackend = await isBackendAvailable()
+      console.log(`[DeepResearch] Using ${this.useBackend ? 'backend API' : 'client-side'} search`)
+
       // Phase 1: Generate search queries
       callbacks?.onProgress?.({
         phase: 'searching',
@@ -128,7 +165,9 @@ export class DeepResearchEngine {
         if (this.abortController?.signal.aborted) break
 
         try {
-          const results = await this.search(query)
+          const results = this.useBackend
+            ? await this.searchBackend(query)
+            : await this.searchClientSide(query)
           results.forEach(r => callbacks?.onSourceFound?.(r))
           allSearchResults.push(...results)
         } catch (e) {
@@ -139,6 +178,22 @@ export class DeepResearchEngine {
       // Deduplicate by URL
       const uniqueResults = this.deduplicateResults(allSearchResults)
       const limitedResults = uniqueResults.slice(0, maxSources)
+
+      // If no results found, try harder with different strategies
+      if (limitedResults.length === 0) {
+        callbacks?.onProgress?.({
+          phase: 'searching',
+          message: 'Expanding search...',
+          progress: 15,
+          sourcesFound: 0,
+          sourcesProcessed: 0
+        })
+
+        // Try direct Wikipedia search as last resort
+        const wikiResults = await this.searchWikipediaDirect(topic)
+        wikiResults.forEach(r => callbacks?.onSourceFound?.(r))
+        limitedResults.push(...wikiResults.slice(0, maxSources))
+      }
 
       callbacks?.onProgress?.({
         phase: 'fetching',
@@ -177,7 +232,7 @@ export class DeepResearchEngine {
         sourcesProcessed: sources.length
       })
 
-      const successfulSources = sources.filter(s => !s.error && s.content.length > 100)
+      const successfulSources = sources.filter(s => !s.error && s.content.length > 50)
 
       for (let i = 0; i < successfulSources.length; i++) {
         if (this.abortController?.signal.aborted) break
@@ -197,6 +252,8 @@ export class DeepResearchEngine {
           source.summary = await this.summarizeSource(source.content, topic)
         } catch (e) {
           console.warn(`Failed to summarize source: ${source.url}`, e)
+          // Use extractive summary as fallback
+          source.summary = this.extractiveSummary(source.content, topic)
         }
       }
 
@@ -256,9 +313,10 @@ export class DeepResearchEngine {
     const queries = [topic]
 
     // Add variations to get diverse results
+    const currentYear = new Date().getFullYear()
     const variations = [
       `${topic} overview`,
-      `${topic} latest news 2024`,
+      `${topic} latest ${currentYear}`,
       `${topic} explained`,
     ]
 
@@ -267,9 +325,9 @@ export class DeepResearchEngine {
   }
 
   /**
-   * Search using the /api/search endpoint
+   * Search using the /api/search endpoint (backend)
    */
-  private async search(query: string, limit = 5): Promise<SearchResult[]> {
+  private async searchBackend(query: string, limit = 5): Promise<SearchResult[]> {
     try {
       const response = await fetch('/api/search', {
         method: 'POST',
@@ -283,9 +341,149 @@ export class DeepResearchEngine {
       }
 
       const data = await response.json()
-      return data.results || []
+      return (data.results || []).map((r: SearchResult) => ({ ...r, source: 'backend' }))
     } catch (error) {
-      console.error('Search error:', error)
+      console.error('Backend search error:', error)
+      // Fallback to client-side search
+      return this.searchClientSide(query, limit)
+    }
+  }
+
+  /**
+   * Search using client-side CORS-friendly APIs
+   */
+  private async searchClientSide(query: string, limit = 5): Promise<SearchResult[]> {
+    const results: SearchResult[] = []
+
+    // Try multiple sources in parallel
+    const searchPromises = [
+      this.searchWikipedia(query, limit),
+      this.searchDuckDuckGoInstant(query),
+    ]
+
+    const searchResults = await Promise.allSettled(searchPromises)
+
+    for (const result of searchResults) {
+      if (result.status === 'fulfilled') {
+        results.push(...result.value)
+      }
+    }
+
+    return results.slice(0, limit)
+  }
+
+  /**
+   * Search Wikipedia API (CORS-friendly)
+   */
+  private async searchWikipedia(query: string, limit = 5): Promise<SearchResult[]> {
+    try {
+      // Use Wikipedia's OpenSearch API
+      const searchUrl = `https://en.wikipedia.org/w/api.php?` +
+        `action=opensearch&search=${encodeURIComponent(query)}` +
+        `&limit=${limit}&namespace=0&format=json&origin=*`
+
+      const response = await fetch(searchUrl, {
+        signal: this.abortController?.signal
+      })
+
+      if (!response.ok) {
+        throw new Error(`Wikipedia search failed: ${response.status}`)
+      }
+
+      const data = await response.json() as [string, string[], string[], string[]]
+      const [, titles, snippets, urls] = data
+
+      return titles.map((title, i) => ({
+        title,
+        url: urls[i],
+        snippet: snippets[i] || '',
+        source: 'wikipedia'
+      }))
+    } catch (error) {
+      console.error('Wikipedia search error:', error)
+      return []
+    }
+  }
+
+  /**
+   * Direct Wikipedia article search with content
+   */
+  private async searchWikipediaDirect(query: string): Promise<SearchResult[]> {
+    try {
+      // Search for Wikipedia articles
+      const searchUrl = `https://en.wikipedia.org/w/api.php?` +
+        `action=query&list=search&srsearch=${encodeURIComponent(query)}` +
+        `&format=json&origin=*&srlimit=5`
+
+      const response = await fetch(searchUrl, {
+        signal: this.abortController?.signal
+      })
+
+      if (!response.ok) {
+        throw new Error(`Wikipedia direct search failed: ${response.status}`)
+      }
+
+      const data = await response.json()
+      const searchResults = data.query?.search || []
+
+      return searchResults.map((result: { title: string; snippet: string; pageid: number }) => ({
+        title: result.title,
+        url: `https://en.wikipedia.org/wiki/${encodeURIComponent(result.title.replace(/ /g, '_'))}`,
+        snippet: result.snippet.replace(/<[^>]+>/g, ''),
+        source: 'wikipedia'
+      }))
+    } catch (error) {
+      console.error('Wikipedia direct search error:', error)
+      return []
+    }
+  }
+
+  /**
+   * Search DuckDuckGo Instant Answer API (CORS-friendly JSON API)
+   */
+  private async searchDuckDuckGoInstant(query: string): Promise<SearchResult[]> {
+    try {
+      // DuckDuckGo Instant Answer API
+      const searchUrl = `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1&skip_disambig=1`
+
+      const response = await fetch(searchUrl, {
+        signal: this.abortController?.signal
+      })
+
+      if (!response.ok) {
+        throw new Error(`DuckDuckGo search failed: ${response.status}`)
+      }
+
+      const data = await response.json()
+      const results: SearchResult[] = []
+
+      // Add Abstract if available
+      if (data.Abstract && data.AbstractURL) {
+        results.push({
+          title: data.Heading || query,
+          url: data.AbstractURL,
+          snippet: data.Abstract,
+          source: 'duckduckgo'
+        })
+      }
+
+      // Add Related Topics
+      if (data.RelatedTopics) {
+        for (const topic of data.RelatedTopics.slice(0, 3)) {
+          if (topic.FirstURL && topic.Text) {
+            results.push({
+              title: topic.Text.split(' - ')[0] || topic.Text.slice(0, 50),
+              url: topic.FirstURL,
+              snippet: topic.Text,
+              source: 'duckduckgo'
+            })
+          }
+        }
+      }
+
+      return results
+    } catch (error) {
+      console.error('DuckDuckGo search error:', error)
       return []
     }
   }
@@ -312,37 +510,97 @@ export class DeepResearchEngine {
       url: result.url,
       title: result.title,
       content: '',
-      fetchedAt: new Date()
+      fetchedAt: new Date(),
+      sourceType: result.source === 'wikipedia' ? 'wikipedia' : 'web'
     }
 
-    try {
-      // Use the proxy API to fetch pages (handles CORS)
-      const proxyUrl = `/api/fetch-page?url=${encodeURIComponent(result.url)}`
+    // For Wikipedia sources, fetch content directly via Wikipedia API
+    if (result.url.includes('wikipedia.org')) {
+      return this.fetchWikipediaContent(result, source)
+    }
 
-      const response = await fetch(proxyUrl, {
+    // For non-Wikipedia sources, try backend proxy first
+    if (this.useBackend) {
+      try {
+        const proxyUrl = `/api/fetch-page?url=${encodeURIComponent(result.url)}`
+
+        const response = await fetch(proxyUrl, {
+          signal: this.abortController?.signal
+        })
+
+        if (response.ok) {
+          const html = await response.text()
+          source.content = this.extractMainContent(html)
+
+          if (source.content && source.content.length >= 50) {
+            source.relevanceScore = this.calculateRelevanceScore(source.content)
+            return source
+          }
+        }
+      } catch (error) {
+        console.warn(`Backend fetch failed for ${result.url}:`, error)
+      }
+    }
+
+    // Fallback: use snippet as content
+    source.content = result.snippet || ''
+    source.relevanceScore = source.content.length > 0 ? 0.4 : 0.1
+
+    // If this is from DuckDuckGo with a good snippet, boost relevance
+    if (result.source === 'duckduckgo' && source.content.length > 100) {
+      source.relevanceScore = 0.7
+      source.sourceType = 'instant'
+    }
+
+    return source
+  }
+
+  /**
+   * Fetch Wikipedia article content directly via API
+   */
+  private async fetchWikipediaContent(result: SearchResult, source: ResearchSource): Promise<ResearchSource> {
+    try {
+      // Extract article title from URL
+      const urlMatch = result.url.match(/\/wiki\/(.+)$/)
+      if (!urlMatch) {
+        throw new Error('Invalid Wikipedia URL')
+      }
+
+      const articleTitle = decodeURIComponent(urlMatch[1].replace(/_/g, ' '))
+
+      // Fetch article extract via Wikipedia API
+      const apiUrl = `https://en.wikipedia.org/w/api.php?` +
+        `action=query&titles=${encodeURIComponent(articleTitle)}` +
+        `&prop=extracts&exintro=false&explaintext=true` +
+        `&format=json&origin=*&exlimit=1`
+
+      const response = await fetch(apiUrl, {
         signal: this.abortController?.signal
       })
 
       if (!response.ok) {
-        // If proxy fails, use the snippet as content
-        throw new Error(`Fetch failed: ${response.status}`)
+        throw new Error(`Wikipedia API failed: ${response.status}`)
       }
 
-      const html = await response.text()
-      source.content = this.extractMainContent(html)
+      const data = await response.json()
+      const pages = data.query?.pages || {}
+      const page = Object.values(pages)[0] as { extract?: string; title?: string } | undefined
 
-      // If content extraction failed, use snippet
-      if (!source.content || source.content.length < 50) {
+      if (page?.extract) {
+        source.content = page.extract.slice(0, 10000)
+        source.title = page.title || source.title
+        source.relevanceScore = this.calculateRelevanceScore(source.content)
+        source.sourceType = 'wikipedia'
+      } else {
         source.content = result.snippet || ''
+        source.relevanceScore = 0.3
+        source.error = 'No content available'
       }
-
-      // Score relevance based on content length and structure
-      source.relevanceScore = this.calculateRelevanceScore(source.content)
 
     } catch (error) {
-      // On any error, use snippet as fallback content
-      source.error = error instanceof Error ? error.message : 'Unknown error'
+      console.warn(`Wikipedia fetch failed for ${result.url}:`, error)
       source.content = result.snippet || ''
+      source.error = error instanceof Error ? error.message : 'Unknown error'
       source.relevanceScore = source.content.length > 0 ? 0.3 : 0.1
     }
 
@@ -420,40 +678,99 @@ export class DeepResearchEngine {
   }
 
   /**
-   * Use AI to summarize a single source
+   * Use AI to summarize a single source (with fallback)
    */
   private async summarizeSource(content: string, topic: string): Promise<string> {
     // Truncate content if too long
     const truncatedContent = content.slice(0, 4000)
 
-    try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: [{
-            role: 'user',
-            content: `Summarize the following content in relation to the topic "${topic}". Focus on key facts, findings, and relevant information. Be concise (2-3 paragraphs max).
+    // Try backend AI first if available
+    if (this.useBackend) {
+      try {
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messages: [{
+              role: 'user',
+              content: `Summarize the following content in relation to the topic "${topic}". Focus on key facts, findings, and relevant information. Be concise (2-3 paragraphs max).
 
 Content:
 ${truncatedContent}`
-          }],
-          stream: false
-        }),
-        signal: this.abortController?.signal
-      })
+            }],
+            stream: false
+          }),
+          signal: this.abortController?.signal
+        })
 
-      if (!response.ok) {
-        throw new Error(`AI request failed: ${response.status}`)
+        if (response.ok) {
+          const data = await response.json()
+          if (data.content) {
+            return data.content
+          }
+        }
+      } catch (error) {
+        console.warn('Backend summarization failed:', error)
+      }
+    }
+
+    // Fallback: use extractive summarization
+    return this.extractiveSummary(content, topic)
+  }
+
+  /**
+   * Extractive summarization (no AI needed)
+   * Extracts the most relevant sentences from the content
+   */
+  private extractiveSummary(content: string, topic: string): string {
+    const topicWords = topic.toLowerCase().split(/\s+/).filter(w => w.length > 3)
+    const sentences = content
+      .replace(/([.!?])\s+/g, '$1|SPLIT|')
+      .split('|SPLIT|')
+      .map(s => s.trim())
+      .filter(s => s.length > 30 && s.length < 500)
+
+    if (sentences.length === 0) {
+      return content.slice(0, 500)
+    }
+
+    // Score sentences by relevance to topic
+    const scoredSentences = sentences.map(sentence => {
+      const lowerSentence = sentence.toLowerCase()
+      let score = 0
+
+      // Score based on topic word matches
+      for (const word of topicWords) {
+        if (lowerSentence.includes(word)) {
+          score += 2
+        }
       }
 
-      const data = await response.json()
-      return data.content || 'Summary unavailable'
-    } catch (error) {
-      console.error('Summarization error:', error)
-      // Return first part of content as fallback
-      return content.slice(0, 500) + '...'
-    }
+      // Prefer sentences with numbers (often contain facts)
+      if (/\d+/.test(sentence)) {
+        score += 1
+      }
+
+      // Prefer sentences that start with capital letters after periods
+      if (/^[A-Z]/.test(sentence)) {
+        score += 0.5
+      }
+
+      // Slight preference for longer sentences (more information)
+      score += Math.min(sentence.length / 200, 1)
+
+      return { sentence, score }
+    })
+
+    // Sort by score and take top sentences
+    scoredSentences.sort((a, b) => b.score - a.score)
+
+    const selectedSentences = scoredSentences
+      .slice(0, 5)
+      .sort((a, b) => sentences.indexOf(a.sentence) - sentences.indexOf(b.sentence))
+      .map(s => s.sentence)
+
+    return selectedSentences.join(' ')
   }
 
   /**
@@ -477,14 +794,16 @@ ${truncatedContent}`
       .map((s, i) => `[${i + 1}] ${s.title}\n${s.summary || s.content.slice(0, 500)}`)
       .join('\n\n')
 
-    try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: [{
-            role: 'user',
-            content: `You are a research analyst. Based on the following sources, create a comprehensive research report on "${topic}".
+    // Try AI synthesis first if backend is available
+    if (this.useBackend) {
+      try {
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messages: [{
+              role: 'user',
+              content: `You are a research analyst. Based on the following sources, create a comprehensive research report on "${topic}".
 
 Structure your response EXACTLY as follows (use these exact headers):
 
@@ -504,48 +823,110 @@ Sources:
 ${sourceSummaries}
 
 Remember to cite sources using bracket notation [1], [2], etc. throughout your analysis.`
-          }],
-          stream: false
-        }),
-        signal: this.abortController?.signal
-      })
+            }],
+            stream: false
+          }),
+          signal: this.abortController?.signal
+        })
 
-      if (!response.ok) {
-        throw new Error(`AI request failed: ${response.status}`)
+        if (response.ok) {
+          const data = await response.json()
+          const reportContent = data.content || ''
+
+          if (reportContent.length > 100) {
+            const parsed = this.parseReportContent(reportContent)
+
+            return {
+              id: crypto.randomUUID(),
+              topic,
+              summary: parsed.summary,
+              keyFindings: parsed.keyFindings,
+              detailedAnalysis: parsed.detailedAnalysis,
+              sources,
+              citations,
+              generatedAt: new Date(),
+              researchDuration: Date.now() - startTime
+            }
+          }
+        }
+      } catch (error) {
+        console.warn('AI synthesis failed:', error)
       }
+    }
 
-      const data = await response.json()
-      const reportContent = data.content || ''
+    // Fallback: Generate report from source summaries
+    return this.generateClientSideReport(topic, sources, citations, startTime)
+  }
 
-      // Parse the structured report
-      const parsed = this.parseReportContent(reportContent)
+  /**
+   * Generate a report entirely client-side without AI
+   */
+  private generateClientSideReport(
+    topic: string,
+    sources: ResearchSource[],
+    citations: Citation[],
+    startTime: number
+  ): ResearchReport {
+    // Build summary from source summaries
+    const summaryParts: string[] = []
+    summaryParts.push(`This research report explores "${topic}" by analyzing ${sources.length} authoritative sources.`)
 
-      return {
-        id: crypto.randomUUID(),
-        topic,
-        summary: parsed.summary,
-        keyFindings: parsed.keyFindings,
-        detailedAnalysis: parsed.detailedAnalysis,
-        sources,
-        citations,
-        generatedAt: new Date(),
-        researchDuration: Date.now() - startTime
+    // Get the first substantial content as overview
+    const primarySource = sources.find(s => s.content.length > 200 && !s.error)
+    if (primarySource) {
+      const firstParagraph = primarySource.content.split(/[.!?]/).slice(0, 3).join('. ')
+      if (firstParagraph.length > 100) {
+        summaryParts.push(firstParagraph + '.')
       }
-    } catch (error) {
-      console.error('Report synthesis error:', error)
+    }
 
-      // Return a basic report from source summaries
-      return {
-        id: crypto.randomUUID(),
-        topic,
-        summary: `Research on "${topic}" gathered information from ${sources.length} sources.`,
-        keyFindings: sources.slice(0, 5).map(s => s.title),
-        detailedAnalysis: sources.map(s => s.summary || s.content.slice(0, 500)).join('\n\n'),
-        sources,
-        citations,
-        generatedAt: new Date(),
-        researchDuration: Date.now() - startTime
+    summaryParts.push(`The information has been compiled from ${sources.filter(s => s.sourceType === 'wikipedia').length || 0} Wikipedia articles and ${sources.filter(s => s.sourceType !== 'wikipedia').length || sources.length} other web sources.`)
+
+    const summary = summaryParts.join('\n\n')
+
+    // Extract key findings from summaries
+    const keyFindings: string[] = []
+    for (let i = 0; i < sources.length && keyFindings.length < 6; i++) {
+      const source = sources[i]
+      const content = source.summary || source.content
+
+      // Extract key sentences as findings
+      const sentences = content.split(/[.!?]/).filter(s => s.trim().length > 30 && s.trim().length < 200)
+
+      for (const sentence of sentences.slice(0, 2)) {
+        const finding = sentence.trim()
+        if (finding && !keyFindings.some(f => f.toLowerCase() === finding.toLowerCase())) {
+          keyFindings.push(`${finding} [${i + 1}]`)
+          if (keyFindings.length >= 6) break
+        }
       }
+    }
+
+    // Build detailed analysis
+    const analysisSection: string[] = []
+    analysisSection.push(`## Overview\n\n${topic} is a subject covered by multiple sources in this research compilation.`)
+
+    for (let i = 0; i < sources.length; i++) {
+      const source = sources[i]
+      const content = source.summary || this.extractiveSummary(source.content, topic)
+
+      if (content.length > 50) {
+        analysisSection.push(`\n### From ${source.title} [${i + 1}]\n\n${content}`)
+      }
+    }
+
+    const detailedAnalysis = analysisSection.join('\n')
+
+    return {
+      id: crypto.randomUUID(),
+      topic,
+      summary,
+      keyFindings: keyFindings.length > 0 ? keyFindings : sources.slice(0, 5).map((s, i) => `${s.title} [${i + 1}]`),
+      detailedAnalysis,
+      sources,
+      citations,
+      generatedAt: new Date(),
+      researchDuration: Date.now() - startTime
     }
   }
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, lazy, Suspense } from 'react'
 import {
   X,
   Cpu,
@@ -20,10 +20,17 @@ import {
   Monitor,
   Bug,
   FileText,
-  Database
+  Database,
+  Package
 } from 'lucide-react'
+
+// Lazy load PluginMarketplace
+const PluginMarketplace = lazy(() => import('./PluginMarketplace'))
 import { aiService } from '@/services/ai'
 import { useAppStore } from '@/stores/appStore'
+import { useOnboardingStore } from '@/stores/onboardingStore'
+import ApiKeySettings from './ApiKeySettings'
+import { BRAND } from '@/config/brand'
 
 // ============================================================================
 // Types and Interfaces
@@ -445,7 +452,9 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
   const sections = [
     { id: 'ai', label: 'AI Provider', icon: Cpu },
+    { id: 'apikeys', label: 'API Keys', icon: Key },
     { id: 'appearance', label: 'Appearance', icon: Palette },
+    { id: 'plugins', label: 'Plugins', icon: Package },
     { id: 'privacy', label: 'Privacy', icon: Shield },
     { id: 'advanced', label: 'Advanced', icon: Settings },
     { id: 'about', label: 'About', icon: Info },
@@ -456,21 +465,21 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   // ============================================================================
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center settings-modal-overlay">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-dark-400/80 backdrop-blur-sm settings-modal-backdrop"
         onClick={onClose}
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-3xl max-h-[85vh] bg-dark-300 rounded-2xl border border-white/10 shadow-2xl overflow-hidden">
+      <div className="relative w-full max-w-3xl max-h-[85vh] glass-premium framer-panel settings-modal-panel rounded-2xl border border-white/10 shadow-2xl overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
           <h2 className="text-lg font-semibold text-white">Settings</h2>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-white/50 hover:text-white hover:bg-white/5 transition-colors"
+            className="p-2 rounded-lg text-white/50 hover:text-white hover:bg-white/5 transition-colors framer-btn"
           >
             <X className="w-5 h-5" />
           </button>
@@ -484,7 +493,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               <button
                 key={section.id}
                 onClick={() => setActiveSection(section.id)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors framer-btn ${
                   activeSection === section.id
                     ? 'bg-rose-gold-400/15 text-rose-gold-400'
                     : 'text-white/70 hover:bg-white/5 hover:text-white'
@@ -497,7 +506,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           </div>
 
           {/* Main content */}
-          <div className="flex-1 p-6 overflow-y-auto">
+          <div className="flex-1 p-6 overflow-y-auto morphic-scrollbar">
             {/* AI Provider Section */}
             {activeSection === 'ai' && (
               <div className="space-y-6">
@@ -510,8 +519,8 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       <span className="text-white/70 text-sm">Current Provider</span>
                       <span className={`px-2 py-0.5 rounded-full text-xs ${
                         getProviderStatus(getCurrentProviderName())?.ready
-                          ? 'bg-green-500/20 text-green-400'
-                          : 'bg-yellow-500/20 text-yellow-400'
+                          ? 'bg-rose-gold-400/20 text-rose-gold-400'
+                          : 'bg-rose-gold-500/20 text-rose-gold-400'
                       }`}>
                         {getProviderStatus(getCurrentProviderName())?.ready ? 'Active' : 'Initializing'}
                       </span>
@@ -539,7 +548,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                           <div className="flex items-center gap-2">
                             <span className="text-white font-medium">Groq API</span>
                             {getProviderStatus('Groq')?.ready && (
-                              <Check className="w-4 h-4 text-green-400" />
+                              <Check className="w-4 h-4 text-rose-gold-400" />
                             )}
                           </div>
                           <div className="text-white/50 text-xs">Fast cloud inference (requires API key)</div>
@@ -562,7 +571,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                           <div className="flex items-center gap-2">
                             <span className="text-white font-medium">Ollama (Local)</span>
                             {getProviderStatus('Ollama')?.ready && (
-                              <Check className="w-4 h-4 text-green-400" />
+                              <Check className="w-4 h-4 text-rose-gold-400" />
                             )}
                           </div>
                           <div className="text-white/50 text-xs">Run models locally via Ollama</div>
@@ -581,12 +590,12 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       }`}
                     >
                       <div className="flex items-center gap-3">
-                        <Cpu className="w-5 h-5 text-blue-400" />
+                        <Cpu className="w-5 h-5 text-rose-gold-400" />
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
                             <span className="text-white font-medium">WebLLM (Browser)</span>
                             {getProviderStatus('WebLLM')?.ready && (
-                              <Check className="w-4 h-4 text-green-400" />
+                              <Check className="w-4 h-4 text-rose-gold-400" />
                             )}
                           </div>
                           <div className="text-white/50 text-xs">Runs locally in your browser - no API key needed</div>
@@ -607,11 +616,11 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       }`}
                     >
                       <div className="flex items-center gap-3">
-                        <Key className="w-5 h-5 text-yellow-400" />
+                        <Key className="w-5 h-5 text-rose-gold-400" />
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
                             <span className="text-white font-medium">Offline Mode</span>
-                            <Check className="w-4 h-4 text-green-400" />
+                            <Check className="w-4 h-4 text-rose-gold-400" />
                           </div>
                           <div className="text-white/50 text-xs">Limited functionality with pre-built responses</div>
                         </div>
@@ -623,14 +632,14 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   {connectionResult && (
                     <div className={`mt-4 p-3 rounded-lg flex items-center gap-2 ${
                       connectionResult.success
-                        ? 'bg-green-500/10 border border-green-500/20'
-                        : 'bg-red-500/10 border border-red-500/20'
+                        ? 'bg-rose-gold-400/10 border border-rose-gold-400/20'
+                        : 'bg-rose-gold-500/10 border border-rose-gold-400/20'
                     }`}>
                       {connectionResult.success
-                        ? <Check className="w-4 h-4 text-green-400" />
-                        : <AlertCircle className="w-4 h-4 text-red-400" />
+                        ? <Check className="w-4 h-4 text-rose-gold-400" />
+                        : <AlertCircle className="w-4 h-4 text-rose-gold-400" />
                       }
-                      <span className={connectionResult.success ? 'text-green-400' : 'text-red-400'}>
+                      <span className={connectionResult.success ? 'text-rose-gold-400' : 'text-rose-gold-400'}>
                         {connectionResult.message}
                       </span>
                     </div>
@@ -729,6 +738,11 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               </div>
             )}
 
+            {/* API Keys Section */}
+            {activeSection === 'apikeys' && (
+              <ApiKeySettings />
+            )}
+
             {/* Appearance Section */}
             {activeSection === 'appearance' && (
               <div className="space-y-6">
@@ -798,6 +812,19 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               </div>
             )}
 
+            {/* Plugins Section */}
+            {activeSection === 'plugins' && (
+              <div className="h-full -m-6">
+                <Suspense fallback={
+                  <div className="flex items-center justify-center h-64">
+                    <Loader2 className="w-8 h-8 text-rose-gold-400 animate-spin" />
+                  </div>
+                }>
+                  <PluginMarketplace />
+                </Suspense>
+              </div>
+            )}
+
             {/* Privacy Section */}
             {activeSection === 'privacy' && (
               <div className="space-y-6">
@@ -830,7 +857,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 {/* Privacy Info */}
                 <div className="p-4 rounded-xl bg-dark-400 border border-white/10">
                   <h4 className="text-white font-medium mb-2 flex items-center gap-2">
-                    <Shield className="w-4 h-4 text-green-400" />
+                    <Shield className="w-4 h-4 text-rose-gold-400" />
                     Data Privacy
                   </h4>
                   <p className="text-white/50 text-sm">
@@ -842,14 +869,14 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
                 {/* Danger Zone */}
                 <div className="pt-4 border-t border-white/10">
-                  <h3 className="text-sm font-medium text-red-400 mb-4">Danger Zone</h3>
+                  <h3 className="text-sm font-medium text-rose-gold-400 mb-4">Danger Zone</h3>
                   <div className="space-y-3">
                     {/* Clear Chat History */}
                     <div className="p-4 rounded-xl bg-dark-400 border border-white/10">
                       <div className="flex items-center justify-between">
                         <div>
                           <div className="text-white font-medium flex items-center gap-2">
-                            <Trash2 className="w-4 h-4 text-red-400" />
+                            <Trash2 className="w-4 h-4 text-rose-gold-400" />
                             Clear Chat History
                           </div>
                           <div className="text-white/50 text-xs mt-1">
@@ -866,7 +893,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                             </button>
                             <button
                               onClick={clearChatHistory}
-                              className="px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors text-sm"
+                              className="px-3 py-1.5 rounded-lg bg-rose-gold-500/20 text-rose-gold-400 hover:bg-rose-gold-500/30 transition-colors text-sm"
                             >
                               Confirm
                             </button>
@@ -874,7 +901,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                         ) : (
                           <button
                             onClick={() => setConfirmClearHistory(true)}
-                            className="px-4 py-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors text-sm"
+                            className="px-4 py-2 rounded-lg bg-rose-gold-500/10 text-rose-gold-400 hover:bg-rose-gold-500/20 transition-colors text-sm"
                           >
                             Clear
                           </button>
@@ -883,14 +910,14 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     </div>
 
                     {/* Clear All Data */}
-                    <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20">
+                    <div className="p-4 rounded-xl bg-rose-gold-500/10 border border-rose-gold-400/20">
                       <div className="flex items-center justify-between">
                         <div>
-                          <div className="text-red-400 font-medium flex items-center gap-2">
+                          <div className="text-rose-gold-400 font-medium flex items-center gap-2">
                             <Database className="w-4 h-4" />
                             Clear All Local Data
                           </div>
-                          <div className="text-red-400/70 text-xs mt-1">
+                          <div className="text-rose-gold-400/70 text-xs mt-1">
                             Delete all data including settings, chats, and cached models
                           </div>
                         </div>
@@ -904,7 +931,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                             </button>
                             <button
                               onClick={clearAllData}
-                              className="px-3 py-1.5 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors text-sm"
+                              className="px-3 py-1.5 rounded-lg bg-rose-gold-500 text-white hover:bg-rose-gold-500 transition-colors text-sm"
                             >
                               Delete All
                             </button>
@@ -912,7 +939,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                         ) : (
                           <button
                             onClick={() => setConfirmClearAllData(true)}
-                            className="px-4 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors text-sm"
+                            className="px-4 py-2 rounded-lg bg-rose-gold-500/20 text-rose-gold-400 hover:bg-rose-gold-500/30 transition-colors text-sm"
                           >
                             Clear All
                           </button>
@@ -967,7 +994,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                         Clear logs
                       </button>
                     </div>
-                    <div className="p-3 rounded-xl bg-dark-400 border border-white/10 max-h-40 overflow-y-auto font-mono text-xs">
+                    <div className="p-3 rounded-xl bg-dark-400 border border-white/10 max-h-40 overflow-y-auto morphic-scrollbar font-mono text-xs">
                       {apiLogs.length > 0 ? (
                         apiLogs.map((log, i) => (
                           <div key={i} className="text-white/60 mb-1">{log}</div>
@@ -1003,7 +1030,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                           </button>
                           <button
                             onClick={resetAllSettings}
-                            className="px-3 py-1.5 rounded-lg bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30 transition-colors text-sm"
+                            className="px-3 py-1.5 rounded-lg bg-rose-gold-500/20 text-rose-gold-400 hover:bg-rose-gold-500/30 transition-colors text-sm"
                           >
                             Reset
                           </button>
@@ -1011,7 +1038,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       ) : (
                         <button
                           onClick={() => setConfirmReset(true)}
-                          className="px-4 py-2 rounded-lg bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20 transition-colors text-sm"
+                          className="px-4 py-2 rounded-lg bg-rose-gold-500/10 text-rose-gold-400 hover:bg-rose-gold-500/20 transition-colors text-sm"
                         >
                           Reset
                         </button>
@@ -1029,11 +1056,11 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 <div className="p-6 rounded-xl bg-gradient-to-br from-rose-gold-400/10 to-rose-gold-600/10 border border-rose-gold-400/20">
                   <div className="flex items-center gap-4">
                     <div className="w-16 h-16 rounded-2xl bg-rose-gold-400/20 flex items-center justify-center">
-                      <span className="text-3xl">🤖</span>
+                      <span className="text-3xl">A</span>
                     </div>
                     <div>
-                      <h2 className="text-xl font-bold text-white">Alabobai</h2>
-                      <p className="text-white/60 text-sm">AI Agent Platform</p>
+                      <h2 className="text-xl font-bold text-white">{BRAND.name}</h2>
+                      <p className="text-white/60 text-sm">{BRAND.tagline}</p>
                       <p className="text-white/40 text-xs mt-1">Version {APP_VERSION}</p>
                     </div>
                   </div>
@@ -1102,6 +1129,30 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       ))}
                     </div>
                   </div>
+                </div>
+
+                {/* Welcome Tour */}
+                <div>
+                  <h3 className="text-sm font-medium text-white mb-4">Getting Started</h3>
+                  <button
+                    onClick={() => {
+                      const { resetOnboarding, openOnboarding } = useOnboardingStore.getState()
+                      resetOnboarding()
+                      openOnboarding()
+                      onClose()
+                    }}
+                    className="w-full flex items-center justify-between p-4 rounded-xl bg-dark-400 border border-white/10 hover:border-rose-gold-400/30 hover:bg-rose-gold-400/5 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-rose-gold-400/20 flex items-center justify-center">
+                        <RotateCcw className="w-4 h-4 text-rose-gold-400" />
+                      </div>
+                      <div className="text-left">
+                        <div className="text-white font-medium">Re-run Welcome Tour</div>
+                        <div className="text-white/50 text-xs">See the onboarding experience again</div>
+                      </div>
+                    </div>
+                  </button>
                 </div>
 
                 {/* Credits */}

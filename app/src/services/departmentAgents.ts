@@ -68,7 +68,7 @@ const DEPARTMENT_CONFIGS: DepartmentConfig[] = [
     id: 'engineering',
     name: 'Engineering',
     description: 'Full-stack development with continuous code quality improvement',
-    icon: '⚡',
+    icon: 'OP',
     color: '#60a5fa',
     capabilities: ['coding', 'testing', 'deployment', 'debugging', 'optimization', 'architecture'],
     toolIds: [
@@ -90,7 +90,7 @@ const DEPARTMENT_CONFIGS: DepartmentConfig[] = [
     id: 'design',
     name: 'Design',
     description: 'UI/UX design with aesthetic optimization',
-    icon: '🎨',
+    icon: 'DS',
     color: '#f472b6',
     capabilities: ['ui_design', 'ux_design', 'branding', 'prototyping', 'animation', 'accessibility'],
     toolIds: [
@@ -109,7 +109,7 @@ const DEPARTMENT_CONFIGS: DepartmentConfig[] = [
     id: 'marketing',
     name: 'Marketing',
     description: 'Content creation and campaign optimization',
-    icon: '📣',
+    icon: 'MK',
     color: '#34d399',
     capabilities: ['content', 'campaigns', 'seo', 'social_media', 'analytics', 'copywriting'],
     toolIds: [
@@ -128,7 +128,7 @@ const DEPARTMENT_CONFIGS: DepartmentConfig[] = [
     id: 'sales',
     name: 'Sales',
     description: 'Lead generation and conversion optimization',
-    icon: '🎯',
+    icon: 'TG',
     color: '#f59e0b',
     capabilities: ['lead_gen', 'outreach', 'crm', 'proposals', 'negotiations'],
     toolIds: [
@@ -147,7 +147,7 @@ const DEPARTMENT_CONFIGS: DepartmentConfig[] = [
     id: 'research',
     name: 'Research',
     description: 'Deep research with comprehensive data gathering',
-    icon: '🔍',
+    icon: 'RS',
     color: '#a78bfa',
     capabilities: ['web_research', 'data_gathering', 'competitive_analysis', 'trend_analysis', 'academic'],
     toolIds: [
@@ -171,7 +171,7 @@ const DEPARTMENT_CONFIGS: DepartmentConfig[] = [
     id: 'finance',
     name: 'Finance',
     description: 'Financial analysis and reporting',
-    icon: '💰',
+    icon: 'FN',
     color: '#10b981',
     capabilities: ['accounting', 'budgeting', 'forecasting', 'reporting', 'compliance'],
     toolIds: [
@@ -189,7 +189,7 @@ const DEPARTMENT_CONFIGS: DepartmentConfig[] = [
     id: 'legal',
     name: 'Legal',
     description: 'Contract analysis and compliance',
-    icon: '⚖️',
+    icon: 'LG',
     color: '#6366f1',
     capabilities: ['contracts', 'compliance', 'ip', 'privacy', 'regulations'],
     toolIds: [
@@ -210,7 +210,7 @@ const DEPARTMENT_CONFIGS: DepartmentConfig[] = [
     id: 'hr',
     name: 'People Ops',
     description: 'HR automation and talent management',
-    icon: '👥',
+    icon: 'HR',
     color: '#ec4899',
     capabilities: ['recruiting', 'onboarding', 'culture', 'performance', 'benefits'],
     toolIds: [
@@ -228,7 +228,7 @@ const DEPARTMENT_CONFIGS: DepartmentConfig[] = [
     id: 'support',
     name: 'Customer Success',
     description: 'Customer support with continuous satisfaction improvement',
-    icon: '🎧',
+    icon: 'CS',
     color: '#06b6d4',
     capabilities: ['tickets', 'chatbot', 'knowledge_base', 'feedback', 'retention'],
     toolIds: [
@@ -247,7 +247,7 @@ const DEPARTMENT_CONFIGS: DepartmentConfig[] = [
     id: 'security',
     name: 'Security',
     description: 'Security monitoring and vulnerability assessment',
-    icon: '🛡️',
+    icon: 'SC',
     color: '#ef4444',
     capabilities: ['monitoring', 'vulnerability', 'compliance', 'incident', 'audit'],
     toolIds: [
@@ -266,7 +266,7 @@ const DEPARTMENT_CONFIGS: DepartmentConfig[] = [
     id: 'data',
     name: 'Data & Analytics',
     description: 'Data analysis with continuous insight improvement',
-    icon: '📊',
+    icon: 'DA',
     color: '#fbbf24',
     capabilities: ['data_analysis', 'visualization', 'ml', 'reporting', 'etl'],
     toolIds: [
@@ -287,7 +287,7 @@ const DEPARTMENT_CONFIGS: DepartmentConfig[] = [
     id: 'operations',
     name: 'Operations',
     description: 'Process automation and efficiency optimization',
-    icon: '⚙️',
+    icon: 'IT',
     color: '#8b5cf6',
     capabilities: ['automation', 'processes', 'logistics', 'inventory', 'scheduling'],
     toolIds: [

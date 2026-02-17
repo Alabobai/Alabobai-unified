@@ -1,3 +1,10 @@
+import {
+  degradedEnvelope,
+  getCircuitBreakerSnapshot,
+  healthGate,
+  runWithReliability,
+} from './_lib/reliability'
+
 export const config = {
   runtime: 'edge',
 }
@@ -48,17 +55,19 @@ async function generateWithGeneric(
   width: number,
   height: number
 ): Promise<string> {
-  const response = await fetch(`${VIDEO_INFERENCE_URL}/generate`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      prompt,
-      durationSeconds,
-      fps,
-      width,
-      height,
-    }),
-  })
+  const { value: response } = await runWithReliability('media.video.generic', () =>
+    fetch(`${VIDEO_INFERENCE_URL}/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prompt,
+        durationSeconds,
+        fps,
+        width,
+        height,
+      }),
+    })
+  )
 
   if (!response.ok) {
     throw new Error(`Video backend failed: ${response.status}`)
@@ -113,7 +122,16 @@ export default async function handler(req: Request) {
     let usedFallback = false
     let warning: string | undefined
 
+    const videoGate = await healthGate('video-backend', {
+      url: `${VIDEO_INFERENCE_URL}/health`,
+      timeoutMs: 1800,
+      cacheTtlMs: 3000,
+    })
+
     try {
+      if (!videoGate.allow) {
+        throw new Error(videoGate.reason || 'health-unhealthy:video')
+      }
       url = await generateWithGeneric(prompt, durationSeconds, fps, width, height)
     } catch (backendError) {
       usedFallback = true
@@ -121,18 +139,31 @@ export default async function handler(req: Request) {
       url = createFallbackMotionAsset(prompt, width, height)
     }
 
+    const payload = {
+      url,
+      prompt,
+      durationSeconds,
+      fps,
+      width,
+      height,
+      backend: usedFallback ? 'local-fallback-motion' : VIDEO_BACKEND,
+      fallback: usedFallback,
+      warning,
+      circuit: getCircuitBreakerSnapshot('media.video.generic'),
+    }
+
     return new Response(
-      JSON.stringify({
-        url,
-        prompt,
-        durationSeconds,
-        fps,
-        width,
-        height,
-        backend: usedFallback ? 'local-fallback-motion' : VIDEO_BACKEND,
-        fallback: usedFallback,
-        warning,
-      }),
+      JSON.stringify(
+        usedFallback
+          ? degradedEnvelope(payload, {
+              route: 'video.local-fallback',
+              warning: warning || 'Video backend unavailable',
+              fallback: 'animated-svg-preview',
+              health: videoGate.health,
+              circuit: payload.circuit,
+            })
+          : payload
+      ),
       {
         headers: corsHeaders({ 'Content-Type': 'application/json' }),
       }

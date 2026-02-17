@@ -120,3 +120,69 @@ export type {
   PerformanceMetrics,
   HealthCheckConfig
 } from './health.js';
+
+// Code Sandbox Service - Docker-based secure code execution
+export {
+  CodeSandboxService,
+  createCodeSandbox,
+  getCodeSandbox,
+  default as CodeSandboxClass
+} from './codeSandbox.js';
+
+export type {
+  SupportedLanguage,
+  ExecutionRequest,
+  ExecutionOutput,
+  ExecutionResult,
+  ExecutionStatus,
+  SandboxSession,
+  SandboxConfig as CodeSandboxConfig
+} from './codeSandbox.js';
+
+// Memory Service - Persistent Memory System
+export {
+  MemoryService,
+  getMemoryService,
+  createMemoryService,
+} from './memoryService.js';
+
+export type {
+  Memory,
+  MemoryType,
+  MemoryCreateInput,
+  MemorySearchOptions,
+  MemorySearchResult,
+  ConsolidationResult,
+  MemoryStats,
+  PrivacySetting,
+} from './memoryService.js';
+
+// Vector Store - Embedding and Similarity Search
+export {
+  VectorStore,
+  getVectorStore,
+  createVectorStore,
+  generateEmbedding,
+  cosineSimilarity,
+  euclideanDistance,
+} from './vectorStore.js';
+
+export type {
+  VectorEntry,
+  SearchResult,
+  SearchOptions,
+} from './vectorStore.js';
+
+// Memory Extractor - Extract Memories from Conversations
+export {
+  MemoryExtractor,
+  getMemoryExtractor,
+  createMemoryExtractor,
+} from './memoryExtractor.js';
+
+export type {
+  ConversationMessage,
+  ExtractedFact,
+  PreferenceDetection,
+  ExtractionResult,
+} from './memoryExtractor.js';

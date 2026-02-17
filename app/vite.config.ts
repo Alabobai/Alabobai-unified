@@ -12,6 +12,11 @@ export default defineConfig({
   server: {
     port: 3000,
     proxy: {
+      '/ollama': {
+        target: 'http://localhost:11434',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/ollama/, ''),
+      },
       '/api/generate-image': {
         target: 'http://127.0.0.1:8890',
         changeOrigin: true,
@@ -21,6 +26,14 @@ export default defineConfig({
         changeOrigin: true,
       },
       '/api/chat': {
+        target: 'http://127.0.0.1:8890',
+        changeOrigin: true,
+      },
+      '/api/search': {
+        target: 'http://127.0.0.1:8890',
+        changeOrigin: true,
+      },
+      '/api/fetch-page': {
         target: 'http://127.0.0.1:8890',
         changeOrigin: true,
       },
@@ -34,6 +47,34 @@ export default defineConfig({
       },
       '/api/proxy': {
         target: 'http://127.0.0.1:8890',
+        changeOrigin: true,
+      },
+      '/api/tts': {
+        target: 'http://127.0.0.1:8890',
+        changeOrigin: true,
+      },
+      '/api/webhook': {
+        target: 'http://127.0.0.1:8890',
+        changeOrigin: true,
+      },
+      '/api/web-agent': {
+        target: 'http://127.0.0.1:8890',
+        changeOrigin: true,
+      },
+      '/api/execute-task': {
+        target: 'http://127.0.0.1:8891',
+        changeOrigin: true,
+      },
+      '/api/task-runs': {
+        target: 'http://127.0.0.1:8891',
+        changeOrigin: true,
+      },
+      '/api/jobs/submit': {
+        target: 'http://127.0.0.1:8891',
+        changeOrigin: true,
+      },
+      '/api/jobs/status': {
+        target: 'http://127.0.0.1:8891',
         changeOrigin: true,
       },
       '/api': {

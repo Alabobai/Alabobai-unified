@@ -24,6 +24,7 @@ interface OllamaModel {
 }
 
 interface ModelsResponse {
+  status: 'ok' | 'degraded';
   models: Array<{
     name: string;
     size: string;
@@ -31,6 +32,7 @@ interface ModelsResponse {
     details?: OllamaModel['details'];
   }>;
   count: number;
+  message?: string;
 }
 
 function formatBytes(bytes: number): string {
@@ -65,6 +67,7 @@ async function listModels(): Promise<ModelsResponse> {
   }));
 
   return {
+    status: 'ok',
     models,
     count: models.length,
   };
@@ -286,13 +289,16 @@ export default async function handler(req: Request) {
 
     return new Response(
       JSON.stringify({
-        error: isConnectionError
-          ? 'Cannot connect to Ollama. Make sure Ollama is running on localhost:11434'
-          : 'Failed to manage models',
+        status: 'degraded',
+        models: [],
+        count: 0,
+        message: isConnectionError
+          ? 'Ollama unavailable; returning degraded model list.'
+          : 'Models endpoint degraded due to internal error.',
         details: error instanceof Error ? error.message : 'Unknown error',
       }),
       {
-        status: isConnectionError ? 503 : 500,
+        status: 200,
         headers: {
           'Content-Type': 'application/json',
           ...corsHeaders,

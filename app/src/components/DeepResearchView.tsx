@@ -17,6 +17,10 @@ import {
   type SearchResult,
   formatDuration
 } from '@/services/deepResearch'
+import { toast } from '@/stores/toastStore'
+import { ProgressBar, GlowSpinner } from './ui/LoadingSpinner'
+import { SkeletonSource, SkeletonResearchReport } from './ui/Skeleton'
+import { BRAND } from '@/config/brand'
 
 interface DeepResearchViewProps {
   onClose?: () => void
@@ -56,25 +60,52 @@ export default function DeepResearchView({ onClose: _onClose }: DeepResearchView
     setSources([])
     setFoundResults([])
 
-    await engineRef.current.research(topic, {
-      onProgress: setProgress,
-      onSourceFound: (result) => {
-        setFoundResults(prev => [...prev, result])
-      },
-      onSourceProcessed: (source) => {
-        setSources(prev => [...prev, source])
-      },
-      onComplete: (result) => {
-        setReport(result)
-        setIsResearching(false)
-      },
-      onError: (err) => {
-        setError(err.message)
-        setIsResearching(false)
-      }
-    }, {
-      maxSources: 5
-    })
+    try {
+      await engineRef.current.research(topic, {
+        onProgress: setProgress,
+        onSourceFound: (result) => {
+          setFoundResults(prev => [...prev, result])
+        },
+        onSourceProcessed: (source) => {
+          setSources(prev => [...prev, source])
+        },
+        onComplete: (result) => {
+          setReport(result)
+          setIsResearching(false)
+          toast.success(
+            'Research Complete',
+            `Found ${result.sources.length} sources and generated a comprehensive report.`
+          )
+        },
+        onError: (err) => {
+          setError(err.message)
+          setIsResearching(false)
+
+          // Show user-friendly toast
+          const errorMsg = err.message.toLowerCase()
+          if (errorMsg.includes('network') || errorMsg.includes('fetch')) {
+            toast.error(
+              'Network Error',
+              'Unable to fetch web sources. Please check your internet connection.'
+            )
+          } else if (errorMsg.includes('abort')) {
+            toast.info('Research Stopped', 'The research was cancelled.')
+          } else {
+            toast.error(
+              'Research Failed',
+              err.message || 'An error occurred during research. Please try again.'
+            )
+          }
+        }
+      }, {
+        maxSources: 5
+      })
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err))
+      setError(error.message)
+      setIsResearching(false)
+      toast.error('Research Error', 'An unexpected error occurred. Please try again.')
+    }
   }
 
   const stopResearch = () => {
@@ -84,20 +115,30 @@ export default function DeepResearchView({ onClose: _onClose }: DeepResearchView
 
   const copyReport = async () => {
     if (!report) return
-    const text = formatReportAsText(report)
-    await navigator.clipboard.writeText(text)
+    try {
+      const text = formatReportAsText(report)
+      await navigator.clipboard.writeText(text)
+      toast.success('Copied', 'Report copied to clipboard.')
+    } catch (err) {
+      toast.error('Copy Failed', 'Unable to copy to clipboard. Please try again.')
+    }
   }
 
   const downloadReport = () => {
     if (!report) return
-    const text = formatReportAsMarkdown(report)
-    const blob = new Blob([text], { type: 'text/markdown' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `research-${report.topic.slice(0, 30).replace(/\s+/g, '-')}.md`
-    a.click()
-    URL.revokeObjectURL(url)
+    try {
+      const text = formatReportAsMarkdown(report)
+      const blob = new Blob([text], { type: 'text/markdown' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `research-${report.topic.slice(0, 30).replace(/\s+/g, '-')}.md`
+      a.click()
+      URL.revokeObjectURL(url)
+      toast.success('Downloaded', 'Report downloaded as Markdown.')
+    } catch (err) {
+      toast.error('Download Failed', 'Unable to download report. Please try again.')
+    }
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -108,14 +149,14 @@ export default function DeepResearchView({ onClose: _onClose }: DeepResearchView
   }
 
   return (
-    <div className="h-full flex flex-col bg-dark-500 overflow-hidden">
+    <div className="h-full w-full flex flex-col bg-dark-500 overflow-hidden">
       {/* Header */}
       <div className="glass-morphic-header p-4 border-b border-white/10">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            {/* Alabobai Logo */}
+            {/* Brand Logo */}
             <div className="flex items-center gap-2">
-              <img src="/logo.png" alt="Alabobai" className="w-8 h-8 rounded-lg" />
+              <img src={BRAND.assets.logo} alt={BRAND.name} className="w-8 h-8 object-contain logo-render" />
               <div className="h-6 w-px bg-white/10" />
             </div>
             {/* View Header */}
@@ -133,7 +174,7 @@ export default function DeepResearchView({ onClose: _onClose }: DeepResearchView
           {isResearching && (
             <button
               onClick={stopResearch}
-              className="morphic-btn bg-red-500/20 text-red-400 border-red-500/30 hover:bg-red-500/30 px-4 py-2 text-sm"
+              className="morphic-btn-ghost bg-rose-gold-500/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-500/30 px-4 py-2 text-sm"
             >
               Stop Research
             </button>
@@ -163,9 +204,9 @@ export default function DeepResearchView({ onClose: _onClose }: DeepResearchView
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Left: Input & Sources */}
-        <div className="w-80 border-r border-white/10 flex flex-col">
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Top: Input & Sources */}
+        <div className="w-full border-b border-white/10 flex flex-col max-h-[320px] overflow-y-auto morphic-scrollbar">
           {/* Search Input */}
           <div className="p-4 border-b border-white/10">
             <div className="morphic-card p-1 rounded-xl">
@@ -181,7 +222,7 @@ export default function DeepResearchView({ onClose: _onClose }: DeepResearchView
             <button
               onClick={startResearch}
               disabled={!topic.trim() || isResearching}
-              className="w-full morphic-btn bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 mt-3 py-3 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed group"
+              className="w-full morphic-btn mt-3 py-3 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed group"
             >
               <span className="flex items-center justify-center gap-2">
                 {isResearching ? (
@@ -216,6 +257,18 @@ export default function DeepResearchView({ onClose: _onClose }: DeepResearchView
                 </div>
               )}
 
+              {/* Skeleton Sources (while searching) */}
+              {isResearching && sources.length === 0 && foundResults.length === 0 && (
+                <div className="space-y-2 mb-4">
+                  <p className="text-xs text-white/50 mb-2">Searching for sources...</p>
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="stagger-item" style={{ animationDelay: `${i * 100}ms` }}>
+                      <SkeletonSource />
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {/* Found Results (during search) */}
               {isResearching && foundResults.length > 0 && sources.length === 0 && (
                 <div className="space-y-2 mb-4">
@@ -223,7 +276,7 @@ export default function DeepResearchView({ onClose: _onClose }: DeepResearchView
                   {foundResults.map((result, i) => (
                     <div
                       key={i}
-                      className="morphic-card p-3 rounded-lg animate-slide-in"
+                      className="morphic-card p-3 rounded-lg animate-fade-in-up hover-lift interactive-card"
                       style={{ animationDelay: `${i * 100}ms` }}
                     >
                       <div className="flex items-start gap-2">
@@ -253,9 +306,11 @@ export default function DeepResearchView({ onClose: _onClose }: DeepResearchView
               <p className="text-xs text-white/40 mb-2">Try researching:</p>
               <div className="space-y-2">
                 {[
-                  'Artificial Intelligence trends 2024',
-                  'Climate change solutions',
-                  'Remote work best practices'
+                  'Quantum Computing',
+                  'Machine Learning',
+                  'Renewable Energy',
+                  'Space Exploration',
+                  'Blockchain'
                 ].map((suggestion) => (
                   <button
                     key={suggestion}
@@ -304,17 +359,28 @@ export default function DeepResearchView({ onClose: _onClose }: DeepResearchView
           )}
 
           {isResearching && !report && (
-            <div className="flex-1 flex items-center justify-center p-8">
-              <div className="text-center">
+            <div className="flex-1 flex flex-col p-8">
+              {/* Research Progress Header */}
+              <div className="text-center mb-8">
                 <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-rose-gold-300/20 to-rose-gold-600/20 border border-rose-gold-400/30 flex items-center justify-center mx-auto mb-4">
-                  <Loader2 className="w-10 h-10 text-rose-gold-400 animate-spin" />
+                  <GlowSpinner size="lg" />
                 </div>
                 <h2 className="text-xl font-bold text-white mb-2">
                   Researching: {topic}
                 </h2>
-                <p className="text-white/50">
+                <p className="text-white/50 mb-4">
                   {progress?.message || 'Initializing research...'}
                 </p>
+                {progress && (
+                  <div className="max-w-md mx-auto">
+                    <ProgressBar progress={progress.progress} size="md" showLabel />
+                  </div>
+                )}
+              </div>
+
+              {/* Skeleton Report Preview */}
+              <div className="flex-1 overflow-y-auto max-w-3xl mx-auto w-full">
+                <SkeletonResearchReport />
               </div>
             </div>
           )}
@@ -338,7 +404,7 @@ export default function DeepResearchView({ onClose: _onClose }: DeepResearchView
                         {report.sources.length} sources
                       </span>
                       <span className="flex items-center gap-1">
-                        <CheckCircle2 className="w-3 h-3 text-green-400" />
+                        <CheckCircle2 className="w-3 h-3 text-rose-gold-400" />
                         Complete
                       </span>
                     </div>
@@ -393,7 +459,7 @@ export default function DeepResearchView({ onClose: _onClose }: DeepResearchView
                     <ul className="space-y-2">
                       {report.keyFindings.map((finding, i) => (
                         <li key={i} className="flex items-start gap-3 text-white/80">
-                          <CheckCircle2 className="w-4 h-4 text-green-400 flex-shrink-0 mt-1" />
+                          <CheckCircle2 className="w-4 h-4 text-rose-gold-400 flex-shrink-0 mt-1" />
                           <span>{finding}</span>
                         </li>
                       ))}
@@ -447,11 +513,11 @@ export default function DeepResearchView({ onClose: _onClose }: DeepResearchView
           {/* Error Display */}
           {error && (
             <div className="p-4">
-              <div className="morphic-card p-4 rounded-xl border border-red-500/30 bg-red-500/10">
+              <div className="morphic-card p-4 rounded-xl border border-rose-gold-400/30 bg-rose-gold-500/10">
                 <div className="flex items-center gap-3">
-                  <AlertCircle className="w-5 h-5 text-red-400" />
+                  <AlertCircle className="w-5 h-5 text-rose-gold-400" />
                   <div>
-                    <p className="text-sm font-medium text-red-400">Research Error</p>
+                    <p className="text-sm font-medium text-rose-gold-400">Research Error</p>
                     <p className="text-xs text-white/60">{error}</p>
                   </div>
                 </div>
@@ -470,16 +536,16 @@ function SourceCard({ source, index }: { source: ResearchSource; index: number }
   return (
     <div
       className={`morphic-card p-3 rounded-lg transition-all cursor-pointer ${
-        source.error ? 'border-red-500/30' : 'border-green-500/30'
+        source.error ? 'border-rose-gold-400/30' : 'border-rose-gold-400/30'
       }`}
       onClick={() => setExpanded(!expanded)}
       style={{ animationDelay: `${index * 100}ms` }}
     >
       <div className="flex items-start gap-2">
         {source.error ? (
-          <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+          <AlertCircle className="w-4 h-4 text-rose-gold-400 flex-shrink-0 mt-0.5" />
         ) : (
-          <CheckCircle2 className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
+          <CheckCircle2 className="w-4 h-4 text-rose-gold-400 flex-shrink-0 mt-0.5" />
         )}
         <div className="min-w-0 flex-1">
           <p className="text-xs text-white font-medium truncate">{source.title}</p>
@@ -488,7 +554,7 @@ function SourceCard({ source, index }: { source: ResearchSource; index: number }
             <div className="flex items-center gap-1 mt-1">
               <div className="h-1 w-16 bg-white/10 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-green-400 rounded-full"
+                  className="h-full bg-rose-gold-400 rounded-full"
                   style={{ width: `${source.relevanceScore * 100}%` }}
                 />
               </div>
@@ -516,7 +582,7 @@ function SourceCard({ source, index }: { source: ResearchSource; index: number }
       )}
 
       {source.error && (
-        <p className="text-[10px] text-red-400 mt-1">{source.error}</p>
+        <p className="text-[10px] text-rose-gold-400 mt-1">{source.error}</p>
       )}
     </div>
   )
@@ -527,17 +593,17 @@ function PhaseIcon({ phase }: { phase: string }) {
     case 'searching':
       return <Search className="w-4 h-4 text-rose-gold-400 animate-pulse" />
     case 'fetching':
-      return <Globe className="w-4 h-4 text-blue-400 animate-pulse" />
+      return <Globe className="w-4 h-4 text-rose-gold-400 animate-pulse" />
     case 'extracting':
-      return <FileText className="w-4 h-4 text-green-400 animate-pulse" />
+      return <FileText className="w-4 h-4 text-rose-gold-400 animate-pulse" />
     case 'analyzing':
-      return <Brain className="w-4 h-4 text-yellow-400 animate-pulse" />
+      return <Brain className="w-4 h-4 text-rose-gold-400 animate-pulse" />
     case 'synthesizing':
       return <Sparkles className="w-4 h-4 text-rose-gold-400 animate-pulse" />
     case 'complete':
-      return <CheckCircle2 className="w-4 h-4 text-green-400" />
+      return <CheckCircle2 className="w-4 h-4 text-rose-gold-400" />
     case 'error':
-      return <AlertCircle className="w-4 h-4 text-red-400" />
+      return <AlertCircle className="w-4 h-4 text-rose-gold-400" />
     default:
       return <Loader2 className="w-4 h-4 text-white/50 animate-spin" />
   }
@@ -560,7 +626,7 @@ ${report.citations.map(c => `[${c.number}] ${c.title} - ${c.url}`).join('\n')}
 
 ---
 Research completed in ${formatDuration(report.researchDuration)}
-Generated by Alabobai Deep Research
+Generated by ${BRAND.name} Deep Research
 `
 }
 
@@ -589,6 +655,6 @@ ${report.citations.map(c => `${c.number}. [${c.title}](${c.url}) - Accessed ${c.
 
 ---
 
-*This report was generated by Alabobai Deep Research Agent*
+*This report was generated by ${BRAND.name} Deep Research Agent*
 `
 }

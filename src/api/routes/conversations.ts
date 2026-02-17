@@ -7,6 +7,7 @@
 import { Router, Request, Response } from 'express';
 import { v4 as uuid } from 'uuid';
 import { z } from 'zod';
+import jwt from 'jsonwebtoken';
 import { OrchestratorService, getOrchestratorService } from '../../services/orchestrator.js';
 import type { Message } from '../../core/types.js';
 
@@ -314,6 +315,57 @@ class ConversationStore {
 
 export function createConversationsRouter(config: ConversationsRouterConfig = {}): Router {
   const router = Router();
+
+  const resolveRequesterUserId = (req: Request): string => {
+    const userId = (req.headers['x-user-id'] as string | undefined) || 'anonymous';
+    return userId.trim() || 'anonymous';
+  };
+
+  const isAdminRequest = (req: Request): boolean => {
+    const key = req.headers['x-api-key'] as string | undefined;
+    const configured = process.env.ADMIN_API_KEY;
+    return !!configured && key === configured;
+  };
+
+  const sessionTokenSecret = process.env.SESSION_TOKEN_SECRET || process.env.ADMIN_API_KEY || 'dev-session-secret';
+
+  const signSessionToken = (sessionId: string, userId: string): string => {
+    return jwt.sign({ sessionId, userId, type: 'session' }, sessionTokenSecret, {
+      expiresIn: '7d',
+      issuer: 'alabobai',
+      audience: 'conversations',
+    });
+  };
+
+  const verifySessionToken = (token: string): { sessionId: string; userId: string } | null => {
+    try {
+      const payload = jwt.verify(token, sessionTokenSecret, {
+        issuer: 'alabobai',
+        audience: 'conversations',
+      }) as { sessionId: string; userId: string; type?: string };
+      if (payload.type !== 'session') return null;
+      return { sessionId: payload.sessionId, userId: payload.userId };
+    } catch {
+      return null;
+    }
+  };
+
+  const assertSessionAccess = (req: Request, session: StoredSession): { ok: boolean; status?: number; message?: string } => {
+    if (isAdminRequest(req)) return { ok: true };
+
+    const requesterUserId = resolveRequesterUserId(req);
+    if (session.userId !== requesterUserId) {
+      return { ok: false, status: 403, message: 'Forbidden' };
+    }
+
+    const token = (req.headers['x-session-token'] as string | undefined) || '';
+    const verified = verifySessionToken(token);
+    if (!verified || verified.sessionId !== session.id || verified.userId !== session.userId) {
+      return { ok: false, status: 401, message: 'Invalid or missing session token' };
+    }
+
+    return { ok: true };
+  };
   const orchestrator = config.orchestrator || getOrchestratorService();
   const store = new ConversationStore(
     config.maxMessagesPerSession || 1000,
@@ -336,7 +388,8 @@ export function createConversationsRouter(config: ConversationsRouterConfig = {}
         });
       }
 
-      const { userId = 'anonymous', metadata = {}, initialMessage } = validation.data;
+      const { metadata = {}, initialMessage } = validation.data;
+      const userId = resolveRequesterUserId(req);
 
       const session = store.createSession(userId, metadata);
 
@@ -354,6 +407,8 @@ export function createConversationsRouter(config: ConversationsRouterConfig = {}
         });
       }
 
+      const sessionToken = signSessionToken(session.id, session.userId);
+
       res.status(201).json({
         success: true,
         session: {
@@ -361,7 +416,8 @@ export function createConversationsRouter(config: ConversationsRouterConfig = {}
           userId: session.userId,
           createdAt: session.createdAt,
           metadata: session.metadata
-        }
+        },
+        sessionToken
       });
     } catch (error) {
       console.error('[Conversations API] Error creating session:', error);
@@ -378,7 +434,7 @@ export function createConversationsRouter(config: ConversationsRouterConfig = {}
 
   router.get('/', (req: Request, res: Response) => {
     try {
-      const userId = req.query.userId as string || 'anonymous';
+      const userId = resolveRequesterUserId(req);
       const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
       const offset = parseInt(req.query.offset as string) || 0;
 
@@ -420,6 +476,10 @@ export function createConversationsRouter(config: ConversationsRouterConfig = {}
       if (!session) {
         return res.status(404).json({ error: 'Conversation not found' });
       }
+      const access = assertSessionAccess(req, session);
+      if (!access.ok) {
+        return res.status(access.status || 403).json({ error: access.message || 'Forbidden' });
+      }
 
       res.json({
         id: session.id,
@@ -453,6 +513,10 @@ export function createConversationsRouter(config: ConversationsRouterConfig = {}
       const session = store.getSession(sessionId);
       if (!session) {
         return res.status(404).json({ error: 'Conversation not found' });
+      }
+      const access = assertSessionAccess(req, session);
+      if (!access.ok) {
+        return res.status(access.status || 403).json({ error: access.message || 'Forbidden' });
       }
 
       const messages = store.getMessages(sessionId, { limit, offset, role });
@@ -500,6 +564,10 @@ export function createConversationsRouter(config: ConversationsRouterConfig = {}
       if (!session) {
         return res.status(404).json({ error: 'Conversation not found' });
       }
+      const access = assertSessionAccess(req, session);
+      if (!access.ok) {
+        return res.status(access.status || 403).json({ error: access.message || 'Forbidden' });
+      }
 
       const { role, content, agentId, agentName } = validation.data;
       const message = store.addMessage(sessionId, { role, content, agentId, agentName });
@@ -535,11 +603,16 @@ export function createConversationsRouter(config: ConversationsRouterConfig = {}
   router.delete('/:sessionId', (req: Request, res: Response) => {
     try {
       const { sessionId } = req.params;
-      const deleted = store.deleteSession(sessionId);
-
-      if (!deleted) {
+      const session = store.getSession(sessionId);
+      if (!session) {
         return res.status(404).json({ error: 'Conversation not found' });
       }
+      const access = assertSessionAccess(req, session);
+      if (!access.ok) {
+        return res.status(access.status || 403).json({ error: access.message || 'Forbidden' });
+      }
+
+      const deleted = store.deleteSession(sessionId);
 
       res.json({ success: true, message: 'Conversation deleted' });
     } catch (error) {
@@ -564,16 +637,24 @@ export function createConversationsRouter(config: ConversationsRouterConfig = {}
         return res.status(400).json({ error: 'Invalid metadata' });
       }
 
-      const updated = store.updateMetadata(sessionId, metadata);
+      const session = store.getSession(sessionId);
+      if (!session) {
+        return res.status(404).json({ error: 'Conversation not found' });
+      }
+      const access = assertSessionAccess(req, session);
+      if (!access.ok) {
+        return res.status(access.status || 403).json({ error: access.message || 'Forbidden' });
+      }
 
+      const updated = store.updateMetadata(sessionId, metadata);
       if (!updated) {
         return res.status(404).json({ error: 'Conversation not found' });
       }
 
-      const session = store.getSession(sessionId);
+      const updatedSession = store.getSession(sessionId);
       res.json({
         success: true,
-        metadata: session?.metadata
+        metadata: updatedSession?.metadata
       });
     } catch (error) {
       console.error('[Conversations API] Error updating metadata:', error);
@@ -602,7 +683,12 @@ export function createConversationsRouter(config: ConversationsRouterConfig = {}
 
         const { query, sessionIds, role, limit, offset } = validation.data;
 
-        const results = store.searchMessages(query, { sessionIds, role, limit, offset });
+        const requesterUserId = resolveRequesterUserId(req);
+        const allowedSessionIds = isAdminRequest(req)
+          ? sessionIds
+          : (sessionIds || store.getUserSessions(requesterUserId).map(s => s.id));
+
+        const results = store.searchMessages(query, { sessionIds: allowedSessionIds, role, limit, offset });
 
         res.json({
           query,
@@ -636,6 +722,15 @@ export function createConversationsRouter(config: ConversationsRouterConfig = {}
     router.get('/:sessionId/analytics', (req: Request, res: Response) => {
       try {
         const { sessionId } = req.params;
+        const session = store.getSession(sessionId);
+        if (!session) {
+          return res.status(404).json({ error: 'Conversation not found' });
+        }
+        const access = assertSessionAccess(req, session);
+        if (!access.ok) {
+          return res.status(access.status || 403).json({ error: access.message || 'Forbidden' });
+        }
+
         const analytics = store.getAnalytics(sessionId);
 
         if (!analytics) {
@@ -674,8 +769,14 @@ export function createConversationsRouter(config: ConversationsRouterConfig = {}
 
       // Get or create local session
       let session = store.getSession(sessionId);
+      if (session) {
+        const access = assertSessionAccess(req, session);
+        if (!access.ok) {
+          return res.status(access.status || 403).json({ error: access.message || 'Forbidden' });
+        }
+      }
       if (!session) {
-        session = store.createSession(req.body.userId || 'anonymous', { synced: true });
+        session = store.createSession(resolveRequesterUserId(req), { synced: true });
         // Note: We created a new session with a different ID, need to handle this
       }
 

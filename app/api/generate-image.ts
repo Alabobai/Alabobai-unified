@@ -1,3 +1,10 @@
+import {
+  degradedEnvelope,
+  getCircuitBreakerSnapshot,
+  healthGate,
+  runWithReliability,
+} from './_lib/reliability'
+
 export const config = {
   runtime: 'edge',
 }
@@ -68,18 +75,20 @@ async function generateWithAutomatic1111(
   width: number,
   height: number
 ): Promise<string> {
-  const response = await fetch(`${IMAGE_INFERENCE_URL}/sdapi/v1/txt2img`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      prompt,
-      width,
-      height,
-      steps: 28,
-      cfg_scale: 7,
-      sampler_name: 'DPM++ 2M Karras',
-    }),
-  })
+  const { value: response } = await runWithReliability('media.image.automatic1111', () =>
+    fetch(`${IMAGE_INFERENCE_URL}/sdapi/v1/txt2img`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prompt,
+        width,
+        height,
+        steps: 28,
+        cfg_scale: 7,
+        sampler_name: 'DPM++ 2M Karras',
+      }),
+    })
+  )
 
   if (!response.ok) {
     throw new Error(`A1111 failed: ${response.status}`)
@@ -134,11 +143,13 @@ async function generateWithComfyUI(prompt: string, width: number, height: number
     },
   }
 
-  const promptRes = await fetch(`${COMFYUI_URL}/prompt`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ prompt: workflow }),
-  })
+  const { value: promptRes } = await runWithReliability('media.image.comfyui', () =>
+    fetch(`${COMFYUI_URL}/prompt`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: workflow }),
+    })
+  )
   if (!promptRes.ok) throw new Error(`ComfyUI prompt failed: ${promptRes.status}`)
   const promptData = await promptRes.json()
   const promptId = promptData.prompt_id as string
@@ -147,7 +158,10 @@ async function generateWithComfyUI(prompt: string, width: number, height: number
   const started = Date.now()
   while (Date.now() - started < 120000) {
     await new Promise((r) => setTimeout(r, 1500))
-    const historyRes = await fetch(`${COMFYUI_URL}/history/${promptId}`)
+    const { value: historyRes } = await runWithReliability('media.image.comfyui', () =>
+      fetch(`${COMFYUI_URL}/history/${promptId}`),
+      { attempts: 2 }
+    )
     if (!historyRes.ok) continue
     const history = await historyRes.json()
     const outputs = history[promptId]?.outputs || {}
@@ -194,7 +208,21 @@ export default async function handler(req: Request) {
     let usedFallback = false
     let warning: string | undefined
 
+    const healthTarget =
+      IMAGE_BACKEND === 'comfyui'
+        ? { name: 'image-backend', url: `${COMFYUI_URL}/system_stats` }
+        : { name: 'image-backend', url: `${IMAGE_INFERENCE_URL}/sdapi/v1/options` }
+    const imageGate = await healthGate(healthTarget.name, {
+      url: healthTarget.url,
+      timeoutMs: 1800,
+      cacheTtlMs: 3000,
+    })
+
     try {
+      if (!imageGate.allow) {
+        throw new Error(imageGate.reason || 'health-unhealthy:image')
+      }
+
       url =
         IMAGE_BACKEND === 'comfyui'
           ? await generateWithComfyUI(enhancedPrompt, width, height)
@@ -205,16 +233,32 @@ export default async function handler(req: Request) {
       url = createFallbackImage(enhancedPrompt, width, height)
     }
 
+    const payload = {
+      url,
+      prompt: enhancedPrompt,
+      width,
+      height,
+      backend: usedFallback ? 'local-fallback-svg' : IMAGE_BACKEND,
+      fallback: usedFallback,
+      warning,
+      circuit:
+        IMAGE_BACKEND === 'comfyui'
+          ? getCircuitBreakerSnapshot('media.image.comfyui')
+          : getCircuitBreakerSnapshot('media.image.automatic1111'),
+    }
+
     return new Response(
-      JSON.stringify({
-        url,
-        prompt: enhancedPrompt,
-        width,
-        height,
-        backend: usedFallback ? 'local-fallback-svg' : IMAGE_BACKEND,
-        fallback: usedFallback,
-        warning,
-      }),
+      JSON.stringify(
+        usedFallback
+          ? degradedEnvelope(payload, {
+              route: 'image.local-fallback',
+              warning: warning || 'Image backend unavailable',
+              fallback: 'generated-svg',
+              health: imageGate.health,
+              circuit: payload.circuit,
+            })
+          : payload
+      ),
       {
         headers: corsHeaders({ 'Content-Type': 'application/json' }),
       }

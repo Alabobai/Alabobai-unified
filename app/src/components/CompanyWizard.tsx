@@ -6,6 +6,7 @@ import {
   HeadphonesIcon, AlertCircle, Wand2, RefreshCw
 } from 'lucide-react'
 import { useAppStore } from '@/stores/appStore'
+import { BRAND_GRADIENT_ACCENT } from '@/config/brandTokens'
 
 type CompanyType = 'saas' | 'ecommerce' | 'app' | 'agency' | 'content' | 'service'
 
@@ -284,8 +285,8 @@ export default function CompanyWizard() {
   const progress = buildSteps.length > 0 ? (completedSteps / buildSteps.length) * 100 : 0
 
   return (
-    <div className="min-h-screen bg-dark-500 flex items-center justify-center p-6">
-      <div className="w-full max-w-4xl">
+    <div className="h-full bg-dark-500 overflow-y-auto alabobai-shell premium-type">
+      <div className="w-full max-w-4xl mx-auto p-6">
         {/* Progress Steps */}
         <div className="flex items-center justify-center mb-12">
           {[1, 2, 3, 4, 5].map((s, i) => (
@@ -306,12 +307,12 @@ export default function CompanyWizard() {
 
         {/* Error Display */}
         {error && (
-          <div className="mb-8 p-4 rounded-xl bg-red-500/10 border border-red-500/30 flex items-center gap-3">
-            <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
-            <p className="text-red-400 flex-1">{error}</p>
+          <div className="mb-8 p-4 rounded-xl bg-rose-gold-500/10 border border-rose-gold-400/30 flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 text-rose-gold-400 flex-shrink-0" />
+            <p className="text-rose-gold-400 flex-1">{error}</p>
             <button
               onClick={() => setError(null)}
-              className="px-4 py-2 rounded-lg bg-red-500/20 text-red-400 text-sm font-medium hover:bg-red-500/30 transition-colors"
+              className="px-4 py-2 rounded-lg bg-rose-gold-500/20 text-rose-gold-400 text-sm font-medium hover:bg-rose-gold-500/30 transition-colors"
             >
               Dismiss
             </button>
@@ -322,7 +323,7 @@ export default function CompanyWizard() {
         {step === 1 && (
           <div className="animate-fade-in">
             <div className="text-center mb-8">
-              <h1 className="text-4xl font-bold text-white mb-3">What type of company do you want to build?</h1>
+              <h1 className="text-4xl font-semibold lux-title premium-type mb-3">What type of company do you want to build?</h1>
               <p className="text-white/60">Choose your business model and we'll set up the right AI departments</p>
             </div>
 
@@ -361,7 +362,7 @@ export default function CompanyWizard() {
         {step === 2 && (
           <div className="animate-fade-in">
             <div className="text-center mb-8">
-              <h1 className="text-4xl font-bold text-white mb-3">Describe your company</h1>
+              <h1 className="text-4xl font-semibold lux-title premium-type mb-3">Describe your company</h1>
               <p className="text-white/60">Tell us about your vision and we'll help bring it to life</p>
             </div>
 
@@ -397,7 +398,7 @@ export default function CompanyWizard() {
         {step === 3 && (
           <div className="animate-fade-in">
             <div className="text-center mb-8">
-              <h1 className="text-4xl font-bold text-white mb-3">Name your company</h1>
+              <h1 className="text-4xl font-semibold lux-title premium-type mb-3">Name your company</h1>
               <p className="text-white/60">Choose a name or let AI suggest some options</p>
             </div>
 
@@ -471,7 +472,7 @@ export default function CompanyWizard() {
         {step === 4 && (
           <div className="animate-fade-in">
             <div className="text-center mb-8">
-              <h1 className="text-4xl font-bold text-white mb-3">Brand Identity</h1>
+              <h1 className="text-4xl font-semibold lux-title premium-type mb-3">Brand Identity</h1>
               <p className="text-white/60">Choose a logo style for {companyName}</p>
             </div>
 
@@ -515,7 +516,7 @@ export default function CompanyWizard() {
                         <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                           selectedLogoId === variation.id
                             ? 'bg-rose-gold-400 text-dark-500'
-                            : 'bg-black/50 text-white backdrop-blur-sm'
+                            : 'bg-dark-400/80 text-white backdrop-blur-sm'
                         }`}>
                           {variation.style}
                         </span>
@@ -527,7 +528,7 @@ export default function CompanyWizard() {
                           e.stopPropagation()
                           regenerateLogo(index)
                         }}
-                        className="absolute top-3 right-3 z-10 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 backdrop-blur-sm transition-colors"
+                        className="absolute top-3 right-3 z-10 p-2 rounded-full bg-dark-400/80 text-white hover:bg-dark-300 backdrop-blur-sm transition-colors"
                         title="Regenerate this logo"
                       >
                         <RefreshCw className="w-4 h-4" />
@@ -653,7 +654,7 @@ export default function CompanyWizard() {
                   </div>
                 )}
               </div>
-              <h1 className="text-4xl font-bold text-white mb-3">
+              <h1 className="text-4xl font-semibold lux-title premium-type mb-3">
                 {isBuilding ? `Building ${companyName}...` : `${companyName} is Ready!`}
               </h1>
               <p className="text-white/60">
@@ -682,7 +683,7 @@ export default function CompanyWizard() {
                   key={buildStep.id}
                   className={`p-4 rounded-xl border transition-all ${
                     buildStep.status === 'complete'
-                      ? 'border-green-500/30 bg-green-500/10'
+                      ? 'border-rose-gold-500/30 bg-rose-gold-500/10'
                       : buildStep.status === 'building'
                       ? 'border-rose-gold-400/30 bg-rose-gold-400/10'
                       : 'border-white/10 bg-white/5'
@@ -691,13 +692,13 @@ export default function CompanyWizard() {
                   <div className="flex items-center gap-3">
                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
                       buildStep.status === 'complete'
-                        ? 'bg-green-500/20'
+                        ? 'bg-rose-gold-500/20'
                         : buildStep.status === 'building'
                         ? 'bg-rose-gold-400/20'
                         : 'bg-white/10'
                     }`}>
                       {buildStep.status === 'complete' ? (
-                        <Check className="w-5 h-5 text-green-400" />
+                        <Check className="w-5 h-5 text-rose-gold-400" />
                       ) : buildStep.status === 'building' ? (
                         <Loader2 className="w-5 h-5 text-rose-gold-400 animate-spin" />
                       ) : (
@@ -706,7 +707,7 @@ export default function CompanyWizard() {
                     </div>
                     <div>
                       <p className={`font-medium ${
-                        buildStep.status === 'complete' ? 'text-green-400' :
+                        buildStep.status === 'complete' ? 'text-rose-gold-400' :
                         buildStep.status === 'building' ? 'text-rose-gold-400' :
                         'text-white/50'
                       }`}>

@@ -1,0 +1,197 @@
+{
+  "version": "1.0.0",
+  "generatedAt": "2026-02-14T23:30:00.000Z",
+  "capabilities": [
+    {
+      "id": "chat.general",
+      "name": "General Chat",
+      "description": "General conversational response via AI chat route",
+      "domain": "chat",
+      "route": "/api/chat",
+      "method": "POST",
+      "tags": ["chat", "assistant", "conversation"],
+      "triggers": ["chat", "ask", "explain", "help"],
+      "defaultPayload": { "stream": false }
+    },
+    {
+      "id": "company.create",
+      "name": "Create Company",
+      "description": "Create company record with generated plan/logo",
+      "domain": "company",
+      "route": "/api/company",
+      "method": "POST",
+      "tags": ["company", "startup", "create"],
+      "triggers": ["create company", "new company", "build startup"],
+      "defaultPayload": { "action": "create" }
+    },
+    {
+      "id": "company.plan",
+      "name": "Generate Company Plan",
+      "description": "Generate business plan for company",
+      "domain": "company",
+      "route": "/api/company",
+      "method": "POST",
+      "tags": ["company", "plan", "business plan"],
+      "triggers": ["company plan", "business plan", "create company plan"],
+      "defaultPayload": { "action": "generate-plan" }
+    },
+    {
+      "id": "company.name",
+      "name": "Generate Company Name",
+      "description": "Generate startup/company name ideas",
+      "domain": "company",
+      "route": "/api/company",
+      "method": "POST",
+      "tags": ["company", "name", "branding"],
+      "triggers": ["company name", "name ideas", "startup name"],
+      "defaultPayload": { "action": "generate-name" }
+    },
+    {
+      "id": "research.search",
+      "name": "Deep Research Search",
+      "description": "Search web sources for research",
+      "domain": "research",
+      "route": "/api/search",
+      "method": "POST",
+      "tags": ["research", "search", "web"],
+      "triggers": ["research", "search topic", "find sources"],
+      "defaultPayload": { "limit": 5 }
+    },
+    {
+      "id": "research.fetch-page",
+      "name": "Fetch Research Page",
+      "description": "Fetch raw page content for analysis",
+      "domain": "research",
+      "route": "/api/fetch-page",
+      "method": "GET",
+      "tags": ["research", "fetch", "page", "url", "webpage"],
+      "triggers": ["fetch page", "open url", "read webpage", "read this url"]
+    },
+    {
+      "id": "media.image.generate",
+      "name": "Generate Image",
+      "description": "Generate image using local image backend",
+      "domain": "media",
+      "route": "/api/generate-image",
+      "method": "POST",
+      "tags": ["image", "generate", "art"],
+      "triggers": ["generate image", "create image", "make logo"],
+      "defaultPayload": { "width": 512, "height": 512, "style": "hero" }
+    },
+    {
+      "id": "media.video.generate",
+      "name": "Generate Video",
+      "description": "Generate video using local video backend",
+      "domain": "media",
+      "route": "/api/generate-video",
+      "method": "POST",
+      "tags": ["video", "generate", "motion"],
+      "triggers": ["generate video", "create video", "make animation"],
+      "defaultPayload": { "durationSeconds": 4, "fps": 16, "width": 512, "height": 512 }
+    },
+    {
+      "id": "localai.chat",
+      "name": "Local AI Chat",
+      "description": "Chat against local AI engine",
+      "domain": "local-ai",
+      "route": "/api/local-ai/chat",
+      "method": "POST",
+      "tags": ["local ai", "chat", "ollama"],
+      "triggers": ["local ai chat", "local model", "chat local"]
+    },
+    {
+      "id": "localai.models",
+      "name": "Local AI Models",
+      "description": "List available local models",
+      "domain": "local-ai",
+      "route": "/api/local-ai/models",
+      "method": "GET",
+      "tags": ["local ai", "models", "ollama"],
+      "triggers": ["list models", "local models", "ai models"]
+    },
+    {
+      "id": "localai.stats",
+      "name": "Local AI Knowledge Stats",
+      "description": "Get local knowledge base stats",
+      "domain": "local-ai",
+      "route": "/api/local-ai/knowledge/stats",
+      "method": "GET",
+      "tags": ["local ai", "knowledge", "stats"],
+      "triggers": ["knowledge stats", "local stats", "kb stats"]
+    },
+    {
+      "id": "localai.ingest",
+      "name": "Local AI Knowledge Ingest",
+      "description": "Ingest content into local knowledge base",
+      "domain": "local-ai",
+      "route": "/api/local-ai/knowledge/ingest",
+      "method": "POST",
+      "tags": ["local ai", "knowledge", "ingest"],
+      "triggers": ["ingest document", "add knowledge", "index content"]
+    },
+    {
+      "id": "localai.search",
+      "name": "Local AI Knowledge Search",
+      "description": "Semantic search over local knowledge base",
+      "domain": "local-ai",
+      "route": "/api/local-ai/knowledge/search",
+      "method": "POST",
+      "tags": ["local ai", "knowledge", "search"],
+      "triggers": ["search knowledge", "local search", "semantic search"],
+      "defaultPayload": { "topK": 10 }
+    },
+    {
+      "id": "proxy.fetch",
+      "name": "Proxy Fetch",
+      "description": "Fetch URL through proxy for CORS-safe retrieval",
+      "domain": "proxy",
+      "route": "/api/proxy",
+      "method": "POST",
+      "tags": ["proxy", "fetch", "web", "url"],
+      "triggers": ["proxy fetch", "fetch url", "load page", "open this link"],
+      "defaultPayload": { "action": "fetch" }
+    },
+    {
+      "id": "proxy.extract",
+      "name": "Proxy Extract",
+      "description": "Extract structured content from URL via proxy",
+      "domain": "proxy",
+      "route": "/api/proxy",
+      "method": "POST",
+      "tags": ["proxy", "extract", "parse"],
+      "triggers": ["extract page", "parse website", "content extract"],
+      "defaultPayload": { "action": "extract" }
+    },
+    {
+      "id": "proxy.search",
+      "name": "Proxy Search",
+      "description": "Search the web using proxy route",
+      "domain": "proxy",
+      "route": "/api/proxy",
+      "method": "POST",
+      "tags": ["proxy", "search", "web"],
+      "triggers": ["proxy search", "web search", "search web"],
+      "defaultPayload": { "action": "search" }
+    },
+    {
+      "id": "webhook.events",
+      "name": "Webhook Events",
+      "description": "List webhook events",
+      "domain": "webhook",
+      "route": "/api/webhook/events",
+      "method": "GET",
+      "tags": ["webhook", "events", "integrations", "logs"],
+      "triggers": ["webhook events", "integration logs", "event history"]
+    },
+    {
+      "id": "webhook.dispatch",
+      "name": "Webhook Dispatch",
+      "description": "Dispatch outgoing webhook calls",
+      "domain": "webhook",
+      "route": "/api/webhook/dispatch",
+      "method": "POST",
+      "tags": ["webhook", "dispatch", "integrations"],
+      "triggers": ["dispatch webhook", "send webhook", "trigger webhook"]
+    }
+  ]
+}

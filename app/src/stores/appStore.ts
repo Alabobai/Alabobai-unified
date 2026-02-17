@@ -53,7 +53,7 @@ export interface HistoryEntry {
   undone?: boolean
 }
 
-type AppView = 'chat' | 'company-wizard' | 'company-dashboard' | 'autonomous-agents' | 'local-ai-brain' | 'self-annealing' | 'deep-research' | 'privacy-fortress' | 'financial-guardian' | 'creative-studio' | 'data-analyst' | 'voice-interface' | 'trust-architect' | 'integration-hub'
+type AppView = 'home' | 'chat' | 'company-wizard' | 'company-dashboard' | 'autonomous-agents' | 'command-center' | 'local-ai-brain' | 'self-annealing' | 'deep-research' | 'privacy-fortress' | 'financial-guardian' | 'creative-studio' | 'data-analyst' | 'voice-interface' | 'trust-architect' | 'integration-hub' | 'memory-dashboard' | 'code-sandbox'
 
 interface AppState {
   // UI State
@@ -83,7 +83,11 @@ interface AppState {
 
   // Actions
   toggleSidebar: () => void
+  openSidebar: () => void
+  closeSidebar: () => void
   toggleWorkspace: () => void
+  openWorkspace: () => void
+  closeWorkspace: () => void
   toggleSettings: () => void
   setActiveTab: (tab: 'browser' | 'tasks' | 'preview' | 'code' | 'terminal' | 'files') => void
   setView: (view: AppView) => void
@@ -122,7 +126,7 @@ export const useAppStore = create<AppState>()(
     workspaceOpen: true,
     settingsOpen: false,
     activeTab: 'browser',
-    currentView: 'chat',
+    currentView: 'home',
 
     chats: [],
     activeChat: null,
@@ -140,10 +144,21 @@ export const useAppStore = create<AppState>()(
 
     // UI Actions
     toggleSidebar: () => set(state => { state.sidebarOpen = !state.sidebarOpen }),
+    openSidebar: () => set(state => { state.sidebarOpen = true }),
+    closeSidebar: () => set(state => { state.sidebarOpen = false }),
     toggleWorkspace: () => set(state => { state.workspaceOpen = !state.workspaceOpen }),
+    openWorkspace: () => set(state => { state.workspaceOpen = true }),
+    closeWorkspace: () => set(state => { state.workspaceOpen = false }),
     toggleSettings: () => set(state => { state.settingsOpen = !state.settingsOpen }),
     setActiveTab: (tab) => set(state => { state.activeTab = tab }),
-    setView: (view) => set(state => { state.currentView = view }),
+    setView: (view) => set(state => {
+      state.currentView = view
+      // Feature/workforce tools should open full page by default.
+      // Keep workspace split only for core chat view.
+      if (view !== 'chat') {
+        state.workspaceOpen = false
+      }
+    }),
 
     // Chat Actions
     createChat: () => set(state => {
@@ -156,6 +171,7 @@ export const useAppStore = create<AppState>()(
       }
       state.chats.unshift(newChat)
       state.activeChat = newChat.id
+      state.currentView = 'chat'
     }),
 
     setActiveChat: (id) => set(state => { state.activeChat = id }),

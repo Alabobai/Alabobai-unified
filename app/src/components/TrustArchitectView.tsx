@@ -12,6 +12,7 @@ import {
   Server, Database, Activity, TrendingUp, Award, Clock,
   BookOpen, AlertOctagon, Bug
 } from 'lucide-react'
+import { BRAND } from '@/config/brand'
 
 // ============== Types ==============
 
@@ -551,9 +552,9 @@ function StatCard({ icon: Icon, label, value, trend, color = 'rose' }: {
 }) {
   const colorClasses: Record<string, string> = {
     rose: 'from-rose-gold-400/20 to-rose-gold-600/20 border-rose-gold-400/30 text-rose-gold-400',
-    green: 'from-green-400/20 to-green-600/20 border-green-500/30 text-green-400',
-    yellow: 'from-yellow-400/20 to-yellow-600/20 border-yellow-500/30 text-yellow-400',
-    red: 'from-red-400/20 to-red-600/20 border-red-500/30 text-red-400',
+    green: 'from-rose-gold-500/20 to-rose-gold-600/20 border-rose-gold-400/30 text-rose-gold-400',
+    yellow: 'from-rose-gold-500/20 to-rose-gold-600/20 border-rose-gold-400/30 text-rose-gold-400',
+    red: 'from-rose-gold-500/20 to-rose-gold-600/20 border-rose-gold-400/30 text-rose-gold-400',
       }
 
   return (
@@ -606,18 +607,18 @@ function VerificationSystems() {
   }
 
   const getScoreColor = (score: number) => {
-    if (score >= 80) return 'text-green-400'
-    if (score >= 60) return 'text-yellow-400'
-    if (score >= 40) return 'text-orange-400'
-    return 'text-red-400'
+    if (score >= 80) return 'text-rose-gold-400'
+    if (score >= 60) return 'text-rose-gold-400'
+    if (score >= 40) return 'text-rose-gold-400'
+    return 'text-rose-gold-400'
   }
 
   const getRiskColor = (risk: 'safe' | 'caution' | 'warning' | 'danger') => {
     const colors = {
-      safe: 'text-green-400 bg-green-500/20 border-green-500/30',
-      caution: 'text-yellow-400 bg-yellow-500/20 border-yellow-500/30',
-      warning: 'text-orange-400 bg-orange-500/20 border-orange-500/30',
-      danger: 'text-red-400 bg-red-500/20 border-red-500/30'
+      safe: 'text-rose-gold-400 bg-rose-gold-400/20 border-rose-gold-400/30',
+      caution: 'text-rose-gold-400 bg-rose-gold-500/20 border-rose-gold-400/30',
+      warning: 'text-rose-gold-400 bg-rose-gold-500/20 border-rose-gold-400/30',
+      danger: 'text-rose-gold-400 bg-rose-gold-500/20 border-rose-gold-400/30'
     }
     return colors[risk]
   }
@@ -644,21 +645,21 @@ function VerificationSystems() {
               />
               <button
                 onClick={handleValidateEmail}
-                className="morphic-btn bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 px-4 py-2 text-sm"
+                className="morphic-btn-ghost bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 px-4 py-2 text-sm"
               >
                 Verify
               </button>
             </div>
 
             {emailValidation && (
-              <div className={`p-4 rounded-lg border ${emailValidation.isValid ? 'bg-green-500/10 border-green-500/30' : 'bg-red-500/10 border-red-500/30'}`}>
+              <div className={`p-4 rounded-lg border ${emailValidation.isValid ? 'bg-rose-gold-400/10 border-rose-gold-400/30' : 'bg-rose-gold-500/10 border-rose-gold-400/30'}`}>
                 <div className="flex items-center gap-2 mb-3">
                   {emailValidation.isValid ? (
-                    <CheckCircle2 className="w-5 h-5 text-green-400" />
+                    <CheckCircle2 className="w-5 h-5 text-rose-gold-400" />
                   ) : (
-                    <AlertCircle className="w-5 h-5 text-red-400" />
+                    <AlertCircle className="w-5 h-5 text-rose-gold-400" />
                   )}
-                  <span className={`font-medium ${emailValidation.isValid ? 'text-green-400' : 'text-red-400'}`}>
+                  <span className={`font-medium ${emailValidation.isValid ? 'text-rose-gold-400' : 'text-rose-gold-400'}`}>
                     {emailValidation.isValid ? 'Valid Email' : 'Invalid Email'}
                   </span>
                 </div>
@@ -670,7 +671,7 @@ function VerificationSystems() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-white/60">Format:</span>
-                    <span className={emailValidation.format ? 'text-green-400' : 'text-red-400'}>
+                    <span className={emailValidation.format ? 'text-rose-gold-400' : 'text-rose-gold-400'}>
                       {emailValidation.format ? 'Valid' : 'Invalid'}
                     </span>
                   </div>
@@ -680,7 +681,7 @@ function VerificationSystems() {
                   <div className="mt-3 pt-3 border-t border-white/10">
                     <p className="text-xs text-white/60 mb-2">Issues:</p>
                     {emailValidation.issues.map((issue, i) => (
-                      <div key={i} className="flex items-center gap-2 text-xs text-red-400">
+                      <div key={i} className="flex items-center gap-2 text-xs text-rose-gold-400">
                         <AlertTriangle className="w-3 h-3" />
                         {issue}
                       </div>
@@ -739,23 +740,23 @@ function VerificationSystems() {
                   </div>
                   <div className="flex items-center gap-2">
                     {domainReputation.https ? (
-                      <Lock className="w-4 h-4 text-green-400" />
+                      <Lock className="w-4 h-4 text-rose-gold-400" />
                     ) : (
-                      <AlertTriangle className="w-4 h-4 text-red-400" />
+                      <AlertTriangle className="w-4 h-4 text-rose-gold-400" />
                     )}
                     <span className="text-white/60">HTTPS:</span>
-                    <span className={domainReputation.https ? 'text-green-400' : 'text-red-400'}>
+                    <span className={domainReputation.https ? 'text-rose-gold-400' : 'text-rose-gold-400'}>
                       {domainReputation.https ? 'Yes' : 'No'}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
                     {domainReputation.dnssec ? (
-                      <ShieldCheck className="w-4 h-4 text-green-400" />
+                      <ShieldCheck className="w-4 h-4 text-rose-gold-400" />
                     ) : (
-                      <ShieldAlert className="w-4 h-4 text-yellow-400" />
+                      <ShieldAlert className="w-4 h-4 text-rose-gold-400" />
                     )}
                     <span className="text-white/60">DNSSEC:</span>
-                    <span className={domainReputation.dnssec ? 'text-green-400' : 'text-yellow-400'}>
+                    <span className={domainReputation.dnssec ? 'text-rose-gold-400' : 'text-rose-gold-400'}>
                       {domainReputation.dnssec ? 'Enabled' : 'Unknown'}
                     </span>
                   </div>
@@ -765,7 +766,7 @@ function VerificationSystems() {
                   <div className="pt-3 border-t border-white/10">
                     <p className="text-xs text-white/60 mb-2">Issues:</p>
                     {domainReputation.issues.map((issue, i) => (
-                      <div key={i} className="flex items-center gap-2 text-xs text-yellow-400">
+                      <div key={i} className="flex items-center gap-2 text-xs text-rose-gold-400">
                         <AlertTriangle className="w-3 h-3" />
                         {issue}
                       </div>
@@ -796,7 +797,7 @@ function VerificationSystems() {
           />
           <button
             onClick={handleAnalyzeURL}
-            className="morphic-btn bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 px-6 py-3 text-sm"
+            className="morphic-btn-ghost bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 px-6 py-3 text-sm"
           >
             Analyze URL
           </button>
@@ -820,20 +821,20 @@ function VerificationSystems() {
             {/* Issues */}
             <div className="p-4 rounded-lg bg-white/5 border border-white/10">
               <h4 className="text-sm font-medium text-white/60 mb-2 flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-yellow-400" />
+                <AlertTriangle className="w-4 h-4 text-rose-gold-400" />
                 Issues Found
               </h4>
               {urlAnalysis.issues.length > 0 ? (
                 <div className="space-y-1">
                   {urlAnalysis.issues.map((issue, i) => (
-                    <div key={i} className="text-xs text-red-400 flex items-start gap-1">
+                    <div key={i} className="text-xs text-rose-gold-400 flex items-start gap-1">
                       <span className="mt-0.5">-</span>
                       {issue}
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-xs text-green-400">No issues detected</p>
+                <p className="text-xs text-rose-gold-400">No issues detected</p>
               )}
             </div>
 
@@ -846,14 +847,14 @@ function VerificationSystems() {
               {urlAnalysis.phishingIndicators.length > 0 ? (
                 <div className="space-y-1">
                   {urlAnalysis.phishingIndicators.map((indicator, i) => (
-                    <div key={i} className="text-xs text-orange-400 flex items-start gap-1">
+                    <div key={i} className="text-xs text-rose-gold-400 flex items-start gap-1">
                       <span className="mt-0.5">-</span>
                       {indicator}
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-xs text-green-400">No phishing indicators</p>
+                <p className="text-xs text-rose-gold-400">No phishing indicators</p>
               )}
             </div>
           </div>
@@ -1047,7 +1048,7 @@ function AuthenticationTools() {
             </button>
 
             {jwtError && (
-              <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-xs">
+              <div className="p-3 rounded-lg bg-rose-gold-500/10 border border-rose-gold-400/30 text-rose-gold-400 text-xs">
                 {jwtError}
               </div>
             )}
@@ -1061,7 +1062,7 @@ function AuthenticationTools() {
                       onClick={() => copyToClipboard(JSON.stringify(jwtDecoded.header, null, 2), 'jwt-header')}
                       className="text-white/40 hover:text-white"
                     >
-                      {copiedItem === 'jwt-header' ? <Check className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}
+                      {copiedItem === 'jwt-header' ? <Check className="w-3 h-3 text-rose-gold-400" /> : <Copy className="w-3 h-3" />}
                     </button>
                   </div>
                   <pre className="text-xs text-rose-gold-400 font-mono overflow-x-auto">
@@ -1076,7 +1077,7 @@ function AuthenticationTools() {
                       onClick={() => copyToClipboard(JSON.stringify(jwtDecoded.payload, null, 2), 'jwt-payload')}
                       className="text-white/40 hover:text-white"
                     >
-                      {copiedItem === 'jwt-payload' ? <Check className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}
+                      {copiedItem === 'jwt-payload' ? <Check className="w-3 h-3 text-rose-gold-400" /> : <Copy className="w-3 h-3" />}
                     </button>
                   </div>
                   <pre className="text-xs text-rose-gold-400 font-mono overflow-x-auto max-h-32">
@@ -1092,7 +1093,7 @@ function AuthenticationTools() {
                     </div>
                   )}
                   {jwtDecoded.expiresAt && (
-                    <div className={`flex items-center gap-1 ${jwtDecoded.isExpired ? 'text-red-400' : 'text-green-400'}`}>
+                    <div className={`flex items-center gap-1 ${jwtDecoded.isExpired ? 'text-rose-gold-400' : 'text-rose-gold-400'}`}>
                       <AlertCircle className="w-3 h-3" />
                       {jwtDecoded.isExpired ? 'Expired' : 'Expires'}: {jwtDecoded.expiresAt}
                     </div>
@@ -1159,7 +1160,7 @@ function AuthenticationTools() {
                   onClick={() => copyToClipboard(base64Output, 'base64')}
                   className="absolute top-2 right-2 p-1.5 text-white/40 hover:text-white"
                 >
-                  {copiedItem === 'base64' ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+                  {copiedItem === 'base64' ? <Check className="w-4 h-4 text-rose-gold-400" /> : <Copy className="w-4 h-4" />}
                 </button>
               </div>
             )}
@@ -1195,7 +1196,7 @@ function AuthenticationTools() {
                     onClick={() => setHashAlgorithm(algo)}
                     className={`flex-1 py-2 rounded-lg text-xs transition-colors ${
                       hashAlgorithm === algo
-                        ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
+                        ? 'bg-rose-gold-500/20 text-rose-gold-400 border border-rose-gold-400/30'
                         : 'bg-white/5 text-white/60 hover:text-white'
                     }`}
                   >
@@ -1207,7 +1208,7 @@ function AuthenticationTools() {
 
             <button
               onClick={handleGenerateHash}
-              className="w-full morphic-btn bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 py-2.5 text-sm font-medium"
+              className="w-full morphic-btn py-2.5 text-sm font-medium"
             >
               Generate Hash
             </button>
@@ -1228,7 +1229,7 @@ function AuthenticationTools() {
                     onClick={() => copyToClipboard(hashOutput, 'hash')}
                     className="absolute top-2 right-2 p-1.5 text-white/40 hover:text-white"
                   >
-                    {copiedItem === 'hash' ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+                    {copiedItem === 'hash' ? <Check className="w-4 h-4 text-rose-gold-400" /> : <Copy className="w-4 h-4" />}
                   </button>
                 )}
               </div>
@@ -1358,10 +1359,10 @@ function SecurityBestPractices() {
 
   const getSeverityColor = (severity: string) => {
     const colors: Record<string, string> = {
-      critical: 'text-red-400 bg-red-500/20 border-red-500/30',
-      high: 'text-orange-400 bg-orange-500/20 border-orange-500/30',
-      medium: 'text-yellow-400 bg-yellow-500/20 border-yellow-500/30',
-      low: 'text-blue-400 bg-blue-500/20 border-blue-500/30'
+      critical: 'text-rose-gold-400 bg-rose-gold-500/20 border-rose-gold-400/30',
+      high: 'text-rose-gold-400 bg-rose-gold-500/20 border-rose-gold-400/30',
+      medium: 'text-rose-gold-400 bg-rose-gold-500/20 border-rose-gold-400/30',
+      low: 'text-rose-gold-400 bg-rose-gold-400/20 border-rose-gold-400/30'
     }
     return colors[severity] || colors.medium
   }
@@ -1461,14 +1462,14 @@ function SecurityBestPractices() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <h5 className="text-xs font-medium text-green-400 mb-2 flex items-center gap-1">
+                      <h5 className="text-xs font-medium text-rose-gold-400 mb-2 flex items-center gap-1">
                         <ShieldCheck className="w-3 h-3" />
                         Prevention
                       </h5>
                       <ul className="space-y-1">
                         {vuln.prevention.map((item, i) => (
                           <li key={i} className="text-xs text-white/60 flex items-start gap-2">
-                            <span className="text-green-400 mt-0.5">-</span>
+                            <span className="text-rose-gold-400 mt-0.5">-</span>
                             {item}
                           </li>
                         ))}
@@ -1476,7 +1477,7 @@ function SecurityBestPractices() {
                     </div>
 
                     <div>
-                      <h5 className="text-xs font-medium text-red-400 mb-2 flex items-center gap-1">
+                      <h5 className="text-xs font-medium text-rose-gold-400 mb-2 flex items-center gap-1">
                         <AlertOctagon className="w-3 h-3" />
                         Attack Examples
                       </h5>
@@ -1579,27 +1580,27 @@ function TrustMetricsDashboard() {
   ]
 
   const getScoreColor = (score: number) => {
-    if (score >= 80) return 'text-green-400'
-    if (score >= 60) return 'text-yellow-400'
-    return 'text-red-400'
+    if (score >= 80) return 'text-rose-gold-400'
+    if (score >= 60) return 'text-rose-gold-400'
+    return 'text-rose-gold-400'
   }
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-      compliant: 'bg-green-500/20 text-green-400 border-green-500/30',
-      partial: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-      review: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
-      'non-compliant': 'bg-red-500/20 text-red-400 border-red-500/30'
+      compliant: 'bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30',
+      partial: 'bg-rose-gold-500/20 text-rose-gold-400 border-rose-gold-400/30',
+      review: 'bg-rose-gold-500/20 text-rose-gold-400 border-rose-gold-400/30',
+      'non-compliant': 'bg-rose-gold-500/20 text-rose-gold-400 border-rose-gold-400/30'
     }
     return colors[status] || colors.review
   }
 
   const getEventIcon = (type: string) => {
     switch (type) {
-      case 'success': return <CheckCircle2 className="w-4 h-4 text-green-400" />
-      case 'warning': return <AlertTriangle className="w-4 h-4 text-yellow-400" />
-      case 'error': return <AlertCircle className="w-4 h-4 text-red-400" />
-      default: return <Info className="w-4 h-4 text-blue-400" />
+      case 'success': return <CheckCircle2 className="w-4 h-4 text-rose-gold-400" />
+      case 'warning': return <AlertTriangle className="w-4 h-4 text-rose-gold-400" />
+      case 'error': return <AlertCircle className="w-4 h-4 text-rose-gold-400" />
+      default: return <Info className="w-4 h-4 text-rose-gold-400" />
     }
   }
 
@@ -1722,8 +1723,8 @@ function TrustMetricsDashboard() {
                   <div className="w-24 h-2 bg-white/10 rounded-full overflow-hidden">
                     <div
                       className={`h-full rounded-full transition-all duration-500 ${
-                        item.score >= 80 ? 'bg-green-500' :
-                        item.score >= 60 ? 'bg-yellow-500' : 'bg-red-500'
+                        item.score >= 80 ? 'bg-rose-gold-500' :
+                        item.score >= 60 ? 'bg-rose-gold-500' : 'bg-rose-gold-500'
                       }`}
                       style={{ width: `${item.score}%` }}
                     />
@@ -1774,26 +1775,26 @@ function TrustMetricsDashboard() {
         </h3>
 
         <div className="grid grid-cols-4 gap-4">
-          <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/30 text-center">
-            <CheckCircle2 className="w-8 h-8 text-green-400 mx-auto mb-2" />
+          <div className="p-4 rounded-lg bg-rose-gold-400/10 border border-rose-gold-400/30 text-center">
+            <CheckCircle2 className="w-8 h-8 text-rose-gold-400 mx-auto mb-2" />
             <p className="text-sm text-white font-medium">MFA Enabled</p>
             <p className="text-xs text-white/60">All admin accounts</p>
           </div>
 
-          <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/30 text-center">
-            <Lock className="w-8 h-8 text-green-400 mx-auto mb-2" />
+          <div className="p-4 rounded-lg bg-rose-gold-400/10 border border-rose-gold-400/30 text-center">
+            <Lock className="w-8 h-8 text-rose-gold-400 mx-auto mb-2" />
             <p className="text-sm text-white font-medium">Strong Passwords</p>
             <p className="text-xs text-white/60">Policy enforced</p>
           </div>
 
-          <div className="p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/30 text-center">
-            <Key className="w-8 h-8 text-yellow-400 mx-auto mb-2" />
+          <div className="p-4 rounded-lg bg-rose-gold-500/10 border border-rose-gold-400/30 text-center">
+            <Key className="w-8 h-8 text-rose-gold-400 mx-auto mb-2" />
             <p className="text-sm text-white font-medium">API Keys</p>
             <p className="text-xs text-white/60">2 need rotation</p>
           </div>
 
-          <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/30 text-center">
-            <Shield className="w-8 h-8 text-green-400 mx-auto mb-2" />
+          <div className="p-4 rounded-lg bg-rose-gold-400/10 border border-rose-gold-400/30 text-center">
+            <Shield className="w-8 h-8 text-rose-gold-400 mx-auto mb-2" />
             <p className="text-sm text-white font-medium">OAuth 2.0</p>
             <p className="text-xs text-white/60">Properly configured</p>
           </div>
@@ -1811,7 +1812,7 @@ export default function TrustArchitectView() {
   const [activeTab, setActiveTab] = useState<TabType>('verification')
 
   return (
-    <div className="h-full flex flex-col bg-dark-500 overflow-hidden">
+    <div className="h-full w-full flex flex-col bg-dark-500 overflow-hidden">
       {/* Header */}
       <div className="glass-morphic-header p-4 border-b border-rose-gold-400/20">
         <div className="flex items-center justify-between mb-4">
@@ -1821,7 +1822,7 @@ export default function TrustArchitectView() {
             </div>
             <div>
               <h2 className="text-lg font-bold text-white">Trust Architect</h2>
-              <p className="text-xs text-rose-gold-400/70">Alabobai - Security verification and authentication tools</p>
+              <p className="text-xs text-rose-gold-400/70">{BRAND.name} - Security verification and authentication tools</p>
             </div>
           </div>
         </div>

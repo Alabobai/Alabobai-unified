@@ -410,7 +410,7 @@ export default function ContactForm() {
     return (
       <div className="max-w-md mx-auto p-8 text-center">
         <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-          <span className="text-white text-2xl">✓</span>
+          <span className="text-white text-2xl">OK</span>
         </div>
         <h2 className="text-2xl font-bold text-white mb-2">Thank You!</h2>
         <p className="text-white/60">We'll get back to you soon.</p>
@@ -482,7 +482,7 @@ export default function App() {
     <div className="min-h-screen bg-slate-900 flex items-center justify-center">
       <div className="text-center">
         <h1 className="text-4xl font-bold text-white mb-8">
-          Alabobai App
+          AI Platform App
         </h1>
         <div className="p-8 rounded-2xl bg-slate-800 border border-white/10">
           <p className="text-white/70 mb-4">Count: {count}</p>

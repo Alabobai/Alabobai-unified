@@ -7,6 +7,7 @@ import {
   ChevronDown, ChevronUp, Eye, EyeOff
 } from 'lucide-react'
 import { aiService } from '@/services/ai'
+import { BRAND } from '@/config/brand'
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -743,7 +744,7 @@ export default function SelfAnnealingAgentView() {
   }, [])
 
   return (
-    <div className="h-full flex flex-col bg-dark-500 overflow-hidden">
+    <div className="h-full w-full flex flex-col bg-dark-500 overflow-hidden">
       {/* Header */}
       <div className="glass-morphic-header p-4 border-b border-rose-gold-400/20">
         <div className="flex items-center justify-between mb-4">
@@ -753,14 +754,14 @@ export default function SelfAnnealingAgentView() {
             </div>
             <div>
               <h2 className="text-xl font-bold text-white">Self-Annealing Agents</h2>
-              <p className="text-sm text-rose-gold-400/70">Alabobai - AI agents that learn and improve from every task</p>
+              <p className="text-sm text-rose-gold-400/70">{BRAND.name} - AI agents that learn and improve from every task</p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
             <button
               onClick={() => setShowCreateModal(true)}
-              className="morphic-btn bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 px-4 py-2 flex items-center gap-2"
+              className="morphic-btn-ghost bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 px-4 py-2 flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
               Create Agent
@@ -785,7 +786,7 @@ export default function SelfAnnealingAgentView() {
             <button
               onClick={handleExecuteTask}
               disabled={isExecuting || !task.trim()}
-              className="morphic-btn bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 px-6 flex items-center gap-2 disabled:opacity-50"
+              className="morphic-btn-ghost bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 px-6 flex items-center gap-2 disabled:opacity-50"
             >
               {isExecuting ? (
                 <>
@@ -804,9 +805,9 @@ export default function SelfAnnealingAgentView() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Left: Agent List */}
-        <div className="w-72 border-r border-white/10 p-4 overflow-y-auto morphic-scrollbar">
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Top: Agent List */}
+        <div className="w-full border-b border-white/10 p-4 overflow-y-auto morphic-scrollbar max-h-[240px]">
           <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3">
             Your Agents ({agents.length})
           </h3>
@@ -892,9 +893,9 @@ export default function SelfAnnealingAgentView() {
           )}
         </div>
 
-        {/* Right: Settings Panel */}
+        {/* Bottom: Settings Panel */}
         {currentAgent && (
-          <div className="w-80 border-l border-white/10 flex flex-col overflow-hidden">
+          <div className="h-72 border-t border-white/10 flex flex-col overflow-hidden">
             <div
               className="p-4 border-b border-white/10 flex items-center justify-between cursor-pointer"
               onClick={() => setShowSettingsPanel(!showSettingsPanel)}
@@ -980,7 +981,7 @@ function AgentCard({
             e.stopPropagation()
             onDelete()
           }}
-          className="p-1 rounded hover:bg-white/10 text-white/30 hover:text-red-400 transition-colors"
+          className="p-1 rounded hover:bg-white/10 text-white/30 hover:text-rose-gold-400 transition-colors"
         >
           <Trash2 className="w-4 h-4" />
         </button>
@@ -991,8 +992,8 @@ function AgentCard({
         <div className="flex items-center justify-between text-xs mb-1">
           <span className="text-white/40">Performance</span>
           <span className={`${
-            agent.performance.recentTrend === 'improving' ? 'text-green-400' :
-            agent.performance.recentTrend === 'declining' ? 'text-red-400' :
+            agent.performance.recentTrend === 'improving' ? 'text-rose-gold-400' :
+            agent.performance.recentTrend === 'declining' ? 'text-rose-gold-400' :
             'text-white/50'
           }`}>
             {(agent.performance.averageQuality * 100).toFixed(0)}%
@@ -1053,8 +1054,8 @@ function ExecutePanel({
                     {log.timestamp.toLocaleTimeString()}
                   </span>
                   <span className={`flex-1 ${
-                    log.type === 'error' ? 'text-red-400' :
-                    log.type === 'improvement' ? 'text-green-400' :
+                    log.type === 'error' ? 'text-rose-gold-400' :
+                    log.type === 'improvement' ? 'text-rose-gold-400' :
                     'text-white/70'
                   }`}>
                     {log.message}
@@ -1076,9 +1077,9 @@ function ExecutePanel({
           >
             <div className="flex items-center gap-2">
               {result.success ? (
-                <CheckCircle2 className="w-5 h-5 text-green-400" />
+                <CheckCircle2 className="w-5 h-5 text-rose-gold-400" />
               ) : (
-                <AlertCircle className="w-5 h-5 text-yellow-400" />
+                <AlertCircle className="w-5 h-5 text-rose-gold-400" />
               )}
               <h4 className="text-sm font-medium text-white">
                 Task Result ({(result.qualityScore * 100).toFixed(0)}% quality)
@@ -1132,15 +1133,15 @@ function AnnealingVisualization({ state }: { state: AnnealingState }) {
         <div className="flex items-center gap-4 text-xs">
           <div className="flex items-center gap-1">
             <span className="text-white/40">Temp:</span>
-            <span className="text-orange-400">{state.temperature.toFixed(1)}</span>
+            <span className="text-rose-gold-400">{state.temperature.toFixed(1)}</span>
           </div>
           <div className="flex items-center gap-1">
             <span className="text-white/40">Energy:</span>
-            <span className="text-blue-400">{state.energy.toFixed(3)}</span>
+            <span className="text-rose-gold-400">{state.energy.toFixed(3)}</span>
           </div>
           <div className="flex items-center gap-1">
             <span className="text-white/40">Iterations:</span>
-            <span className="text-green-400">{state.iterations}</span>
+            <span className="text-rose-gold-400">{state.iterations}</span>
           </div>
         </div>
       </div>
@@ -1164,7 +1165,7 @@ function AnnealingVisualization({ state }: { state: AnnealingState }) {
 
         {/* Convergence line */}
         <div
-          className="absolute left-0 right-0 border-t-2 border-green-400/50 border-dashed transition-all duration-500"
+          className="absolute left-0 right-0 border-t-2 border-rose-gold-400/50 border-dashed transition-all duration-500"
           style={{ top: `${(1 - state.convergence) * 100}%` }}
         />
       </div>
@@ -1175,13 +1176,13 @@ function AnnealingVisualization({ state }: { state: AnnealingState }) {
           icon={<Target className="w-4 h-4" />}
           label="Convergence"
           value={`${(state.convergence * 100).toFixed(1)}%`}
-          color="text-green-400"
+          color="text-rose-gold-400"
         />
         <StatCard
           icon={<TrendingUp className="w-4 h-4" />}
           label="Improvements"
           value={state.improvements.toString()}
-          color="text-blue-400"
+          color="text-rose-gold-400"
         />
         <StatCard
           icon={<GitBranch className="w-4 h-4" />}
@@ -1238,9 +1239,9 @@ function HistoryPanel({ agent }: { agent: SelfAnnealingAgent }) {
           <div className="flex items-start justify-between mb-2">
             <div className="flex items-center gap-2">
               {task.success ? (
-                <CheckCircle2 className="w-5 h-5 text-green-400" />
+                <CheckCircle2 className="w-5 h-5 text-rose-gold-400" />
               ) : (
-                <AlertCircle className="w-5 h-5 text-yellow-400" />
+                <AlertCircle className="w-5 h-5 text-rose-gold-400" />
               )}
               <span className="text-sm font-medium text-white truncate max-w-xs">
                 {task.task}
@@ -1259,9 +1260,9 @@ function HistoryPanel({ agent }: { agent: SelfAnnealingAgent }) {
           </div>
 
           {task.improvements.length > 0 && (
-            <div className="mt-2 pl-4 border-l-2 border-green-400/30">
+            <div className="mt-2 pl-4 border-l-2 border-rose-gold-400/30">
               {task.improvements.slice(0, 3).map((imp, i) => (
-                <p key={i} className="text-xs text-green-400/70">{imp}</p>
+                <p key={i} className="text-xs text-rose-gold-400/70">{imp}</p>
               ))}
             </div>
           )}
@@ -1296,8 +1297,8 @@ function LearningPanel({ agent }: { agent: SelfAnnealingAgent }) {
       <div className="morphic-card p-4 rounded-xl">
         <h4 className="text-sm font-medium text-white mb-3">Best Learned Strategy</h4>
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center">
-            <Sparkles className="w-5 h-5 text-green-400" />
+          <div className="w-10 h-10 rounded-lg bg-rose-gold-400/20 flex items-center justify-center">
+            <Sparkles className="w-5 h-5 text-rose-gold-400" />
           </div>
           <div>
             <p className="text-white font-medium capitalize">{agent.performance.bestStrategy}</p>
@@ -1322,9 +1323,9 @@ function LearningPanel({ agent }: { agent: SelfAnnealingAgent }) {
               <h4 className="text-sm font-medium text-white capitalize">{type} Tasks</h4>
               <div className="flex items-center gap-2">
                 <span className={`text-xs px-2 py-0.5 rounded ${
-                  successRate > 0.7 ? 'bg-green-500/20 text-green-400' :
-                  successRate > 0.4 ? 'bg-yellow-500/20 text-yellow-400' :
-                  'bg-red-500/20 text-red-400'
+                  successRate > 0.7 ? 'bg-rose-gold-400/20 text-rose-gold-400' :
+                  successRate > 0.4 ? 'bg-rose-gold-500/20 text-rose-gold-400' :
+                  'bg-rose-gold-500/20 text-rose-gold-400'
                 }`}>
                   {(successRate * 100).toFixed(0)}% success
                 </span>
@@ -1335,9 +1336,9 @@ function LearningPanel({ agent }: { agent: SelfAnnealingAgent }) {
               {entries.slice(-5).reverse().map(entry => (
                 <div key={entry.id} className="flex items-start gap-2 text-sm">
                   <span className={`mt-1 w-2 h-2 rounded-full ${
-                    entry.outcome === 'success' ? 'bg-green-400' :
-                    entry.outcome === 'partial' ? 'bg-yellow-400' :
-                    'bg-red-400'
+                    entry.outcome === 'success' ? 'bg-rose-gold-400' :
+                    entry.outcome === 'partial' ? 'bg-rose-gold-500' :
+                    'bg-rose-gold-500'
                   }`} />
                   <div className="flex-1">
                     <p className="text-white/70">{entry.lesson}</p>
@@ -1460,15 +1461,15 @@ function MetricCard({
   color: string
 }) {
   const colorClasses: Record<string, string> = {
-    green: 'from-green-500/20 to-green-500/5 border-green-500/20',
-    blue: 'from-blue-500/20 to-blue-500/5 border-blue-500/20',
+    green: 'from-rose-gold-400/20 to-rose-gold-400/5 border-rose-gold-400/20',
+    blue: 'from-rose-gold-400/20 to-rose-gold-400/5 border-rose-gold-400/20',
     rose: 'from-rose-gold-400/20 to-rose-gold-400/5 border-rose-gold-400/20'
   }
 
   const trendIcons = {
-    improving: <TrendingUp className="w-4 h-4 text-green-400" />,
+    improving: <TrendingUp className="w-4 h-4 text-rose-gold-400" />,
     stable: <Activity className="w-4 h-4 text-white/40" />,
-    declining: <TrendingUp className="w-4 h-4 text-red-400 rotate-180" />
+    declining: <TrendingUp className="w-4 h-4 text-rose-gold-400 rotate-180" />
   }
 
   return (
@@ -1506,13 +1507,13 @@ function QuickStats({ agent }: { agent: SelfAnnealingAgent }) {
         <div className="flex items-center gap-2">
           {agent.performance.recentTrend === 'improving' ? (
             <>
-              <TrendingUp className="w-5 h-5 text-green-400" />
-              <span className="text-sm text-green-400">Performance Improving</span>
+              <TrendingUp className="w-5 h-5 text-rose-gold-400" />
+              <span className="text-sm text-rose-gold-400">Performance Improving</span>
             </>
           ) : agent.performance.recentTrend === 'declining' ? (
             <>
-              <TrendingUp className="w-5 h-5 text-red-400 rotate-180" />
-              <span className="text-sm text-red-400">Performance Declining</span>
+              <TrendingUp className="w-5 h-5 text-rose-gold-400 rotate-180" />
+              <span className="text-sm text-rose-gold-400">Performance Declining</span>
             </>
           ) : (
             <>
@@ -1602,7 +1603,7 @@ function AgentSettingsPanel({
       {/* Reset Button */}
       <button
         onClick={onReset}
-        className="w-full morphic-btn px-4 py-2 text-sm flex items-center justify-center gap-2 text-red-400 hover:bg-red-500/10"
+        className="w-full morphic-btn-ghost px-4 py-2 text-sm flex items-center justify-center gap-2 text-rose-gold-400 hover:bg-rose-gold-500/10"
       >
         <RotateCcw className="w-4 h-4" />
         Reset Learning Data
@@ -1643,7 +1644,7 @@ function EmptyState({ onCreateAgent }: { onCreateAgent: () => void }) {
 
         <button
           onClick={onCreateAgent}
-          className="morphic-btn bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 px-6 py-3 flex items-center gap-2 mx-auto"
+          className="morphic-btn px-6 py-3 flex items-center gap-2 mx-auto"
         >
           <Plus className="w-5 h-5" />
           Create Your First Agent
@@ -1671,7 +1672,7 @@ function CreateAgentModal({
   }
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-dark-500/90 flex items-center justify-center z-50">
       <div className="morphic-card w-full max-w-md rounded-2xl overflow-hidden">
         <div className="p-4 border-b border-white/10">
           <h3 className="text-lg font-semibold text-white">Create New Agent</h3>
@@ -1741,7 +1742,7 @@ function CreateAgentModal({
           <button
             onClick={handleCreate}
             disabled={!name.trim()}
-            className="flex-1 morphic-btn bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 px-4 py-2 disabled:opacity-50"
+            className="flex-1 morphic-btn px-4 py-2 disabled:opacity-50"
           >
             Create Agent
           </button>

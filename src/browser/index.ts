@@ -363,6 +363,121 @@ export async function webFillForm(
 }
 
 // ============================================================================
+// BROWSER AUTOMATION SERVICE (Session-based)
+// ============================================================================
+
+export {
+  BrowserAutomationService,
+  createBrowserAutomation,
+  type BrowserSessionConfig,
+  type BrowserSession,
+  type BrowserAction,
+  type ActionType as SessionActionType,
+  type ActionResult as SessionActionResult,
+  type ElementInfo,
+  type DOMSnapshot,
+  type FormInfo as SessionFormInfo,
+  type FormFieldInfo as SessionFormFieldInfo,
+  type LinkInfo as SessionLinkInfo,
+  type ImageInfo as SessionImageInfo,
+  type CookieData,
+  type SafetyConfig,
+  type ProxyConfig,
+  type SessionStatus,
+  type NavigationEntry,
+} from '../services/browserAutomation.js';
+
+// ============================================================================
+// BROWSER AGENT SERVICE (AI-powered)
+// ============================================================================
+
+export {
+  BrowserAgentService,
+  createBrowserAgent,
+  type BrowserAgentConfig,
+  type TaskPlan,
+  type TaskStep,
+  type TaskStatus,
+  type TaskStepResult,
+  type PlannedAction,
+  type ActionTarget as AgentActionTarget,
+  type UserIntent,
+  type ElementMatch,
+  type AgentThought,
+} from '../services/browserAgent.js';
+
+// ============================================================================
+// API ROUTES & WEBSOCKET
+// ============================================================================
+
+export { createBrowserRouter } from '../api/routes/browser.js';
+export {
+  BrowserWebSocketHandler,
+  createBrowserWebSocketHandler,
+} from '../api/routes/browserWebSocket.js';
+
+// ============================================================================
+// BROWSER SYSTEM FACTORY
+// ============================================================================
+
+import { BrowserAutomationService, createBrowserAutomation, SafetyConfig } from '../services/browserAutomation.js';
+import { BrowserAgentService, createBrowserAgent, BrowserAgentConfig } from '../services/browserAgent.js';
+import { createBrowserRouter } from '../api/routes/browser.js';
+import { createBrowserWebSocketHandler, BrowserWebSocketHandler } from '../api/routes/browserWebSocket.js';
+import { Router } from 'express';
+
+/**
+ * Configuration for creating a complete browser system
+ */
+export interface BrowserSystemConfig {
+  safety?: SafetyConfig;
+  agent?: BrowserAgentConfig;
+  webSocketPort?: number;
+}
+
+/**
+ * Complete browser automation system
+ */
+export interface BrowserSystem {
+  browserService: BrowserAutomationService;
+  agentService: BrowserAgentService;
+  router: Router;
+  wsHandler: BrowserWebSocketHandler;
+  cleanup: () => Promise<void>;
+}
+
+/**
+ * Create a complete browser automation system with all components
+ */
+export function createBrowserSystem(config: BrowserSystemConfig = {}): BrowserSystem {
+  // Create core service
+  const browserService = createBrowserAutomation(config.safety);
+
+  // Create AI agent
+  const agentService = createBrowserAgent(browserService, config.agent);
+
+  // Create API router
+  const router = createBrowserRouter({ browserService });
+
+  // Create WebSocket handler
+  const wsHandler = createBrowserWebSocketHandler(browserService, config.webSocketPort);
+
+  // Cleanup function
+  const cleanup = async () => {
+    await browserService.cleanup();
+    wsHandler.close();
+  };
+
+  return {
+    browserService,
+    agentService,
+    router,
+    wsHandler,
+    cleanup,
+  };
+}
+
+// ============================================================================
 // DEFAULT EXPORT
 // ============================================================================
 

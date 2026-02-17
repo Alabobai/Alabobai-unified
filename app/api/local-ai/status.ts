@@ -1,12 +1,20 @@
+import {
+  checkServiceHealth,
+  getAllCircuitBreakerSnapshots,
+  getAllServiceHealthSnapshots,
+} from '../_lib/reliability';
+
 export const config = {
   runtime: 'edge',
 };
 
-// Local AI Brain Status API
-// Checks connection status of Ollama and Qdrant services
-
 const OLLAMA_URL = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
 const QDRANT_URL = process.env.QDRANT_URL || process.env.QDRANT_BASE_URL || 'http://localhost:6333';
+const IMAGE_INFERENCE_URL = process.env.IMAGE_INFERENCE_URL || 'http://localhost:7860';
+const COMFYUI_URL = process.env.COMFYUI_URL || 'http://localhost:8188';
+const VIDEO_INFERENCE_URL = process.env.VIDEO_INFERENCE_URL || 'http://localhost:8000';
+const IMAGE_BACKEND = process.env.IMAGE_BACKEND || 'automatic1111';
+const VIDEO_BACKEND = process.env.VIDEO_BACKEND || 'generic';
 
 interface ServiceStatus {
   connected: boolean;
@@ -18,92 +26,19 @@ interface ServiceStatus {
 interface StatusResponse {
   status: 'healthy' | 'degraded' | 'unhealthy';
   timestamp: string;
+  machineReadable: true;
   services: {
     ollama: ServiceStatus;
     qdrant: ServiceStatus;
+    imageBackend: ServiceStatus;
+    videoBackend: ServiceStatus;
   };
   models?: string[];
-}
-
-async function checkOllama(): Promise<ServiceStatus> {
-  const start = Date.now();
-  try {
-    const response = await fetch(`${OLLAMA_URL}/api/tags`, {
-      method: 'GET',
-      signal: AbortSignal.timeout(5000),
-    });
-
-    const latencyMs = Date.now() - start;
-
-    if (!response.ok) {
-      return {
-        connected: false,
-        latencyMs,
-        error: `HTTP ${response.status}: ${response.statusText}`,
-      };
-    }
-
-    await response.json();
-    return {
-      connected: true,
-      latencyMs,
-      version: 'running',
-    };
-  } catch (error) {
-    return {
-      connected: false,
-      latencyMs: Date.now() - start,
-      error: error instanceof Error ? error.message : 'Connection failed',
-    };
-  }
-}
-
-async function checkQdrant(): Promise<ServiceStatus> {
-  const start = Date.now();
-  try {
-    const response = await fetch(`${QDRANT_URL}/collections`, {
-      method: 'GET',
-      signal: AbortSignal.timeout(5000),
-    });
-
-    const latencyMs = Date.now() - start;
-
-    if (!response.ok) {
-      return {
-        connected: false,
-        latencyMs,
-        error: `HTTP ${response.status}: ${response.statusText}`,
-      };
-    }
-
-    // Try to get version info
-    const versionResponse = await fetch(`${QDRANT_URL}/`, {
-      method: 'GET',
-      signal: AbortSignal.timeout(2000),
-    }).catch(() => null);
-
-    let version: string | undefined;
-    if (versionResponse?.ok) {
-      const versionData = await versionResponse.json().catch(() => ({}));
-      version = versionData.version;
-    }
-
-    return {
-      connected: true,
-      latencyMs,
-      version,
-    };
-  } catch (error) {
-    return {
-      connected: false,
-      latencyMs: Date.now() - start,
-      error: error instanceof Error ? error.message : 'Connection failed',
-    };
-  }
+  circuitBreakers: ReturnType<typeof getAllCircuitBreakerSnapshots>;
+  healthCache: ReturnType<typeof getAllServiceHealthSnapshots>;
 }
 
 export default async function handler(req: Request) {
-  // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response(null, {
       headers: {
@@ -125,23 +60,56 @@ export default async function handler(req: Request) {
   }
 
   try {
-    // Check both services in parallel
-    const [ollamaStatus, qdrantStatus] = await Promise.all([
-      checkOllama(),
-      checkQdrant(),
+    const [ollamaSnap, qdrantSnap, imageSnap, videoSnap] = await Promise.all([
+      checkServiceHealth('ollama', { url: `${OLLAMA_URL}/api/tags`, timeoutMs: 2000 }),
+      checkServiceHealth('qdrant', { url: `${QDRANT_URL}/collections`, timeoutMs: 2000 }),
+      checkServiceHealth('image-backend', {
+        url: IMAGE_BACKEND === 'comfyui' ? `${COMFYUI_URL}/system_stats` : `${IMAGE_INFERENCE_URL}/sdapi/v1/options`,
+        timeoutMs: 2000,
+      }),
+      checkServiceHealth('video-backend', { url: `${VIDEO_INFERENCE_URL}/health`, timeoutMs: 2000 }),
     ]);
 
-    // Determine overall health status
+    const ollamaStatus: ServiceStatus = {
+      connected: ollamaSnap.healthy,
+      latencyMs: ollamaSnap.latencyMs,
+      version: ollamaSnap.healthy ? 'running' : undefined,
+      error: ollamaSnap.error,
+    };
+
+    const qdrantStatus: ServiceStatus = {
+      connected: qdrantSnap.healthy,
+      latencyMs: qdrantSnap.latencyMs,
+      error: qdrantSnap.error,
+    };
+
+    const imageBackendStatus: ServiceStatus = {
+      connected: imageSnap.healthy,
+      latencyMs: imageSnap.latencyMs,
+      version: IMAGE_BACKEND,
+      error: imageSnap.error,
+    };
+
+    const videoBackendStatus: ServiceStatus = {
+      connected: VIDEO_BACKEND === 'generic' ? videoSnap.healthy : false,
+      latencyMs: videoSnap.latencyMs,
+      version: VIDEO_BACKEND,
+      error: videoSnap.error,
+    };
+
+    const healthyCount = [ollamaStatus, qdrantStatus, imageBackendStatus, videoBackendStatus].filter(
+      (s) => s.connected
+    ).length;
+
     let status: StatusResponse['status'];
-    if (ollamaStatus.connected && qdrantStatus.connected) {
+    if (healthyCount === 4) {
       status = 'healthy';
-    } else if (ollamaStatus.connected || qdrantStatus.connected) {
+    } else if (healthyCount > 0) {
       status = 'degraded';
     } else {
       status = 'unhealthy';
     }
 
-    // Get available models if Ollama is connected
     let models: string[] | undefined;
     if (ollamaStatus.connected) {
       try {
@@ -151,18 +119,23 @@ export default async function handler(req: Request) {
           models = modelsData.models?.map((m: any) => m.name) || [];
         }
       } catch {
-        // Ignore errors fetching models
+        // best effort
       }
     }
 
     const response: StatusResponse = {
       status,
       timestamp: new Date().toISOString(),
+      machineReadable: true,
       services: {
         ollama: ollamaStatus,
         qdrant: qdrantStatus,
+        imageBackend: imageBackendStatus,
+        videoBackend: videoBackendStatus,
       },
       models,
+      circuitBreakers: getAllCircuitBreakerSnapshots(),
+      healthCache: getAllServiceHealthSnapshots(),
     };
 
     return new Response(JSON.stringify(response), {
@@ -179,7 +152,9 @@ export default async function handler(req: Request) {
       JSON.stringify({
         status: 'unhealthy',
         timestamp: new Date().toISOString(),
+        machineReadable: true,
         error: error instanceof Error ? error.message : 'Status check failed',
+        circuitBreakers: getAllCircuitBreakerSnapshots(),
       }),
       {
         status: 503,

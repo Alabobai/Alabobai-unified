@@ -23,6 +23,9 @@ export interface LLMServiceConfig {
   maxRetries?: number;
   retryDelay?: number;
   timeout?: number;
+  configuredProvider?: LLMProvider;
+  failoverUsed?: boolean;
+  failoverReason?: string;
 }
 
 export interface ChatMessage {
@@ -80,6 +83,9 @@ export class LLMService extends EventEmitter {
   private maxRetries: number;
   private retryDelay: number;
   private timeout: number;
+  private configuredProvider: LLMProvider;
+  private failoverUsed: boolean;
+  private failoverReason?: string;
 
   // Usage tracking
   private stats: LLMUsageStats = {
@@ -100,6 +106,9 @@ export class LLMService extends EventEmitter {
     this.maxRetries = config.maxRetries || 3;
     this.retryDelay = config.retryDelay || 1000;
     this.timeout = config.timeout || 120000;
+    this.configuredProvider = config.configuredProvider || config.provider;
+    this.failoverUsed = config.failoverUsed || false;
+    this.failoverReason = config.failoverReason;
 
     // Initialize provider client
     if (config.provider === 'anthropic') {
@@ -591,10 +600,19 @@ Be concise and capture the key points.`
     this.latencies = [];
   }
 
-  getProviderInfo(): { provider: LLMProvider; model: string } {
+  getProviderInfo(): {
+    provider: LLMProvider;
+    configuredProvider: LLMProvider;
+    model: string;
+    failoverUsed: boolean;
+    failoverReason?: string;
+  } {
     return {
       provider: this.provider,
-      model: this.model
+      configuredProvider: this.configuredProvider,
+      model: this.model,
+      failoverUsed: this.failoverUsed,
+      failoverReason: this.failoverReason
     };
   }
 
@@ -636,37 +654,42 @@ export function createLLMService(config: LLMServiceConfig): LLMService {
 
 export function getDefaultLLMService(): LLMService {
   if (!defaultService) {
-    const provider = (process.env.LLM_PROVIDER || 'groq') as LLMProvider;
+    const configuredProvider = (process.env.LLM_PROVIDER || 'groq') as LLMProvider;
 
-    let apiKey: string;
-    let model: string;
+    const providerOrder: LLMProvider[] = [
+      configuredProvider,
+      ...(['groq', 'anthropic', 'openai'] as LLMProvider[]).filter(p => p !== configuredProvider),
+    ];
 
-    switch (provider) {
-      case 'groq':
-        apiKey = process.env.GROQ_API_KEY || '';
-        model = process.env.LLM_MODEL || 'llama-3.3-70b-versatile';
-        break;
-      case 'anthropic':
-        apiKey = process.env.ANTHROPIC_API_KEY || '';
-        model = process.env.LLM_MODEL || 'claude-sonnet-4-20250514';
-        break;
-      case 'openai':
-        apiKey = process.env.OPENAI_API_KEY || '';
-        model = process.env.LLM_MODEL || 'gpt-4o';
-        break;
-      default:
-        apiKey = process.env.GROQ_API_KEY || '';
-        model = 'llama-3.3-70b-versatile';
+    const apiKeyByProvider: Record<LLMProvider, string> = {
+      groq: process.env.GROQ_API_KEY || '',
+      anthropic: process.env.ANTHROPIC_API_KEY || '',
+      openai: process.env.OPENAI_API_KEY || '',
+    };
+
+    const modelByProvider: Record<LLMProvider, string> = {
+      groq: process.env.LLM_MODEL || 'llama-3.3-70b-versatile',
+      anthropic: process.env.LLM_MODEL || 'claude-sonnet-4-20250514',
+      openai: process.env.LLM_MODEL || 'gpt-4o',
+    };
+
+    const selectedProvider = providerOrder.find(p => !!apiKeyByProvider[p]);
+    if (!selectedProvider) {
+      throw new Error('Missing API keys for all configured LLM providers');
     }
 
-    if (!apiKey) {
-      throw new Error(`Missing API key for provider: ${provider}`);
-    }
+    const failoverUsed = selectedProvider !== configuredProvider;
+    const failoverReason = failoverUsed
+      ? `configured provider ${configuredProvider} missing key; switched to ${selectedProvider}`
+      : undefined;
 
     defaultService = new LLMService({
-      provider,
-      apiKey,
-      model
+      provider: selectedProvider,
+      apiKey: apiKeyByProvider[selectedProvider],
+      model: modelByProvider[selectedProvider],
+      configuredProvider,
+      failoverUsed,
+      failoverReason,
     });
   }
 

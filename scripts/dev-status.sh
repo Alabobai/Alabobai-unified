@@ -19,6 +19,12 @@ check_http "Backend API" "http://localhost:8888/api/health"
 check_http "Frontend" "http://localhost:3001/"
 check_http "Local bridge" "http://localhost:8890/health"
 check_http "Local AI models endpoint" "http://localhost:3001/api/local-ai/models"
+bridge_code=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:8891/api/execute-task?runId=missing" || true)
+if [[ "$bridge_code" != "000" ]]; then
+  echo "✅ Runtime API bridge: UP ($bridge_code)"
+else
+  echo "❌ Runtime API bridge: DOWN ($bridge_code)"
+fi
 proxy_code=$(curl -s -o /dev/null -w "%{http_code}" -X POST "http://localhost:3001/api/proxy" -H "content-type: application/json" -d '{"action":"fetch","url":"https://example.com"}' || true)
 if [[ "$proxy_code" == "200" ]]; then
   echo "✅ Proxy endpoint (POST fetch): UP ($proxy_code)"

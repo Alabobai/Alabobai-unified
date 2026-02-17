@@ -7,6 +7,7 @@ import express, { Request, Response, NextFunction } from 'express';
 import { createServer } from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
 import cors from 'cors';
+import compression from 'compression';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { v4 as uuid } from 'uuid';
@@ -17,6 +18,7 @@ import { getOrchestrator, Orchestrator } from '../core/orchestrator.js';
 import { createLLMClient, LLMClient } from '../core/llm-client.js';
 import { createMemoryStore, MemoryStore } from '../core/memory.js';
 import { Message, ApprovalRequest, Agent, Task } from '../core/types.js';
+import { validateEnv } from '../config/env.js';
 
 // Import new modular routes
 import { createCommandsRouter } from './routes/commands.js';
@@ -27,6 +29,9 @@ import { createAuthRouter } from './routes/auth.js';
 import { createCompaniesRouter, attachCompaniesWebSocket } from './routes/companies.js';
 import { createLocalAIRouter } from './routes/local-ai.js';
 import { createProxyRouter } from './routes/proxy.js';
+import { createFilesRouter } from './routes/files.js';
+import { createSandboxRouter } from './routes/sandbox.js';
+import { createMemoryRouter } from './routes/memory.js';
 
 // Import direct Claude chat API
 import {
@@ -41,6 +46,8 @@ import {
   createRateLimiter,
   createRequestLogger,
   createErrorHandler,
+  createAuthMiddleware,
+  createRoleAuthMiddleware,
   extractSession
 } from './middleware/index.js';
 
@@ -54,19 +61,72 @@ import { initializeHealthMonitor, HealthMonitor } from '../services/health.js';
 const app = express();
 const server = createServer(app);
 const wss = new WebSocketServer({ server });
+const env = validateEnv();
 const LOCAL_IMAGE_URL = process.env.IMAGE_INFERENCE_URL || 'http://127.0.0.1:7860';
 const LOCAL_VIDEO_URL = process.env.VIDEO_INFERENCE_URL || 'http://127.0.0.1:8000';
 
 // Middleware
-app.use(cors());
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true }));
+const corsOptions = env.corsOrigins.length
+  ? {
+      origin: env.corsOrigins,
+      credentials: true,
+    }
+  : {
+      origin: true,
+      credentials: true,
+    };
+
+app.disable('x-powered-by');
+app.set('trust proxy', 1);
+app.use((req: Request, res: Response, next: NextFunction) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  res.setHeader('Content-Security-Policy', "default-src 'self'; frame-ancestors 'none'; base-uri 'self';");
+  next();
+});
+
+app.use(cors(corsOptions));
+app.use(compression());
+app.use((req: Request, res: Response, next: NextFunction) => {
+  // Fail slow requests fast to protect capacity under load.
+  res.setTimeout(30_000, () => {
+    if (!res.headersSent) {
+      res.status(504).json({ error: 'Gateway timeout', message: 'Request timed out' });
+    }
+  });
+  next();
+});
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 
 // Request logging
 app.use(createRequestLogger());
 
+// Metrics collection for SLO dashboards
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    const latency = Date.now() - start;
+    const isError = res.statusCode >= 500;
+    healthMonitor?.recordRequest(latency, req.path, isError);
+  });
+  next();
+});
+
 // Session extraction
 app.use(extractSession());
+
+// Role-based API key auth (viewer < operator < admin)
+const roleKeys = {
+  admin: env.ADMIN_API_KEY,
+  operator: env.OPERATOR_API_KEY,
+  viewer: env.VIEWER_API_KEY,
+};
+const viewerAuth = createRoleAuthMiddleware('viewer', roleKeys);
+const operatorAuth = createRoleAuthMiddleware('operator', roleKeys);
+const adminAuth = createRoleAuthMiddleware('admin', roleKeys);
 
 // Rate limiting for API routes
 app.use('/api', createRateLimiter({
@@ -127,20 +187,25 @@ async function initialize(): Promise<void> {
   setupEventListeners();
 
   // Initialize health monitoring
+  // If no provider key is configured, skip active LLM health probing so readiness
+  // reflects actual serving capability of the local platform instead of external key state.
   healthMonitor = await initializeHealthMonitor({
     checkIntervalMs: 30000,
-    llmHealthCheck: true
+    llmHealthCheck: !!apiKey
   });
 
   // Register modular API routes
-  app.use('/api/commands', createCommandsRouter());
-  app.use('/api/conversations', createConversationsRouter());
+  app.use('/api/commands', operatorAuth, createCommandsRouter());
+  app.use('/api/conversations', viewerAuth, createConversationsRouter());
   app.use('/api/health', createHealthRouter({ healthMonitor }));
   app.use('/api/departments', createDepartmentsRouter());
   app.use('/api/auth', createAuthRouter());
-  app.use('/api/companies', createCompaniesRouter());
+  app.use('/api/companies', operatorAuth, createCompaniesRouter());
   app.use('/api/local-ai', createLocalAIRouter());
   app.use('/api/proxy', createProxyRouter());
+  app.use('/api/files', createFilesRouter());
+  app.use('/api/sandbox', createSandboxRouter());
+  app.use('/api/memory', createMemoryRouter());
 
   // Attach WebSocket handler for company creation progress
   attachCompaniesWebSocket(server, '/ws/companies');
@@ -319,18 +384,8 @@ app.post('/api/generate-video', async (req: Request, res: Response) => {
   }
 });
 
-// Health check
-app.get('/api/health', (req: Request, res: Response) => {
-  res.json({
-    status: 'ok',
-    platform: 'Alabobai Unified',
-    version: '1.0.0',
-    timestamp: new Date().toISOString(),
-  });
-});
-
 // Get system state
-app.get('/api/state', (req: Request, res: Response) => {
+app.get('/api/state', viewerAuth, (req: Request, res: Response) => {
   res.json({
     agents: orchestrator.getAgents(),
     tasks: orchestrator.getTasks().slice(-20),
@@ -339,12 +394,12 @@ app.get('/api/state', (req: Request, res: Response) => {
 });
 
 // Get all agents
-app.get('/api/agents', (req: Request, res: Response) => {
+app.get('/api/agents', viewerAuth, (req: Request, res: Response) => {
   res.json({ agents: orchestrator.getAgents() });
 });
 
 // Get specific agent
-app.get('/api/agents/:id', (req: Request, res: Response) => {
+app.get('/api/agents/:id', viewerAuth, (req: Request, res: Response) => {
   const agent = orchestrator.getAgents().find(a => a.id === req.params.id);
   if (!agent) {
     return res.status(404).json({ error: 'Agent not found' });
@@ -406,7 +461,7 @@ app.post('/api/chat/stream', async (req: Request, res: Response) => {
 });
 
 // Get conversation history
-app.get('/api/chat/:sessionId/history', (req: Request, res: Response) => {
+app.get('/api/chat/:sessionId/history', viewerAuth, (req: Request, res: Response) => {
   const context = orchestrator.getContext(req.params.sessionId);
   if (!context) {
     return res.status(404).json({ error: 'Session not found' });
@@ -511,12 +566,12 @@ app.get('/api/v2/chat/departments', (req: Request, res: Response) => {
 // ============================================================================
 
 // Get pending approvals
-app.get('/api/approvals', (req: Request, res: Response) => {
+app.get('/api/approvals', adminAuth, (req: Request, res: Response) => {
   res.json({ approvals: orchestrator.getPendingApprovals() });
 });
 
 // Respond to approval
-app.post('/api/approvals/:id', async (req: Request, res: Response) => {
+app.post('/api/approvals/:id', adminAuth, async (req: Request, res: Response) => {
   try {
     const { approved, reason } = req.body;
 
@@ -538,7 +593,7 @@ app.post('/api/approvals/:id', async (req: Request, res: Response) => {
 // ============================================================================
 
 // Get all tasks
-app.get('/api/tasks', (req: Request, res: Response) => {
+app.get('/api/tasks', operatorAuth, (req: Request, res: Response) => {
   const { status, limit = 50 } = req.query;
   let tasks = orchestrator.getTasks();
 
@@ -550,7 +605,7 @@ app.get('/api/tasks', (req: Request, res: Response) => {
 });
 
 // Create a task directly
-app.post('/api/tasks', async (req: Request, res: Response) => {
+app.post('/api/tasks', adminAuth, async (req: Request, res: Response) => {
   try {
     const { title, description, priority = 'normal', category } = req.body;
 

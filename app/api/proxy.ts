@@ -8,6 +8,8 @@
  * - Taking screenshots (via external service)
  */
 
+import { degradedEnvelope, healthGate, runWithReliability } from './_lib/reliability'
+
 export const config = {
   runtime: 'edge',
 }
@@ -16,6 +18,23 @@ interface ProxyRequest {
   action: 'navigate' | 'fetch' | 'extract' | 'screenshot' | 'search'
   url?: string
   query?: string
+}
+
+async function reliableProxyFetch(url: string, init: RequestInit, breaker: string): Promise<Response> {
+  const gate = await healthGate(`proxy.${breaker}.health`, {
+    url,
+    method: 'GET',
+    timeoutMs: 1800,
+    cacheTtlMs: 3000,
+  })
+
+  if (!gate.allow) {
+    throw new Error(gate.reason || `health-unhealthy:proxy:${breaker}`)
+  }
+
+  return (
+    await runWithReliability(`proxy.${breaker}`, () => fetch(url, init), { attempts: 2 })
+  ).value
 }
 
 export default async function handler(req: Request) {
@@ -37,6 +56,12 @@ export default async function handler(req: Request) {
   try {
     const body: ProxyRequest = await req.json()
     const { action, url, query } = body
+
+    if ((action === 'navigate' || action === 'fetch' || action === 'extract' || action === 'screenshot')) {
+      if (!url || !isSafePublicUrl(url)) {
+        return errorResponse('Invalid or blocked URL', 400)
+      }
+    }
 
     switch (action) {
       case 'navigate':
@@ -63,13 +88,13 @@ export default async function handler(req: Request) {
 
 async function handleFetch(url: string) {
   try {
-    const response = await fetch(url, {
+    const response = await reliableProxyFetch(url, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
         'Accept-Language': 'en-US,en;q=0.5',
       },
-    })
+    }, 'fetch')
 
     const html = await response.text()
 
@@ -101,12 +126,12 @@ async function handleFetch(url: string) {
 
 async function handleExtract(url: string) {
   try {
-    const response = await fetch(url, {
+    const response = await reliableProxyFetch(url, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
       },
-    })
+    }, 'extract')
 
     const html = await response.text()
 
@@ -186,11 +211,20 @@ async function handleScreenshot(url: string) {
     // For now, we'll generate a placeholder that indicates the URL
     const placeholderSvg = generatePlaceholderScreenshot(url)
 
-    return jsonResponse({
-      success: true,
-      url,
-      screenshot: `data:image/svg+xml;base64,${btoa(placeholderSvg)}`,
-    })
+    return jsonResponse(
+      degradedEnvelope(
+        {
+          success: true,
+          url,
+          screenshot: `data:image/svg+xml;base64,${btoa(placeholderSvg)}`,
+        },
+        {
+          route: 'proxy.screenshot.placeholder',
+          warning: 'Screenshot service not configured, returning deterministic placeholder',
+          fallback: 'placeholder-svg',
+        }
+      )
+    )
   } catch (error) {
     console.error('Screenshot error:', error)
     return errorResponse('Failed to take screenshot', 500)
@@ -202,11 +236,11 @@ async function handleSearch(query: string) {
     // Use DuckDuckGo HTML API (no auth required)
     const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`
 
-    const response = await fetch(searchUrl, {
+    const response = await reliableProxyFetch(searchUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
       },
-    })
+    }, 'search')
 
     const html = await response.text()
 
@@ -247,6 +281,33 @@ async function handleSearch(query: string) {
 }
 
 // Helper functions
+
+function isSafePublicUrl(input: string): boolean {
+  try {
+    const u = new URL(input)
+    if (!['http:', 'https:'].includes(u.protocol)) return false
+
+    const host = u.hostname.toLowerCase()
+
+    if (
+      host === 'localhost' ||
+      host === '127.0.0.1' ||
+      host === '::1' ||
+      host.endsWith('.local') ||
+      host.endsWith('.internal')
+    ) return false
+
+    // Block common private IP ranges
+    if (/^10\./.test(host)) return false
+    if (/^192\.168\./.test(host)) return false
+    if (/^172\.(1[6-9]|2\d|3[0-1])\./.test(host)) return false
+    if (/^169\.254\./.test(host)) return false
+
+    return true
+  } catch {
+    return false
+  }
+}
 
 function sanitizeHtmlForIframe(html: string, baseUrl: string): string {
   // Add base tag for relative URLs

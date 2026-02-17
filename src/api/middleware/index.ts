@@ -24,6 +24,8 @@ export interface AuthConfig {
   skipPaths?: string[];
 }
 
+export type ApiRole = 'viewer' | 'operator' | 'admin';
+
 export interface RequestLogEntry {
   id: string;
   method: string;
@@ -34,6 +36,16 @@ export interface RequestLogEntry {
   duration?: number;
   statusCode?: number;
   error?: string;
+}
+
+export interface AuditLogEntry {
+  requestId: string;
+  actorRole: ApiRole | 'unknown';
+  method: string;
+  path: string;
+  statusCode: number;
+  timestamp: Date;
+  ip: string;
 }
 
 // ============================================================================
@@ -170,11 +182,49 @@ export function createAuthMiddleware(config: AuthConfig = {}): RequestHandler {
   };
 }
 
+export function createRoleAuthMiddleware(
+  requiredRole: ApiRole,
+  keys: { admin?: string; operator?: string; viewer?: string },
+  apiKeyHeader: string = 'X-API-Key'
+): RequestHandler {
+  const rank: Record<ApiRole, number> = { viewer: 1, operator: 2, admin: 3 };
+
+  return (req: Request, res: Response, next: NextFunction) => {
+    const key = req.headers[apiKeyHeader.toLowerCase()] as string | undefined;
+
+    // Dev-open mode if no keys configured
+    if (!keys.admin && !keys.operator && !keys.viewer && process.env.NODE_ENV !== 'production') {
+      return next();
+    }
+
+    if (!key) {
+      return res.status(401).json({ error: 'Unauthorized', message: `Missing ${apiKeyHeader} header` });
+    }
+
+    let role: ApiRole | null = null;
+    if (keys.admin && key === keys.admin) role = 'admin';
+    else if (keys.operator && key === keys.operator) role = 'operator';
+    else if (keys.viewer && key === keys.viewer) role = 'viewer';
+
+    if (!role) {
+      return res.status(401).json({ error: 'Unauthorized', message: 'Invalid API key' });
+    }
+
+    if (rank[role] < rank[requiredRole]) {
+      return res.status(403).json({ error: 'Forbidden', message: `Requires ${requiredRole} role` });
+    }
+
+    (req as Request & { apiRole?: ApiRole }).apiRole = role;
+    next();
+  };
+}
+
 // ============================================================================
 // REQUEST LOGGING
 // ============================================================================
 
 const requestLogs: RequestLogEntry[] = [];
+const auditLogs: AuditLogEntry[] = [];
 const MAX_LOGS = 10000;
 
 export function createRequestLogger(): RequestHandler {
@@ -205,15 +255,47 @@ export function createRequestLogger(): RequestHandler {
       // Store log
       requestLogs.push(logEntry);
 
+      // Structured audit logs for state-changing API actions
+      if (
+        req.path.startsWith('/api') &&
+        !['GET', 'HEAD', 'OPTIONS'].includes(req.method)
+      ) {
+        const actorRole = ((req as Request & { apiRole?: ApiRole }).apiRole || 'unknown') as ApiRole | 'unknown';
+        auditLogs.push({
+          requestId,
+          actorRole,
+          method: req.method,
+          path: req.path,
+          statusCode: res.statusCode,
+          timestamp: new Date(),
+          ip: logEntry.ip,
+        });
+      }
+
       // Trim old logs
       if (requestLogs.length > MAX_LOGS) {
         requestLogs.splice(0, requestLogs.length - MAX_LOGS);
       }
+      if (auditLogs.length > MAX_LOGS) {
+        auditLogs.splice(0, auditLogs.length - MAX_LOGS);
+      }
 
-      // Console log for development
-      if (process.env.NODE_ENV !== 'production') {
+      // Console log (structured in production)
+      if (process.env.NODE_ENV === 'production') {
+        console.log(JSON.stringify({
+          type: 'http_request',
+          requestId,
+          method: req.method,
+          path: req.path,
+          statusCode: res.statusCode,
+          durationMs: logEntry.duration,
+          ip: logEntry.ip,
+          userAgent: logEntry.userAgent,
+          timestamp: logEntry.timestamp.toISOString(),
+        }));
+      } else {
         const status = res.statusCode >= 400 ? `[${res.statusCode}]` : res.statusCode;
-        console.log(`[API] ${req.method} ${req.path} ${status} ${logEntry.duration}ms`);
+        console.log(`[API] ${req.method} ${req.path} ${status} ${logEntry.duration}ms (${requestId})`);
       }
     });
 
@@ -223,6 +305,10 @@ export function createRequestLogger(): RequestHandler {
 
 export function getRequestLogs(limit: number = 100): RequestLogEntry[] {
   return requestLogs.slice(-limit).reverse();
+}
+
+export function getAuditLogs(limit: number = 100): AuditLogEntry[] {
+  return auditLogs.slice(-limit).reverse();
 }
 
 // ============================================================================
@@ -372,10 +458,12 @@ export function extractSession(): RequestHandler {
 export default {
   createRateLimiter,
   createAuthMiddleware,
+  createRoleAuthMiddleware,
   createRequestLogger,
   createErrorHandler,
   createCorsMiddleware,
   validateContentType,
   extractSession,
-  getRequestLogs
+  getRequestLogs,
+  getAuditLogs
 };

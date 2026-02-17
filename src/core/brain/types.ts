@@ -102,6 +102,10 @@ export interface PlanStep {
   dependsOn?: string[];
   optional?: boolean;
   maxRetries?: number;
+  /** Expected outcome of this step */
+  expectedOutcome?: string;
+  /** Current status of this step */
+  status?: 'pending' | 'running' | 'completed' | 'failed' | 'skipped';
 }
 
 export interface Plan {
@@ -112,13 +116,38 @@ export interface Plan {
   fallbackPlan?: Plan;
 }
 
+export interface PlanResult {
+  reasoning: string;
+  steps: PlanStep[];
+  estimatedSteps: number;
+  risks: string[];
+}
+
 export interface ActionResult {
+  stepId?: string;
+  success?: boolean;
+  output?: unknown;
+  error?: string;
+  duration?: number;
+  retryCount?: number;
+  /** Number of steps executed (agentic loop) */
+  stepsExecuted?: number;
+  /** Number of steps succeeded (agentic loop) */
+  stepsSucceeded?: number;
+  /** Number of steps failed (agentic loop) */
+  stepsFailed?: number;
+  /** Results from each step (agentic loop) */
+  results?: StepResult[];
+  /** Error messages (agentic loop) */
+  errors?: string[];
+}
+
+export interface StepResult {
   stepId: string;
   success: boolean;
-  output: unknown;
+  output?: string;
   error?: string;
-  duration: number;
-  retryCount: number;
+  toolUsed?: string;
 }
 
 export interface Observation {
@@ -130,42 +159,100 @@ export interface Observation {
   insights?: string[];
 }
 
+export interface ObserveResult {
+  taskComplete: boolean;
+  summary: string;
+  remainingWork: string[];
+  nextSteps: string[];
+  confidence: number;
+  learnings: string[];
+}
+
 export interface LoopIteration {
-  phase: LoopPhase;
-  timestamp: Date;
-  input: unknown;
-  output: unknown;
-  duration: number;
+  phase?: LoopPhase;
+  timestamp?: Date;
+  input?: unknown;
+  output?: unknown;
+  duration?: number;
+  /** Iteration number (agentic loop) */
+  number?: number;
+  /** Phases executed in this iteration (agentic loop) */
+  phases?: {
+    think?: ThinkResult;
+    plan?: PlanResult;
+    act?: ActionResult;
+    observe?: ObserveResult;
+  };
+  /** Start time in milliseconds (agentic loop) */
+  startTime?: number;
+  /** End time in milliseconds (agentic loop) */
+  endTime?: number;
+  /** Whether this iteration completed the task (agentic loop) */
+  isComplete?: boolean;
+  /** Whether this iteration was cancelled (agentic loop) */
+  cancelled?: boolean;
+  /** Error message if iteration failed (agentic loop) */
+  error?: string;
 }
 
 export interface AgenticLoopConfig {
   /** Maximum iterations before stopping */
   maxIterations: number;
   /** Timeout per iteration in milliseconds */
-  iterationTimeout: number;
+  iterationTimeout?: number;
   /** Maximum retries per action */
-  maxRetries: number;
+  maxRetries?: number;
   /** Enable streaming of intermediate results */
-  enableStreaming: boolean;
+  enableStreaming?: boolean;
   /** Thinking level (1-5, higher = more detailed) */
-  thinkingLevel: number;
+  thinkingLevel?: number;
   /** Enable self-reflection after actions */
-  enableReflection: boolean;
+  enableReflection?: boolean;
+  /** Maximum tokens per step */
+  maxTokensPerStep?: number;
+  /** Timeout for thinking phase in milliseconds */
+  thinkingTimeout?: number;
+  /** Timeout for action phase in milliseconds */
+  actionTimeout?: number;
+  /** Whether to execute actions in parallel */
+  parallelActions?: boolean;
+  /** Whether to require confirmation before executing */
+  requireConfirmation?: boolean;
+  /** Whether to stop on first error */
+  stopOnError?: boolean;
+  /** Enable verbose logging */
+  verbose?: boolean;
 }
 
 export interface LoopState {
-  id: string;
-  goal: string;
-  phase: LoopPhase;
+  id?: string;
+  goal?: string;
+  phase?: LoopPhase;
   iterations: LoopIteration[];
   currentPlan?: Plan;
-  executedSteps: string[];
-  failedSteps: string[];
+  executedSteps?: string[];
+  failedSteps?: string[];
   isComplete: boolean;
   finalResult?: unknown;
   error?: string;
-  startedAt: Date;
+  startedAt?: Date;
   completedAt?: Date;
+  /** Task description (agentic loop) */
+  task?: string;
+  /** Context for the task (agentic loop) */
+  context?: string;
+  /** Current iteration number (agentic loop) */
+  currentIteration?: number;
+  /** Current phase (agentic loop) */
+  currentPhase?: LoopPhase;
+  /** Whether the loop is running (agentic loop) */
+  isRunning?: boolean;
+  /** Start time in milliseconds (agentic loop) */
+  startTime?: number;
+  /** End time in milliseconds (agentic loop) */
+  endTime?: number;
+  /** Final answer from the loop (agentic loop) */
+  finalAnswer?: string;
 }
 
 // ============================================================================
