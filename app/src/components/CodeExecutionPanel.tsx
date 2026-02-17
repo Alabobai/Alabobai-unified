@@ -78,7 +78,8 @@ export default function CodeExecutionPanel({
   initialLanguage = 'python',
   onExecutionComplete,
   className = '',
-  compact = false
+  compact = false,
+  preferBrowserExecutable = true
 }: CodeExecutionPanelProps) {
   // State
   const [language, setLanguage] = useState<SupportedLanguage>(initialLanguage);
@@ -97,18 +98,47 @@ export default function CodeExecutionPanel({
 
   // Refs
   const abortControllerRef = useRef<AbortController | null>(null);
-  const outputEndRef = useRef<HTMLDivElement>(null);
+  const executionIdRef = useRef<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Check service availability on mount
   useEffect(() => {
-    codeSandbox.isAvailable().then(setServiceAvailable);
+    let alive = true;
+
+    const fallbackTimer = globalThis.setTimeout(() => {
+      if (alive) setServiceAvailable(false);
+    }, 2500);
+
+    codeSandbox.isAvailable()
+      .then((available) => {
+        if (alive) setServiceAvailable(available);
+      })
+      .catch(() => {
+        if (alive) setServiceAvailable(false);
+      })
+      .finally(() => {
+        globalThis.clearTimeout(fallbackTimer);
+      });
+
+    return () => {
+      alive = false;
+      globalThis.clearTimeout(fallbackTimer);
+    };
   }, []);
 
-  // Auto-scroll output
+  // Auto-switch to browser-executable language when Docker is unavailable.
   useEffect(() => {
-    outputEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [outputs]);
+    if (!preferBrowserExecutable) return;
+    if (serviceAvailable !== false) return;
+    if (language === 'python') {
+      setLanguage('javascript');
+      if (!initialCode) {
+        setCode(getExampleCode('javascript'));
+      }
+    }
+  }, [preferBrowserExecutable, serviceAvailable, language, initialCode]);
+
+  // Keep output scrolling fully user-controlled (no forced auto-jump)
 
   // Handle language change
   const handleLanguageChange = useCallback((newLanguage: SupportedLanguage) => {
@@ -128,6 +158,8 @@ export default function CodeExecutionPanel({
     setResult(null);
     setError(null);
     setFilesCreated([]);
+    setExecutionId(null);
+    executionIdRef.current = null;
 
     abortControllerRef.current = new AbortController();
 
@@ -146,6 +178,7 @@ export default function CodeExecutionPanel({
         },
         {
           onStart: (id) => {
+            executionIdRef.current = id;
             setExecutionId(id);
             setOutputs(prev => [...prev, {
               type: 'system',
@@ -162,8 +195,9 @@ export default function CodeExecutionPanel({
             }]);
           },
           onComplete: (completeResult) => {
+            const resolvedExecutionId = executionIdRef.current || executionId || '';
             const fullResult: ExecutionResult = {
-              executionId: executionId || '',
+              executionId: resolvedExecutionId,
               success: completeResult.success,
               exitCode: completeResult.exitCode,
               stdout: '',
@@ -599,7 +633,6 @@ export default function CodeExecutionPanel({
                 <span>{error}</span>
               </div>
             )}
-            <div ref={outputEndRef} />
           </div>
 
           {/* Created Files */}
