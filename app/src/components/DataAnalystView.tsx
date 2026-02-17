@@ -1,423 +1,278 @@
 /**
  * Data Analyst View Component
- * Provides comprehensive data analysis capabilities with CSS-based visualizations
+ * Comprehensive data analysis capabilities with real data processing and Chart.js visualizations
  */
 
-import { useState, useRef, useCallback, useMemo } from 'react'
+import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
 import {
   BarChart3, Upload, FileText, Table, PieChart, TrendingUp,
   Download, Copy, Sparkles, AlertCircle, CheckCircle2,
   Loader2, ChevronDown, ChevronUp, Search,
-  Database, Brain, SortAsc, SortDesc, Trash2
+  Database, Brain, SortAsc, SortDesc, Trash2, Filter,
+  RefreshCw, Activity, Grid3X3, Settings, Eye, EyeOff,
+  ArrowUpDown, Columns, FileJson, FilePlus, Clipboard,
+  MoreVertical, ChevronLeft, ChevronRight, Maximize2,
+  LayoutGrid, List, Zap, Info
 } from 'lucide-react'
+import ChartBuilder, { CSSBarChart, CSSLineChart, CSSPieChart } from './ChartBuilder'
+import {
+  parseData, parseCSV, parseJSON,
+  calculateColumnStats, calculateCorrelationMatrix, calculateBasicStats,
+  suggestCharts, aggregateBy,
+  filterData, sortData, searchData,
+  exportAsCSV, exportAsJSON, exportStatsSummary,
+  analyzeMissingValues, detectOutliers,
+  SAMPLE_DATASETS,
+  type ParsedData, type DataColumn, type ColumnStats,
+  type FilterCondition, type SortConfig, type CorrelationResult, type ChartSuggestion
+} from '../services/dataAnalysis'
+import { aiService } from '@/services/ai'
+import { BRAND_TOKENS } from '@/config/brandTokens'
+import { BRAND } from '@/config/brand'
 
+// ============================================================================
 // Types
-interface DataColumn {
-  name: string
-  type: 'number' | 'string' | 'date' | 'boolean' | 'mixed'
-  values: (string | number | boolean | null)[]
-  stats?: ColumnStats
-}
+// ============================================================================
 
-interface ColumnStats {
-  count: number
-  unique: number
-  nullCount: number
-  nullPercentage: number
-  mean?: number
-  median?: number
-  mode?: string | number
-  min?: number | string
-  max?: number | string
-  stdDev?: number
-  sum?: number
-  q1?: number
-  q3?: number
-}
-
-interface ParsedData {
-  columns: DataColumn[]
-  rowCount: number
-  headers: string[]
-  raw: Record<string, unknown>[]
-}
-
-interface ChartData {
-  labels: string[]
-  values: number[]
-  colors?: string[]
-}
+type ActiveTab = 'data' | 'statistics' | 'charts' | 'correlation' | 'ai'
+type SortDirection = 'asc' | 'desc' | null
+type ViewMode = 'table' | 'cards'
 
 interface AnalysisResult {
   summary: string
   insights: string[]
   recommendations: string[]
+  warnings?: string[]
 }
 
-type ChartType = 'bar' | 'line' | 'pie' | 'table'
-type SortDirection = 'asc' | 'desc' | null
+// ============================================================================
+// Color palette for charts
+// ============================================================================
 
-// Sample datasets
-const SAMPLE_DATASETS = {
-  sales: {
-    name: 'Sales Data',
-    description: 'Monthly sales data for a retail store',
-    data: `Month,Sales,Expenses,Profit,Region
-January,45000,32000,13000,North
-February,52000,35000,17000,North
-March,48000,31000,17000,South
-April,61000,40000,21000,East
-May,55000,36000,19000,West
-June,67000,42000,25000,North
-July,72000,45000,27000,South
-August,68000,43000,25000,East
-September,59000,38000,21000,West
-October,63000,41000,22000,North
-November,71000,46000,25000,South
-December,85000,52000,33000,East`
-  },
-  employees: {
-    name: 'Employee Data',
-    description: 'Employee information with department and salary',
-    data: `Name,Department,Salary,Experience,Performance
-Alice,Engineering,95000,5,Excellent
-Bob,Marketing,72000,3,Good
-Charlie,Engineering,105000,8,Excellent
-Diana,Sales,68000,2,Good
-Eve,Engineering,88000,4,Good
-Frank,HR,65000,6,Excellent
-Grace,Marketing,78000,4,Good
-Henry,Sales,82000,7,Excellent
-Ivy,Engineering,92000,3,Good
-Jack,HR,58000,1,Fair`
-  },
-  products: {
-    name: 'Product Inventory',
-    description: 'Product stock levels and pricing',
-    data: `Product,Category,Price,Stock,Rating
-Laptop Pro,Electronics,1299,45,4.5
-Wireless Mouse,Electronics,29,230,4.2
-Office Chair,Furniture,349,78,4.0
-Standing Desk,Furniture,599,32,4.7
-Notebook Set,Stationery,15,500,4.1
-Mechanical Keyboard,Electronics,149,120,4.6
-Monitor 27,Electronics,399,65,4.4
-Desk Lamp,Furniture,45,180,3.9
-Pen Pack,Stationery,8,800,4.0
-Webcam HD,Electronics,79,95,4.3`
-  }
-}
+const CHART_COLORS = [...BRAND_TOKENS.charts.primary]
 
-// Color palettes for charts
-const CHART_COLORS = [
-  '#f59e0b', // amber
-  '#3b82f6', // blue
-  '#10b981', // emerald
-  '#8b5cf6', // violet
-  '#ef4444', // red
-  '#06b6d4', // cyan
-  '#f97316', // orange
-  '#84cc16', // lime
-  '#ec4899', // pink
-  '#6366f1', // indigo
-]
+// ============================================================================
+// Main Component
+// ============================================================================
 
 export default function DataAnalystView() {
-  // State
+  // ========== Data State ==========
   const [inputMode, setInputMode] = useState<'paste' | 'upload' | 'sample'>('paste')
   const [rawInput, setRawInput] = useState('')
   const [parsedData, setParsedData] = useState<ParsedData | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'summary' | 'columns' | 'charts' | 'ai'>('summary')
+  const [isProcessing, setIsProcessing] = useState(false)
 
-  // Chart state
-  const [selectedChart, setSelectedChart] = useState<ChartType>('bar')
-  const [chartColumn, setChartColumn] = useState<string>('')
-  const [labelColumn, setLabelColumn] = useState<string>('')
+  // ========== UI State ==========
+  const [activeTab, setActiveTab] = useState<ActiveTab>('data')
+  const [showFilters, setShowFilters] = useState(false)
+  const [viewMode, setViewMode] = useState<ViewMode>('table')
 
-  // Table state
+  // ========== Table State ==========
   const [sortColumn, setSortColumn] = useState<string | null>(null)
   const [sortDirection, setSortDirection] = useState<SortDirection>(null)
   const [filterText, setFilterText] = useState('')
-  const [visibleRows, setVisibleRows] = useState(20)
+  const [filters, setFilters] = useState<FilterCondition[]>([])
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(25)
+  const [columnWidths, setColumnWidths] = useState<Record<string, number>>({})
+  const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(new Set())
+  const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set())
 
-  // AI Analysis state
+  // ========== Chart State ==========
+  const [selectedChartType, setSelectedChartType] = useState<'bar' | 'line' | 'pie' | 'scatter' | 'histogram'>('bar')
+  const [chartXAxis, setChartXAxis] = useState('')
+  const [chartYAxis, setChartYAxis] = useState('')
+  const [chartAggregation, setChartAggregation] = useState<'sum' | 'avg' | 'count' | 'min' | 'max'>('sum')
+  const [chartSuggestions, setChartSuggestions] = useState<ChartSuggestion[]>([])
+  const [useChartBuilder, setUseChartBuilder] = useState(true)
+
+  // ========== Correlation State ==========
+  const [correlationMatrix, setCorrelationMatrix] = useState<CorrelationResult[]>([])
+
+  // ========== AI Analysis State ==========
   const [aiQuery, setAiQuery] = useState('')
   const [aiAnalysis, setAiAnalysis] = useState<AnalysisResult | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
 
+  // ========== Drag & Drop State ==========
+  const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const dropZoneRef = useRef<HTMLDivElement>(null)
 
-  // Parse CSV data
-  const parseCSV = useCallback((csv: string): ParsedData => {
-    const lines = csv.trim().split('\n')
-    if (lines.length < 2) {
-      throw new Error('CSV must have at least a header row and one data row')
+  // ========== Derived Data ==========
+  const filteredData = useMemo(() => {
+    if (!parsedData) return []
+
+    let data = [...parsedData.raw]
+
+    // Apply text search
+    if (filterText) {
+      data = searchData(data, filterText)
     }
 
-    const headers = lines[0].split(',').map(h => h.trim())
-    const rows: Record<string, unknown>[] = []
-
-    for (let i = 1; i < lines.length; i++) {
-      const values = lines[i].split(',').map(v => v.trim())
-      const row: Record<string, unknown> = {}
-      headers.forEach((header, idx) => {
-        let value: string | number | boolean | null = values[idx] || null
-        if (value !== null) {
-          // Try to parse as number
-          const numVal = Number(value)
-          if (!isNaN(numVal) && value !== '') {
-            value = numVal
-          } else if (value.toLowerCase() === 'true') {
-            value = true
-          } else if (value.toLowerCase() === 'false') {
-            value = false
-          }
-        }
-        row[header] = value
-      })
-      rows.push(row)
+    // Apply column filters
+    if (filters.length > 0) {
+      data = filterData(data, filters)
     }
 
-    // Build columns with type detection
-    const columns: DataColumn[] = headers.map(header => {
-      const values = rows.map(row => row[header] as string | number | boolean | null)
-      const type = detectColumnType(values)
-      return { name: header, type, values }
-    })
-
-    // Calculate statistics for each column
-    columns.forEach(col => {
-      col.stats = calculateColumnStats(col)
-    })
-
-    return { columns, rowCount: rows.length, headers, raw: rows }
-  }, [])
-
-  // Parse JSON data
-  const parseJSON = useCallback((json: string): ParsedData => {
-    const parsed = JSON.parse(json)
-    const rows = Array.isArray(parsed) ? parsed : [parsed]
-
-    if (rows.length === 0) {
-      throw new Error('JSON array is empty')
+    // Apply sorting
+    if (sortColumn && sortDirection) {
+      data = sortData(data, [{ column: sortColumn, direction: sortDirection }])
     }
 
-    const headers = Object.keys(rows[0])
-    const columns: DataColumn[] = headers.map(header => {
-      const values = rows.map(row => row[header] as string | number | boolean | null)
-      const type = detectColumnType(values)
-      return { name: header, type, values }
-    })
+    return data
+  }, [parsedData, filterText, filters, sortColumn, sortDirection])
 
-    columns.forEach(col => {
-      col.stats = calculateColumnStats(col)
-    })
+  // Pagination
+  const totalPages = Math.ceil(filteredData.length / pageSize)
+  const paginatedData = useMemo(() => {
+    const start = (currentPage - 1) * pageSize
+    return filteredData.slice(start, start + pageSize)
+  }, [filteredData, currentPage, pageSize])
 
-    return { columns, rowCount: rows.length, headers, raw: rows }
-  }, [])
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [filterText, filters, sortColumn, sortDirection])
 
-  // Detect column type
-  const detectColumnType = (values: (string | number | boolean | null)[]): DataColumn['type'] => {
-    const nonNull = values.filter(v => v !== null && v !== '')
-    if (nonNull.length === 0) return 'mixed'
+  // Calculate correlations when data changes
+  useEffect(() => {
+    if (parsedData) {
+      const matrix = calculateCorrelationMatrix(parsedData)
+      setCorrelationMatrix(matrix)
 
-    const types = new Set(nonNull.map(v => {
-      if (typeof v === 'number') return 'number'
-      if (typeof v === 'boolean') return 'boolean'
-      if (typeof v === 'string' && !isNaN(Date.parse(v))) return 'date'
-      return 'string'
-    }))
+      const suggestions = suggestCharts(parsedData)
+      setChartSuggestions(suggestions)
 
-    if (types.size === 1) return types.values().next().value || 'mixed'
-    return 'mixed'
-  }
-
-  // Calculate statistics for a column
-  const calculateColumnStats = (column: DataColumn): ColumnStats => {
-    const values = column.values
-    const nonNull = values.filter(v => v !== null && v !== '')
-    const nullCount = values.length - nonNull.length
-
-    const stats: ColumnStats = {
-      count: values.length,
-      unique: new Set(nonNull.map(String)).size,
-      nullCount,
-      nullPercentage: (nullCount / values.length) * 100
+      // Set default chart axes
+      const numericCol = parsedData.columns.find(c => c.type === 'number')
+      const categoricalCol = parsedData.columns.find(c => c.type === 'string')
+      if (categoricalCol) setChartXAxis(categoricalCol.name)
+      if (numericCol) setChartYAxis(numericCol.name)
     }
+  }, [parsedData])
 
-    // Calculate mode (most frequent value)
-    const frequency = new Map<string | number | boolean, number>()
-    nonNull.forEach(v => {
-      const key = v as string | number | boolean
-      frequency.set(key, (frequency.get(key) || 0) + 1)
-    })
-    let maxFreq = 0
-    frequency.forEach((count, value) => {
-      if (count > maxFreq) {
-        maxFreq = count
-        stats.mode = value as string | number
-      }
-    })
-
-    // Numeric statistics
-    if (column.type === 'number') {
-      const numbers = nonNull as number[]
-      if (numbers.length > 0) {
-        const sorted = [...numbers].sort((a, b) => a - b)
-        stats.sum = numbers.reduce((a, b) => a + b, 0)
-        stats.mean = stats.sum / numbers.length
-        stats.min = sorted[0]
-        stats.max = sorted[sorted.length - 1]
-
-        // Median
-        const mid = Math.floor(sorted.length / 2)
-        stats.median = sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2
-
-        // Standard deviation
-        const squaredDiffs = numbers.map(n => Math.pow(n - stats.mean!, 2))
-        stats.stdDev = Math.sqrt(squaredDiffs.reduce((a, b) => a + b, 0) / numbers.length)
-
-        // Quartiles
-        stats.q1 = sorted[Math.floor(sorted.length * 0.25)]
-        stats.q3 = sorted[Math.floor(sorted.length * 0.75)]
-      }
-    } else if (column.type === 'string') {
-      const strings = nonNull as string[]
-      if (strings.length > 0) {
-        const sorted = [...strings].sort()
-        stats.min = sorted[0]
-        stats.max = sorted[sorted.length - 1]
-      }
-    }
-
-    return stats
-  }
-
-  // Parse input data
-  const parseData = useCallback(() => {
+  // ========== Parse Functions ==========
+  const handleParse = useCallback(async () => {
     setError(null)
+    setIsProcessing(true)
+
     try {
       const trimmed = rawInput.trim()
       if (!trimmed) {
         throw new Error('Please enter some data to analyze')
       }
 
-      let data: ParsedData
-      if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
-        data = parseJSON(trimmed)
-      } else {
-        data = parseCSV(trimmed)
-      }
+      // Small delay to show loading state
+      await new Promise(resolve => setTimeout(resolve, 100))
 
+      const data = parseData(trimmed)
       setParsedData(data)
-      setChartColumn(data.columns.find(c => c.type === 'number')?.name || data.headers[0])
-      setLabelColumn(data.columns.find(c => c.type === 'string')?.name || data.headers[0])
+      setActiveTab('data')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to parse data')
+    } finally {
+      setIsProcessing(false)
     }
-  }, [rawInput, parseCSV, parseJSON])
+  }, [rawInput])
 
-  // Handle file upload
-  const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
+  // ========== File Handling ==========
+  const handleFileUpload = useCallback((files: FileList | null) => {
+    const file = files?.[0]
     if (!file) return
+
+    setIsProcessing(true)
+    setError(null)
 
     const reader = new FileReader()
     reader.onload = (event) => {
       const text = event.target?.result as string
       setRawInput(text)
       setInputMode('paste')
+
+      // Auto-parse the file
+      try {
+        const data = parseData(text)
+        setParsedData(data)
+        setActiveTab('data')
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to parse file')
+      } finally {
+        setIsProcessing(false)
+      }
     }
-    reader.onerror = () => setError('Failed to read file')
+    reader.onerror = () => {
+      setError('Failed to read file')
+      setIsProcessing(false)
+    }
     reader.readAsText(file)
   }, [])
 
-  // Load sample dataset
-  const loadSample = useCallback((key: keyof typeof SAMPLE_DATASETS) => {
-    setRawInput(SAMPLE_DATASETS[key].data)
-    setInputMode('paste')
+  // ========== Drag & Drop ==========
+  const handleDragEnter = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(true)
   }, [])
 
-  // Get chart data
-  const chartData = useMemo((): ChartData => {
-    if (!parsedData || !chartColumn) {
-      return { labels: [], values: [] }
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!dropZoneRef.current?.contains(e.relatedTarget as Node)) {
+      setIsDragging(false)
     }
+  }, [])
 
-    const valueCol = parsedData.columns.find(c => c.name === chartColumn)
-    const labelCol = parsedData.columns.find(c => c.name === labelColumn)
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+  }, [])
 
-    if (!valueCol) return { labels: [], values: [] }
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
 
-    // If we have numeric values, aggregate by label column
-    if (valueCol.type === 'number' && labelCol && labelCol.type === 'string') {
-      const aggregated = new Map<string, number>()
-      labelCol.values.forEach((label, idx) => {
-        const key = String(label || 'Unknown')
-        const val = valueCol.values[idx] as number
-        if (typeof val === 'number') {
-          aggregated.set(key, (aggregated.get(key) || 0) + val)
-        }
-      })
-      return {
-        labels: Array.from(aggregated.keys()),
-        values: Array.from(aggregated.values()),
-        colors: CHART_COLORS
+    const files = e.dataTransfer?.files
+    handleFileUpload(files)
+  }, [handleFileUpload])
+
+  // ========== Clipboard Paste ==========
+  const handlePasteFromClipboard = useCallback(async () => {
+    try {
+      const text = await navigator.clipboard.readText()
+      if (text) {
+        setRawInput(text)
+        setInputMode('paste')
       }
+    } catch (err) {
+      setError('Failed to read from clipboard. Please paste manually.')
     }
+  }, [])
 
-    // For non-numeric, count occurrences
-    const counts = new Map<string, number>()
-    valueCol.values.forEach(v => {
-      const key = String(v ?? 'null')
-      counts.set(key, (counts.get(key) || 0) + 1)
-    })
+  // ========== Sample Data ==========
+  const loadSample = useCallback((key: keyof typeof SAMPLE_DATASETS) => {
+    const sample = SAMPLE_DATASETS[key]
+    setRawInput(sample.data)
+    setInputMode('paste')
 
-    return {
-      labels: Array.from(counts.keys()),
-      values: Array.from(counts.values()),
-      colors: CHART_COLORS
+    // Auto-parse
+    try {
+      const data = parseCSV(sample.data)
+      setParsedData(data)
+      setActiveTab('data')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to parse sample data')
     }
-  }, [parsedData, chartColumn, labelColumn])
+  }, [])
 
-  // Sorted and filtered data for table
-  const tableData = useMemo(() => {
-    if (!parsedData) return []
-
-    let data = [...parsedData.raw]
-
-    // Filter
-    if (filterText) {
-      const lower = filterText.toLowerCase()
-      data = data.filter(row =>
-        Object.values(row).some(v =>
-          String(v).toLowerCase().includes(lower)
-        )
-      )
-    }
-
-    // Sort
-    if (sortColumn && sortDirection) {
-      data.sort((a, b) => {
-        const aVal = a[sortColumn]
-        const bVal = b[sortColumn]
-        if (aVal === bVal) return 0
-        if (aVal === null || aVal === undefined) return 1
-        if (bVal === null || bVal === undefined) return -1
-        const cmp = aVal < bVal ? -1 : 1
-        return sortDirection === 'asc' ? cmp : -cmp
-      })
-    }
-
-    return data
-  }, [parsedData, sortColumn, sortDirection, filterText])
-
-  // Toggle sort
-  const toggleSort = (column: string) => {
+  // ========== Sorting ==========
+  const toggleSort = useCallback((column: string) => {
     if (sortColumn === column) {
-      if (sortDirection === 'asc') setSortDirection('desc')
-      else if (sortDirection === 'desc') {
+      if (sortDirection === 'asc') {
+        setSortDirection('desc')
+      } else if (sortDirection === 'desc') {
         setSortColumn(null)
         setSortDirection(null)
       }
@@ -425,123 +280,80 @@ export default function DataAnalystView() {
       setSortColumn(column)
       setSortDirection('asc')
     }
-  }
+  }, [sortColumn, sortDirection])
 
-  // AI Analysis (simulated)
-  const runAIAnalysis = async () => {
-    if (!parsedData || !aiQuery.trim()) return
-
-    setIsAnalyzing(true)
-
-    // Simulate AI processing delay
-    await new Promise(resolve => setTimeout(resolve, 1500))
-
-    // Generate insights based on the data
-    const insights: string[] = []
-    const recommendations: string[] = []
-
-    // Find numeric columns for analysis
-    const numericCols = parsedData.columns.filter(c => c.type === 'number')
-    const stringCols = parsedData.columns.filter(c => c.type === 'string')
-
-    // Generate summary based on query
-    let summary = `Analysis of ${parsedData.rowCount} records across ${parsedData.columns.length} columns. `
-
-    if (numericCols.length > 0) {
-      const mainCol = numericCols[0]
-      if (mainCol.stats) {
-        summary += `The ${mainCol.name} column has a mean of ${mainCol.stats.mean?.toFixed(2) || 'N/A'} `
-        summary += `with values ranging from ${mainCol.stats.min} to ${mainCol.stats.max}. `
-
-        insights.push(`${mainCol.name} shows ${mainCol.stats.stdDev && mainCol.stats.stdDev > (mainCol.stats.mean || 0) * 0.3 ? 'high' : 'moderate'} variability (std dev: ${mainCol.stats.stdDev?.toFixed(2)})`)
+  // ========== Column Visibility ==========
+  const toggleColumnVisibility = useCallback((column: string) => {
+    setHiddenColumns(prev => {
+      const next = new Set(prev)
+      if (next.has(column)) {
+        next.delete(column)
+      } else {
+        next.add(column)
       }
-    }
-
-    // Generate insights based on data patterns
-    parsedData.columns.forEach(col => {
-      if (col.stats) {
-        if (col.stats.nullPercentage > 10) {
-          insights.push(`${col.name} has ${col.stats.nullPercentage.toFixed(1)}% missing values`)
-          recommendations.push(`Consider handling missing values in ${col.name} column`)
-        }
-        if (col.type === 'number' && col.stats.unique === col.stats.count) {
-          insights.push(`${col.name} contains all unique values - could be an identifier`)
-        }
-        if (col.type === 'string' && col.stats.unique < 10 && col.stats.count > 20) {
-          insights.push(`${col.name} appears to be a categorical variable with ${col.stats.unique} categories`)
-        }
-      }
+      return next
     })
+  }, [])
 
-    // Add query-specific insights
-    const queryLower = aiQuery.toLowerCase()
-    if (queryLower.includes('trend') || queryLower.includes('pattern')) {
-      if (numericCols.length > 0) {
-        const vals = numericCols[0].values.filter(v => typeof v === 'number') as number[]
-        const firstHalf = vals.slice(0, Math.floor(vals.length / 2))
-        const secondHalf = vals.slice(Math.floor(vals.length / 2))
-        const firstAvg = firstHalf.reduce((a, b) => a + b, 0) / firstHalf.length
-        const secondAvg = secondHalf.reduce((a, b) => a + b, 0) / secondHalf.length
-        const trend = secondAvg > firstAvg ? 'upward' : secondAvg < firstAvg ? 'downward' : 'stable'
-        insights.push(`Overall ${trend} trend detected in ${numericCols[0].name}`)
+  // ========== Row Selection ==========
+  const toggleRowSelection = useCallback((index: number) => {
+    setSelectedRows(prev => {
+      const next = new Set(prev)
+      if (next.has(index)) {
+        next.delete(index)
+      } else {
+        next.add(index)
       }
+      return next
+    })
+  }, [])
+
+  const selectAllRows = useCallback(() => {
+    if (selectedRows.size === filteredData.length) {
+      setSelectedRows(new Set())
+    } else {
+      setSelectedRows(new Set(filteredData.map((_, i) => i)))
     }
+  }, [filteredData, selectedRows.size])
 
-    if (queryLower.includes('correlation') || queryLower.includes('relationship')) {
-      if (numericCols.length >= 2) {
-        recommendations.push(`Consider analyzing the relationship between ${numericCols[0].name} and ${numericCols[1].name}`)
-      }
-    }
-
-    if (queryLower.includes('outlier') || queryLower.includes('anomal')) {
-      numericCols.forEach(col => {
-        if (col.stats && col.stats.q1 !== undefined && col.stats.q3 !== undefined) {
-          const iqr = col.stats.q3 - col.stats.q1
-          const outlierThreshold = 1.5 * iqr
-          const outliers = (col.values.filter(v =>
-            typeof v === 'number' &&
-            (v < col.stats!.q1! - outlierThreshold || v > col.stats!.q3! + outlierThreshold)
-          )).length
-          if (outliers > 0) {
-            insights.push(`${outliers} potential outliers detected in ${col.name}`)
-          }
-        }
-      })
-    }
-
-    // Default recommendations
-    if (recommendations.length === 0) {
-      if (stringCols.length > 0 && numericCols.length > 0) {
-        recommendations.push(`Create visualizations grouping ${numericCols[0].name} by ${stringCols[0].name}`)
-      }
-      recommendations.push('Export data for further analysis in specialized tools')
-    }
-
-    setAiAnalysis({ summary, insights, recommendations })
-    setIsAnalyzing(false)
-  }
-
-  // Export functions
-  const exportAsCSV = () => {
+  // ========== Export Functions ==========
+  const handleExportCSV = useCallback(() => {
     if (!parsedData) return
 
-    const headers = parsedData.headers.join(',')
-    const rows = parsedData.raw.map(row =>
-      parsedData.headers.map(h => {
-        const val = row[h]
-        if (typeof val === 'string' && val.includes(',')) return `"${val}"`
-        return String(val ?? '')
-      }).join(',')
-    )
+    const dataToExport = selectedRows.size > 0
+      ? Array.from(selectedRows).map(i => filteredData[i])
+      : filteredData
 
-    const csv = [headers, ...rows].join('\n')
+    const csv = exportAsCSV(parsedData, dataToExport)
     downloadFile(csv, 'data-export.csv', 'text/csv')
-  }
+  }, [parsedData, filteredData, selectedRows])
 
-  const copyAsJSON = async () => {
+  const handleExportJSON = useCallback(() => {
     if (!parsedData) return
-    await navigator.clipboard.writeText(JSON.stringify(parsedData.raw, null, 2))
-  }
+
+    const dataToExport = selectedRows.size > 0
+      ? Array.from(selectedRows).map(i => filteredData[i])
+      : filteredData
+
+    const json = exportAsJSON(parsedData, dataToExport)
+    downloadFile(json, 'data-export.json', 'application/json')
+  }, [parsedData, filteredData, selectedRows])
+
+  const handleCopyJSON = useCallback(async () => {
+    if (!parsedData) return
+
+    const dataToExport = selectedRows.size > 0
+      ? Array.from(selectedRows).map(i => filteredData[i])
+      : filteredData
+
+    await navigator.clipboard.writeText(JSON.stringify(dataToExport, null, 2))
+  }, [parsedData, filteredData, selectedRows])
+
+  const handleExportStats = useCallback(() => {
+    if (!parsedData) return
+    const stats = exportStatsSummary(parsedData)
+    downloadFile(stats, 'statistics-summary.md', 'text/markdown')
+  }, [parsedData])
 
   const downloadFile = (content: string, filename: string, type: string) => {
     const blob = new Blob([content], { type })
@@ -553,18 +365,139 @@ export default function DataAnalystView() {
     URL.revokeObjectURL(url)
   }
 
-  // Export chart as image
-  const exportChartAsImage = () => {
-    const chartEl = document.getElementById('data-chart')
-    if (!chartEl) return
+  // ========== AI Analysis ==========
+  const runAIAnalysis = useCallback(async () => {
+    if (!parsedData || !aiQuery.trim()) return
 
-    // Using html2canvas would be ideal here, but we'll create a simple text export
-    const chartInfo = `Chart: ${selectedChart}\nData Column: ${chartColumn}\nLabel Column: ${labelColumn}\n\nData:\n${chartData.labels.map((l, i) => `${l}: ${chartData.values[i]}`).join('\n')}`
-    downloadFile(chartInfo, 'chart-data.txt', 'text/plain')
-  }
+    setIsAnalyzing(true)
 
-  // Clear data
-  const clearData = () => {
+    const insights: string[] = []
+    const recommendations: string[] = []
+    const warnings: string[] = []
+
+    const numericCols = parsedData.columns.filter(c => c.type === 'number')
+    const stringCols = parsedData.columns.filter(c => c.type === 'string')
+
+    // Generate summary
+    let summary = `Dataset contains ${parsedData.rowCount.toLocaleString()} rows and ${parsedData.columns.length} columns. `
+
+    // Missing value analysis
+    const missingAnalysis = analyzeMissingValues(parsedData)
+    if (missingAnalysis.missingPercentage > 0) {
+      summary += `${missingAnalysis.missingPercentage.toFixed(1)}% of data is missing. `
+      if (missingAnalysis.missingPercentage > 20) {
+        warnings.push(`High missing data rate (${missingAnalysis.missingPercentage.toFixed(1)}%) may affect analysis quality`)
+      }
+    }
+
+    // Numeric column insights
+    numericCols.forEach(col => {
+      if (col.stats) {
+        if (col.stats.stdDev && col.stats.mean) {
+          const cv = (col.stats.stdDev / Math.abs(col.stats.mean)) * 100
+          if (cv > 50) {
+            insights.push(`${col.name} shows high variability (CV: ${cv.toFixed(1)}%)`)
+          }
+        }
+
+        // Outlier detection
+        const outliers = detectOutliers(col)
+        if (outliers.outliers.length > 0) {
+          insights.push(`${col.name} contains ${outliers.outliers.length} potential outliers`)
+        }
+      }
+    })
+
+    // Categorical column insights
+    stringCols.forEach(col => {
+      if (col.stats && col.stats.unique < 10) {
+        insights.push(`${col.name} is categorical with ${col.stats.unique} unique values`)
+      }
+    })
+
+    // Query-specific analysis
+    const queryLower = aiQuery.toLowerCase()
+
+    if (queryLower.includes('trend') || queryLower.includes('pattern')) {
+      if (numericCols.length > 0) {
+        const vals = numericCols[0].values.filter(v => typeof v === 'number') as number[]
+        if (vals.length > 2) {
+          const firstThird = vals.slice(0, Math.floor(vals.length / 3))
+          const lastThird = vals.slice(-Math.floor(vals.length / 3))
+          const firstAvg = firstThird.reduce((a, b) => a + b, 0) / firstThird.length
+          const lastAvg = lastThird.reduce((a, b) => a + b, 0) / lastThird.length
+          const change = ((lastAvg - firstAvg) / firstAvg) * 100
+
+          if (Math.abs(change) > 10) {
+            insights.push(`${numericCols[0].name} shows ${change > 0 ? 'upward' : 'downward'} trend (${change.toFixed(1)}% change)`)
+          }
+        }
+      }
+    }
+
+    if (queryLower.includes('correlation') || queryLower.includes('relationship')) {
+      const strongCorrelations = correlationMatrix.filter(c => Math.abs(c.correlation) > 0.5)
+      strongCorrelations.forEach(c => {
+        insights.push(`Strong ${c.correlation > 0 ? 'positive' : 'negative'} correlation between ${c.column1} and ${c.column2} (r=${c.correlation.toFixed(3)})`)
+      })
+    }
+
+    // Recommendations
+    if (numericCols.length >= 2) {
+      recommendations.push(`Consider scatter plot analysis for ${numericCols[0].name} vs ${numericCols[1].name}`)
+    }
+    if (stringCols.length > 0 && numericCols.length > 0) {
+      recommendations.push(`Create grouped bar chart of ${numericCols[0].name} by ${stringCols[0].name}`)
+    }
+    if (missingAnalysis.columnsMissing.length > 0) {
+      recommendations.push(`Address missing values in: ${missingAnalysis.columnsMissing.map(c => c.column).join(', ')}`)
+    }
+
+    // Use AI service for enhanced natural language interpretation
+    try {
+      const dataContext = {
+        rowCount: parsedData.rowCount,
+        columns: parsedData.columns.map(c => ({
+          name: c.name,
+          type: c.type,
+          stats: c.stats
+        })),
+        insights,
+        correlations: correlationMatrix.slice(0, 5),
+        query: aiQuery
+      }
+
+      const aiResponse = await aiService.chatSync([
+        {
+          role: 'system',
+          content: 'You are a data analyst assistant. Provide a brief, insightful interpretation of the data analysis results. Be concise and actionable.'
+        },
+        {
+          role: 'user',
+          content: `Analyze this dataset and answer: "${aiQuery}"\n\nData context: ${JSON.stringify(dataContext, null, 2)}\n\nProvide a 2-3 sentence natural language summary focusing on the user's question.`
+        }
+      ])
+
+      // Prepend AI interpretation to summary
+      if (aiResponse) {
+        summary = aiResponse + '\n\n' + summary
+      }
+    } catch (error) {
+      // AI enhancement failed, continue with statistical analysis
+      console.log('[DataAnalyst] AI enhancement unavailable, using statistical analysis only')
+    }
+
+    setAiAnalysis({
+      summary,
+      insights: insights.slice(0, 8),
+      recommendations: recommendations.slice(0, 5),
+      warnings
+    })
+    setIsAnalyzing(false)
+  }, [parsedData, aiQuery, correlationMatrix])
+
+  // ========== Clear Data ==========
+  const clearData = useCallback(() => {
     setParsedData(null)
     setRawInput('')
     setError(null)
@@ -572,50 +505,85 @@ export default function DataAnalystView() {
     setSortColumn(null)
     setSortDirection(null)
     setFilterText('')
-  }
+    setFilters([])
+    setSelectedRows(new Set())
+    setHiddenColumns(new Set())
+    setCurrentPage(1)
+  }, [])
+
+  // ========== Chart Data ==========
+  const chartData = useMemo(() => {
+    if (!parsedData || !chartXAxis || !chartYAxis) {
+      return []
+    }
+    return aggregateBy(parsedData.raw, chartXAxis, chartYAxis, chartAggregation)
+  }, [parsedData, chartXAxis, chartYAxis, chartAggregation])
+
+  // ========== Visible Columns ==========
+  const visibleHeaders = useMemo(() => {
+    if (!parsedData) return []
+    return parsedData.headers.filter(h => !hiddenColumns.has(h))
+  }, [parsedData, hiddenColumns])
+
+  // ============================================================================
+  // Render
+  // ============================================================================
 
   return (
-    <div className="h-full flex flex-col bg-dark-500 overflow-hidden">
+    <div className="h-full w-full flex flex-col bg-dark-500 overflow-hidden">
       {/* Header */}
       <div className="glass-morphic-header p-4 border-b border-white/10">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            {/* Alabobai Logo */}
             <div className="flex items-center gap-2">
-              <img src="/logo.png" alt="Alabobai" className="w-8 h-8 rounded-lg" />
+              <img src={BRAND.assets.logo} alt={BRAND.name} className="w-8 h-8 object-contain logo-render" />
               <div className="h-6 w-px bg-white/10" />
             </div>
-            {/* View Header */}
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center shadow-glow-lg">
-                <BarChart3 className="w-5 h-5 text-white" />
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-gold-400 to-rose-gold-600 flex items-center justify-center shadow-glow-lg">
+                <BarChart3 className="w-5 h-5 text-dark-500" />
               </div>
               <div>
                 <h2 className="text-lg font-bold text-white">Data Analyst</h2>
-                <p className="text-xs text-rose-gold-400/70">Analyze, visualize, and gain insights from your data</p>
+                <p className="text-xs text-rose-gold-400/70">
+                  {parsedData
+                    ? `${parsedData.rowCount.toLocaleString()} rows - ${parsedData.columns.length} columns`
+                    : 'Upload, paste, or select sample data to analyze'}
+                </p>
               </div>
             </div>
           </div>
 
           {parsedData && (
             <div className="flex items-center gap-2">
-              <button
-                onClick={exportAsCSV}
-                className="morphic-btn px-3 py-1.5 text-xs flex items-center gap-1.5"
-              >
-                <Download className="w-3.5 h-3.5" />
-                Export CSV
-              </button>
-              <button
-                onClick={copyAsJSON}
-                className="morphic-btn px-3 py-1.5 text-xs flex items-center gap-1.5"
-              >
-                <Copy className="w-3.5 h-3.5" />
-                Copy JSON
-              </button>
+              <div className="relative group">
+                <button className="morphic-btn px-3 py-1.5 text-xs flex items-center gap-1.5">
+                  <Download className="w-3.5 h-3.5" />
+                  Export
+                  <ChevronDown className="w-3 h-3" />
+                </button>
+                <div className="absolute right-0 top-full mt-1 py-1 bg-dark-400 border border-white/10 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 min-w-[140px]">
+                  <button onClick={handleExportCSV} className="w-full px-3 py-2 text-xs text-left text-white/70 hover:text-white hover:bg-white/5 flex items-center gap-2">
+                    <FileText className="w-3.5 h-3.5" />
+                    Export CSV
+                  </button>
+                  <button onClick={handleExportJSON} className="w-full px-3 py-2 text-xs text-left text-white/70 hover:text-white hover:bg-white/5 flex items-center gap-2">
+                    <FileJson className="w-3.5 h-3.5" />
+                    Export JSON
+                  </button>
+                  <button onClick={handleCopyJSON} className="w-full px-3 py-2 text-xs text-left text-white/70 hover:text-white hover:bg-white/5 flex items-center gap-2">
+                    <Copy className="w-3.5 h-3.5" />
+                    Copy JSON
+                  </button>
+                  <button onClick={handleExportStats} className="w-full px-3 py-2 text-xs text-left text-white/70 hover:text-white hover:bg-white/5 flex items-center gap-2">
+                    <Activity className="w-3.5 h-3.5" />
+                    Export Stats
+                  </button>
+                </div>
+              </div>
               <button
                 onClick={clearData}
-                className="morphic-btn bg-red-500/20 text-red-400 border-red-500/30 hover:bg-red-500/30 px-3 py-1.5 text-xs flex items-center gap-1.5"
+                className="morphic-btn-ghost bg-rose-gold-500/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-500/30 px-3 py-1.5 text-xs flex items-center gap-1.5"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 Clear
@@ -626,112 +594,135 @@ export default function DataAnalystView() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Left Panel - Data Input */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Data Input Panel */}
         {!parsedData ? (
-          <div className="flex-1 flex flex-col p-6 overflow-y-auto morphic-scrollbar">
+          <div
+            ref={dropZoneRef}
+            className={`flex-1 flex flex-col p-6 overflow-y-auto morphic-scrollbar transition-colors ${
+              isDragging ? 'bg-rose-gold-400/10' : ''
+            }`}
+            onDragEnter={handleDragEnter}
+            onDragLeave={handleDragLeave}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+          >
             {/* Input Mode Tabs */}
             <div className="flex gap-2 mb-4">
-              <button
-                onClick={() => setInputMode('paste')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                  inputMode === 'paste'
-                    ? 'bg-rose-gold-400/20 text-rose-gold-400 border border-rose-gold-400/30'
-                    : 'text-white/60 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                <FileText className="w-4 h-4 inline mr-2" />
-                Paste Data
-              </button>
-              <button
-                onClick={() => setInputMode('upload')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                  inputMode === 'upload'
-                    ? 'bg-rose-gold-400/20 text-rose-gold-400 border border-rose-gold-400/30'
-                    : 'text-white/60 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                <Upload className="w-4 h-4 inline mr-2" />
-                Upload File
-              </button>
-              <button
-                onClick={() => setInputMode('sample')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                  inputMode === 'sample'
-                    ? 'bg-rose-gold-400/20 text-rose-gold-400 border border-rose-gold-400/30'
-                    : 'text-white/60 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                <Database className="w-4 h-4 inline mr-2" />
-                Sample Data
-              </button>
+              {(['paste', 'upload', 'sample'] as const).map(mode => (
+                <button
+                  key={mode}
+                  onClick={() => setInputMode(mode)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
+                    inputMode === mode
+                      ? 'bg-rose-gold-400/20 text-rose-gold-400 border border-rose-gold-400/30'
+                      : 'text-white/60 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  {mode === 'paste' && <FileText className="w-4 h-4" />}
+                  {mode === 'upload' && <Upload className="w-4 h-4" />}
+                  {mode === 'sample' && <Database className="w-4 h-4" />}
+                  {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                </button>
+              ))}
             </div>
 
-            {/* Input Area */}
+            {/* Paste Mode */}
             {inputMode === 'paste' && (
               <div className="flex-1 flex flex-col">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-white/50">Paste CSV or JSON data</span>
+                  <button
+                    onClick={handlePasteFromClipboard}
+                    className="text-xs text-rose-gold-400 hover:text-rose-gold-300 flex items-center gap-1"
+                  >
+                    <Clipboard className="w-3.5 h-3.5" />
+                    Paste from clipboard
+                  </button>
+                </div>
                 <textarea
                   value={rawInput}
                   onChange={(e) => setRawInput(e.target.value)}
-                  placeholder="Paste your CSV or JSON data here...
+                  placeholder={`Paste your CSV or JSON data here...
 
 Example CSV:
-Name,Age,City
-John,30,New York
-Jane,25,Los Angeles
+Name,Age,City,Salary
+John,30,New York,75000
+Jane,25,Los Angeles,68000
 
 Example JSON:
-[{&quot;name&quot;: &quot;John&quot;, &quot;age&quot;: 30}]"
+[{"name": "John", "age": 30, "salary": 75000}]`}
                   className="flex-1 min-h-[300px] p-4 bg-dark-400 border border-white/10 rounded-xl text-white placeholder-white/30 font-mono text-sm resize-none focus:outline-none focus:border-rose-gold-400/50"
                 />
                 <button
-                  onClick={parseData}
-                  disabled={!rawInput.trim()}
-                  className="mt-4 morphic-btn bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 py-3 text-sm font-semibold disabled:opacity-50"
+                  onClick={handleParse}
+                  disabled={!rawInput.trim() || isProcessing}
+                  className="mt-4 morphic-btn py-3 text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  <BarChart3 className="w-4 h-4 inline mr-2" />
-                  Analyze Data
+                  {isProcessing ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <BarChart3 className="w-4 h-4" />
+                      Analyze Data
+                    </>
+                  )}
                 </button>
               </div>
             )}
 
+            {/* Upload Mode */}
             {inputMode === 'upload' && (
               <div className="flex-1 flex flex-col items-center justify-center">
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept=".csv,.json,.txt"
-                  onChange={handleFileUpload}
+                  accept=".csv,.json,.txt,.tsv"
+                  onChange={(e) => handleFileUpload(e.target.files)}
                   className="hidden"
                 />
                 <div
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-full max-w-md p-12 border-2 border-dashed border-white/20 rounded-2xl cursor-pointer hover:border-rose-gold-400/50 hover:bg-rose-gold-400/5 transition-all text-center"
+                  className={`w-full max-w-xl p-12 border-2 border-dashed rounded-2xl cursor-pointer transition-all text-center ${
+                    isDragging
+                      ? 'border-rose-gold-400 bg-rose-gold-400/10'
+                      : 'border-white/20 hover:border-rose-gold-400/50 hover:bg-rose-gold-400/5'
+                  }`}
                 >
-                  <Upload className="w-16 h-16 text-white/30 mx-auto mb-4" />
-                  <p className="text-white/70 mb-2">Click to upload or drag and drop</p>
-                  <p className="text-xs text-white/40">CSV, JSON, or TXT files</p>
+                  {isProcessing ? (
+                    <Loader2 className="w-16 h-16 text-rose-gold-400 mx-auto mb-4 animate-spin" />
+                  ) : (
+                    <Upload className="w-16 h-16 text-white/30 mx-auto mb-4" />
+                  )}
+                  <p className="text-white/70 mb-2">
+                    {isDragging ? 'Drop file here' : 'Click to upload or drag and drop'}
+                  </p>
+                  <p className="text-xs text-white/40">CSV, JSON, TSV, or TXT files up to 50MB</p>
                 </div>
               </div>
             )}
 
+            {/* Sample Mode */}
             {inputMode === 'sample' && (
               <div className="flex-1">
                 <p className="text-white/60 mb-4">Choose a sample dataset to explore:</p>
-                <div className="grid gap-4">
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {Object.entries(SAMPLE_DATASETS).map(([key, dataset]) => (
                     <button
                       key={key}
                       onClick={() => loadSample(key as keyof typeof SAMPLE_DATASETS)}
                       className="morphic-card p-4 rounded-xl text-left hover:border-rose-gold-400/30 transition-all group"
                     >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-rose-gold-400/20 flex items-center justify-center group-hover:bg-rose-gold-400/30 transition-colors">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-rose-gold-400/20 flex items-center justify-center group-hover:bg-rose-gold-400/30 transition-colors flex-shrink-0">
                           <Database className="w-5 h-5 text-rose-gold-400" />
                         </div>
                         <div>
                           <h3 className="text-sm font-semibold text-white">{dataset.name}</h3>
-                          <p className="text-xs text-white/50">{dataset.description}</p>
+                          <p className="text-xs text-white/50 mt-1">{dataset.description}</p>
                         </div>
                       </div>
                     </button>
@@ -742,248 +733,424 @@ Example JSON:
 
             {/* Error Display */}
             {error && (
-              <div className="mt-4 p-4 bg-red-500/10 border border-red-500/30 rounded-xl flex items-center gap-3">
-                <AlertCircle className="w-5 h-5 text-red-400" />
-                <p className="text-sm text-red-400">{error}</p>
+              <div className="mt-4 p-4 bg-rose-gold-500/10 border border-rose-gold-400/30 rounded-xl flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-rose-gold-400 flex-shrink-0" />
+                <p className="text-sm text-rose-gold-400">{error}</p>
               </div>
             )}
           </div>
         ) : (
           <>
-            {/* Analysis Tabs */}
-            <div className="w-72 border-r border-white/10 flex flex-col">
-              <div className="p-4 border-b border-white/10">
-                <div className="flex flex-col gap-1">
-                  {(['summary', 'columns', 'charts', 'ai'] as const).map((tab) => (
+            {/* Sidebar Tabs */}
+            <div className="w-full border-b border-white/10 flex flex-col max-h-[260px]">
+              <div className="p-3">
+                <nav className="space-y-1">
+                  {[
+                    { id: 'data', label: 'Data Table', icon: Table },
+                    { id: 'statistics', label: 'Statistics', icon: Activity },
+                    { id: 'charts', label: 'Charts', icon: PieChart },
+                    { id: 'correlation', label: 'Correlation', icon: Grid3X3 },
+                    { id: 'ai', label: 'AI Analysis', icon: Brain }
+                  ].map(tab => (
                     <button
-                      key={tab}
-                      onClick={() => setActiveTab(tab)}
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id as ActiveTab)}
                       className={`w-full px-3 py-2 rounded-lg text-left text-sm font-medium transition-all flex items-center gap-2 ${
-                        activeTab === tab
-                          ? 'bg-rose-gold-400/20 text-rose-gold-400 border border-rose-gold-400/30'
+                        activeTab === tab.id
+                          ? 'bg-rose-gold-400/20 text-rose-gold-400'
                           : 'text-white/60 hover:text-white hover:bg-white/5'
                       }`}
                     >
-                      {tab === 'summary' && <Table className="w-4 h-4" />}
-                      {tab === 'columns' && <BarChart3 className="w-4 h-4" />}
-                      {tab === 'charts' && <PieChart className="w-4 h-4" />}
-                      {tab === 'ai' && <Brain className="w-4 h-4" />}
-                      {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                      {tab === 'ai' && <Sparkles className="w-3 h-3 text-rose-gold-400 ml-auto" />}
+                      <tab.icon className="w-4 h-4" />
+                      {tab.label}
+                      {tab.id === 'ai' && <Sparkles className="w-3 h-3 ml-auto text-rose-gold-400" />}
                     </button>
                   ))}
-                </div>
+                </nav>
               </div>
 
-              {/* Data Info */}
-              <div className="p-4">
-                <div className="morphic-card p-4 rounded-xl">
-                  <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3">
-                    Data Overview
-                  </h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-white/60">Rows</span>
-                      <span className="text-white font-mono">{parsedData.rowCount}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-white/60">Columns</span>
-                      <span className="text-white font-mono">{parsedData.columns.length}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-white/60">Numeric</span>
-                      <span className="text-rose-gold-400 font-mono">
-                        {parsedData.columns.filter(c => c.type === 'number').length}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-white/60">Categorical</span>
-                      <span className="text-rose-gold-400 font-mono">
-                        {parsedData.columns.filter(c => c.type === 'string').length}
-                      </span>
-                    </div>
+              {/* Quick Stats */}
+              <div className="p-3 border-t border-white/10">
+                <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-2">
+                  Overview
+                </h3>
+                <div className="space-y-2 text-xs">
+                  <div className="flex justify-between">
+                    <span className="text-white/50">Rows</span>
+                    <span className="text-white font-mono">{parsedData.rowCount.toLocaleString()}</span>
                   </div>
+                  <div className="flex justify-between">
+                    <span className="text-white/50">Columns</span>
+                    <span className="text-white font-mono">{parsedData.columns.length}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-white/50">Numeric</span>
+                    <span className="text-rose-gold-400 font-mono">
+                      {parsedData.columns.filter(c => c.type === 'number').length}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-white/50">Text</span>
+                    <span className="text-rose-gold-400 font-mono">
+                      {parsedData.columns.filter(c => c.type === 'string').length}
+                    </span>
+                  </div>
+                  {filteredData.length !== parsedData.rowCount && (
+                    <div className="flex justify-between text-rose-gold-400">
+                      <span>Filtered</span>
+                      <span className="font-mono">{filteredData.length.toLocaleString()}</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
               {/* Column List */}
-              <div className="flex-1 overflow-y-auto morphic-scrollbar p-4 pt-0">
-                <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-2">
-                  Columns
-                </h3>
+              <div className="flex-1 overflow-y-auto morphic-scrollbar p-3 pt-0">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider">
+                    Columns
+                  </h3>
+                  <button
+                    onClick={() => setHiddenColumns(new Set())}
+                    className="text-[10px] text-rose-gold-400 hover:text-rose-gold-300"
+                  >
+                    Show all
+                  </button>
+                </div>
                 <div className="space-y-1">
                   {parsedData.columns.map((col) => (
                     <div
                       key={col.name}
-                      className="px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                      className={`px-2 py-1.5 rounded-lg transition-colors flex items-center gap-2 ${
+                        hiddenColumns.has(col.name) ? 'opacity-50' : ''
+                      } hover:bg-white/5`}
                     >
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-white truncate">{col.name}</span>
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded ${
-                          col.type === 'number' ? 'bg-blue-500/20 text-blue-400' :
-                          col.type === 'string' ? 'bg-green-500/20 text-green-400' :
-                          col.type === 'date' ? 'bg-rose-gold-500/20 text-rose-gold-400' :
-                          'bg-gray-500/20 text-gray-400'
-                        }`}>
-                          {col.type}
-                        </span>
-                      </div>
+                      <button
+                        onClick={() => toggleColumnVisibility(col.name)}
+                        className="text-white/40 hover:text-white"
+                      >
+                        {hiddenColumns.has(col.name) ? (
+                          <EyeOff className="w-3 h-3" />
+                        ) : (
+                          <Eye className="w-3 h-3" />
+                        )}
+                      </button>
+                      <span className="text-xs text-white truncate flex-1">{col.name}</span>
+                      <span className={`text-[9px] px-1 py-0.5 rounded ${
+                        col.type === 'number' ? 'bg-rose-gold-500/20 text-rose-gold-400' :
+                        col.type === 'string' ? 'bg-rose-gold-500/20 text-rose-gold-400' :
+                        col.type === 'date' ? 'bg-rose-gold-500/20 text-rose-gold-400' :
+                        col.type === 'boolean' ? 'bg-rose-gold-500/20 text-rose-gold-400' :
+                        'bg-white/10 text-white/50'
+                      }`}>
+                        {col.type}
+                      </span>
                     </div>
                   ))}
                 </div>
               </div>
             </div>
 
-            {/* Main Analysis Area */}
+            {/* Main Content Area */}
             <div className="flex-1 overflow-hidden flex flex-col">
-              {activeTab === 'summary' && (
-                <div className="flex-1 overflow-hidden flex flex-col p-4">
-                  {/* Filter and Table Controls */}
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="relative flex-1 max-w-md">
+              {/* Data Table Tab */}
+              {activeTab === 'data' && (
+                <div className="flex-1 flex flex-col overflow-hidden">
+                  {/* Table Controls */}
+                  <div className="flex items-center gap-3 p-3 border-b border-white/10">
+                    <div className="relative flex-1 max-w-sm">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
                       <input
                         type="text"
                         value={filterText}
                         onChange={(e) => setFilterText(e.target.value)}
-                        placeholder="Filter data..."
-                        className="w-full pl-10 pr-4 py-2 bg-dark-400 border border-white/10 rounded-lg text-sm text-white placeholder-white/30 focus:outline-none focus:border-rose-gold-400/50"
+                        placeholder="Search all columns..."
+                        className="w-full pl-9 pr-3 py-1.5 bg-dark-400 border border-white/10 rounded-lg text-sm text-white placeholder-white/30 focus:outline-none focus:border-rose-gold-400/50"
                       />
                     </div>
-                    <span className="text-xs text-white/40">
-                      Showing {Math.min(visibleRows, tableData.length)} of {tableData.length} rows
+
+                    <button
+                      onClick={() => setShowFilters(!showFilters)}
+                      className={`p-2 rounded-lg transition-all ${
+                        showFilters || filters.length > 0
+                          ? 'bg-rose-gold-400/20 text-rose-gold-400'
+                          : 'text-white/50 hover:text-white hover:bg-white/10'
+                      }`}
+                    >
+                      <Filter className="w-4 h-4" />
+                    </button>
+
+                    <div className="flex gap-1">
+                      <button
+                        onClick={() => setViewMode('table')}
+                        className={`p-2 rounded-lg transition-all ${
+                          viewMode === 'table'
+                            ? 'bg-white/10 text-white'
+                            : 'text-white/40 hover:text-white'
+                        }`}
+                      >
+                        <List className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => setViewMode('cards')}
+                        className={`p-2 rounded-lg transition-all ${
+                          viewMode === 'cards'
+                            ? 'bg-white/10 text-white'
+                            : 'text-white/40 hover:text-white'
+                        }`}
+                      >
+                        <LayoutGrid className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <span className="text-xs text-white/40 ml-auto">
+                      {selectedRows.size > 0 && `${selectedRows.size} selected - `}
+                      {filteredData.length.toLocaleString()} rows
                     </span>
                   </div>
 
                   {/* Data Table */}
-                  <div className="flex-1 overflow-auto morphic-scrollbar morphic-card rounded-xl">
-                    <table className="w-full text-sm">
-                      <thead className="sticky top-0 bg-dark-400 z-10">
-                        <tr>
-                          {parsedData.headers.map((header) => (
-                            <th
-                              key={header}
-                              onClick={() => toggleSort(header)}
-                              className="px-4 py-3 text-left font-semibold text-white/80 border-b border-white/10 cursor-pointer hover:bg-white/5 transition-colors select-none"
-                            >
-                              <div className="flex items-center gap-2">
-                                {header}
-                                {sortColumn === header && (
-                                  sortDirection === 'asc'
-                                    ? <SortAsc className="w-3.5 h-3.5 text-rose-gold-400" />
-                                    : <SortDesc className="w-3.5 h-3.5 text-rose-gold-400" />
-                                )}
-                              </div>
+                  <div className="flex-1 overflow-auto morphic-scrollbar">
+                    {viewMode === 'table' ? (
+                      <table className="w-full text-sm">
+                        <thead className="sticky top-0 bg-dark-400/95 backdrop-blur z-10">
+                          <tr>
+                            <th className="w-10 px-2 py-2 border-b border-white/10">
+                              <input
+                                type="checkbox"
+                                checked={selectedRows.size === filteredData.length && filteredData.length > 0}
+                                onChange={selectAllRows}
+                                className="w-3.5 h-3.5 rounded bg-dark-500 border-white/20"
+                              />
                             </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {tableData.slice(0, visibleRows).map((row, idx) => (
-                          <tr
-                            key={idx}
-                            className="border-b border-white/5 hover:bg-white/5 transition-colors"
-                          >
-                            {parsedData.headers.map((header) => (
-                              <td key={header} className="px-4 py-2.5 text-white/70">
-                                {String(row[header] ?? '')}
-                              </td>
+                            {visibleHeaders.map((header) => (
+                              <th
+                                key={header}
+                                onClick={() => toggleSort(header)}
+                                className="px-3 py-2 text-left font-semibold text-white/80 border-b border-white/10 cursor-pointer hover:bg-white/5 transition-colors select-none"
+                                style={{ width: columnWidths[header] }}
+                              >
+                                <div className="flex items-center gap-1.5">
+                                  <span className="truncate">{header}</span>
+                                  {sortColumn === header ? (
+                                    sortDirection === 'asc'
+                                      ? <SortAsc className="w-3.5 h-3.5 text-rose-gold-400 flex-shrink-0" />
+                                      : <SortDesc className="w-3.5 h-3.5 text-rose-gold-400 flex-shrink-0" />
+                                  ) : (
+                                    <ArrowUpDown className="w-3 h-3 text-white/20 flex-shrink-0" />
+                                  )}
+                                </div>
+                              </th>
                             ))}
                           </tr>
+                        </thead>
+                        <tbody>
+                          {paginatedData.map((row, idx) => {
+                            const globalIdx = (currentPage - 1) * pageSize + idx
+                            return (
+                              <tr
+                                key={idx}
+                                className={`border-b border-white/5 hover:bg-white/5 transition-colors ${
+                                  selectedRows.has(globalIdx) ? 'bg-rose-gold-400/10' : ''
+                                }`}
+                              >
+                                <td className="px-2 py-2">
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedRows.has(globalIdx)}
+                                    onChange={() => toggleRowSelection(globalIdx)}
+                                    className="w-3.5 h-3.5 rounded bg-dark-500 border-white/20"
+                                  />
+                                </td>
+                                {visibleHeaders.map((header) => (
+                                  <td key={header} className="px-3 py-2 text-white/70">
+                                    <span className="truncate block max-w-[200px]">
+                                      {formatCellValue(row[header])}
+                                    </span>
+                                  </td>
+                                ))}
+                              </tr>
+                            )
+                          })}
+                        </tbody>
+                      </table>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+                        {paginatedData.map((row, idx) => (
+                          <div key={idx} className="morphic-card p-4 rounded-xl">
+                            {visibleHeaders.slice(0, 6).map((header) => (
+                              <div key={header} className="flex justify-between py-1 border-b border-white/5 last:border-0">
+                                <span className="text-xs text-white/50">{header}</span>
+                                <span className="text-xs text-white font-mono">{formatCellValue(row[header])}</span>
+                              </div>
+                            ))}
+                          </div>
                         ))}
-                      </tbody>
-                    </table>
+                      </div>
+                    )}
                   </div>
 
-                  {/* Load More */}
-                  {visibleRows < tableData.length && (
-                    <button
-                      onClick={() => setVisibleRows(v => v + 20)}
-                      className="mt-4 py-2 text-sm text-rose-gold-400 hover:text-rose-gold-300 transition-colors"
-                    >
-                      Load more rows...
-                    </button>
-                  )}
+                  {/* Pagination */}
+                  <div className="flex items-center justify-between p-3 border-t border-white/10">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-white/50">Rows per page:</span>
+                      <select
+                        value={pageSize}
+                        onChange={(e) => setPageSize(Number(e.target.value))}
+                        className="px-2 py-1 bg-dark-400 border border-white/10 rounded text-xs text-white"
+                      >
+                        {[10, 25, 50, 100].map(size => (
+                          <option key={size} value={size}>{size}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-white/50">
+                        {(currentPage - 1) * pageSize + 1}-{Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length.toLocaleString()}
+                      </span>
+                      <button
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                        className="p-1 rounded hover:bg-white/10 disabled:opacity-30"
+                      >
+                        <ChevronLeft className="w-4 h-4 text-white/60" />
+                      </button>
+                      <button
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                        className="p-1 rounded hover:bg-white/10 disabled:opacity-30"
+                      >
+                        <ChevronRight className="w-4 h-4 text-white/60" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )}
 
-              {activeTab === 'columns' && (
+              {/* Statistics Tab */}
+              {activeTab === 'statistics' && (
                 <div className="flex-1 overflow-y-auto morphic-scrollbar p-4">
                   <div className="grid gap-4">
                     {parsedData.columns.map((col) => (
-                      <ColumnCard key={col.name} column={col} />
+                      <ColumnStatsCard key={col.name} column={col} />
                     ))}
                   </div>
                 </div>
               )}
 
+              {/* Charts Tab */}
               {activeTab === 'charts' && (
-                <div className="flex-1 overflow-y-auto morphic-scrollbar p-4">
-                  {/* Chart Controls */}
-                  <div className="flex flex-wrap items-center gap-4 mb-6">
-                    <div>
-                      <label className="text-xs text-white/40 mb-1 block">Chart Type</label>
-                      <div className="flex gap-1">
-                        {(['bar', 'line', 'pie'] as const).map((type) => (
-                          <button
-                            key={type}
-                            onClick={() => setSelectedChart(type)}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                              selectedChart === type
-                                ? 'bg-rose-gold-400/20 text-rose-gold-400'
-                                : 'text-white/60 hover:text-white hover:bg-white/10'
-                            }`}
-                          >
-                            {type.charAt(0).toUpperCase() + type.slice(1)}
-                          </button>
-                        ))}
+                <div className="flex-1 overflow-hidden flex flex-col">
+                  {useChartBuilder ? (
+                    <ChartBuilder data={parsedData} />
+                  ) : (
+                    <div className="flex-1 overflow-y-auto morphic-scrollbar p-4">
+                      {/* Simple Chart Controls */}
+                      <div className="flex flex-wrap items-center gap-4 mb-6">
+                        <div className="flex gap-1 bg-white/5 rounded-lg p-1">
+                          {(['bar', 'line', 'pie'] as const).map((type) => (
+                            <button
+                              key={type}
+                              onClick={() => setSelectedChartType(type)}
+                              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                                selectedChartType === type
+                                  ? 'bg-rose-gold-400/20 text-rose-gold-400'
+                                  : 'text-white/50 hover:text-white'
+                              }`}
+                            >
+                              {type.charAt(0).toUpperCase() + type.slice(1)}
+                            </button>
+                          ))}
+                        </div>
+
+                        <select
+                          value={chartXAxis}
+                          onChange={(e) => setChartXAxis(e.target.value)}
+                          className="px-3 py-1.5 bg-dark-400 border border-white/10 rounded-lg text-sm text-white"
+                        >
+                          {parsedData.headers.map((col) => (
+                            <option key={col} value={col}>{col}</option>
+                          ))}
+                        </select>
+
+                        <select
+                          value={chartYAxis}
+                          onChange={(e) => setChartYAxis(e.target.value)}
+                          className="px-3 py-1.5 bg-dark-400 border border-white/10 rounded-lg text-sm text-white"
+                        >
+                          {parsedData.headers.map((col) => (
+                            <option key={col} value={col}>{col}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* CSS Chart Fallback */}
+                      <div className="morphic-card p-6 rounded-xl">
+                        {selectedChartType === 'bar' && <CSSBarChart data={chartData} colors={CHART_COLORS} />}
+                        {selectedChartType === 'line' && <CSSLineChart data={chartData} colors={CHART_COLORS} />}
+                        {selectedChartType === 'pie' && <CSSPieChart data={chartData} colors={CHART_COLORS} />}
                       </div>
                     </div>
+                  )}
 
-                    <div>
-                      <label className="text-xs text-white/40 mb-1 block">Value Column</label>
-                      <select
-                        value={chartColumn}
-                        onChange={(e) => setChartColumn(e.target.value)}
-                        className="px-3 py-1.5 bg-dark-400 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-rose-gold-400/50"
-                      >
-                        {parsedData.columns.map((col) => (
-                          <option key={col.name} value={col.name}>{col.name}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="text-xs text-white/40 mb-1 block">Label Column</label>
-                      <select
-                        value={labelColumn}
-                        onChange={(e) => setLabelColumn(e.target.value)}
-                        className="px-3 py-1.5 bg-dark-400 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-rose-gold-400/50"
-                      >
-                        {parsedData.columns.map((col) => (
-                          <option key={col.name} value={col.name}>{col.name}</option>
-                        ))}
-                      </select>
-                    </div>
-
+                  {/* Toggle Chart Builder */}
+                  <div className="p-3 border-t border-white/10">
                     <button
-                      onClick={exportChartAsImage}
-                      className="ml-auto morphic-btn px-3 py-1.5 text-xs"
+                      onClick={() => setUseChartBuilder(!useChartBuilder)}
+                      className="text-xs text-rose-gold-400 hover:text-rose-gold-300"
                     >
-                      <Download className="w-3.5 h-3.5 inline mr-1.5" />
-                      Export Data
+                      {useChartBuilder ? 'Use Simple Charts' : 'Use Advanced Chart Builder'}
                     </button>
-                  </div>
-
-                  {/* Chart Display */}
-                  <div id="data-chart" className="morphic-card p-6 rounded-xl">
-                    {selectedChart === 'bar' && <BarChartCSS data={chartData} />}
-                    {selectedChart === 'line' && <LineChartCSS data={chartData} />}
-                    {selectedChart === 'pie' && <PieChartCSS data={chartData} />}
                   </div>
                 </div>
               )}
 
+              {/* Correlation Tab */}
+              {activeTab === 'correlation' && (
+                <div className="flex-1 overflow-y-auto morphic-scrollbar p-4">
+                  <h3 className="text-sm font-semibold text-white mb-4">Correlation Matrix</h3>
+
+                  {correlationMatrix.length === 0 ? (
+                    <div className="text-center py-12 text-white/40">
+                      <Grid3X3 className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                      <p>Need at least 2 numeric columns to calculate correlations</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {correlationMatrix.map((result, idx) => (
+                        <div key={idx} className="morphic-card p-4 rounded-xl">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm text-white">
+                              {result.column1} vs {result.column2}
+                            </span>
+                            <span className={`text-sm font-mono px-2 py-0.5 rounded ${
+                              Math.abs(result.correlation) > 0.7 ? 'bg-rose-gold-500/20 text-rose-gold-400' :
+                              Math.abs(result.correlation) > 0.4 ? 'bg-rose-gold-500/20 text-rose-gold-400' :
+                              'bg-white/10 text-white/60'
+                            }`}>
+                              r = {result.correlation.toFixed(3)}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
+                              <div
+                                className={`h-full transition-all ${
+                                  result.correlation > 0 ? 'bg-rose-gold-500' : 'bg-rose-gold-500'
+                                }`}
+                                style={{ width: `${Math.abs(result.correlation) * 100}%` }}
+                              />
+                            </div>
+                            <span className="text-xs text-white/50 capitalize">{result.strength}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* AI Analysis Tab */}
               {activeTab === 'ai' && (
                 <div className="flex-1 overflow-y-auto morphic-scrollbar p-4">
                   {/* AI Query Input */}
@@ -998,59 +1165,71 @@ Example JSON:
                       placeholder="Ask questions like:
 - What are the main trends in this data?
 - Are there any outliers or anomalies?
-- What patterns do you see?"
+- What correlations exist between variables?"
                       className="w-full h-24 p-3 bg-dark-400 border border-white/10 rounded-lg text-sm text-white placeholder-white/30 resize-none focus:outline-none focus:border-rose-gold-400/50"
                     />
-                    <button
-                      onClick={runAIAnalysis}
-                      disabled={!aiQuery.trim() || isAnalyzing}
-                      className="mt-3 morphic-btn bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 px-4 py-2 text-sm disabled:opacity-50"
-                    >
-                      {isAnalyzing ? (
-                        <>
-                          <Loader2 className="w-4 h-4 inline mr-2 animate-spin" />
-                          Analyzing...
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles className="w-4 h-4 inline mr-2" />
-                          Analyze
-                        </>
-                      )}
-                    </button>
+                    <div className="flex items-center gap-2 mt-3">
+                      <button
+                        onClick={runAIAnalysis}
+                        disabled={!aiQuery.trim() || isAnalyzing}
+                        className="morphic-btn-ghost bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 px-4 py-2 text-sm disabled:opacity-50"
+                      >
+                        {isAnalyzing ? (
+                          <>
+                            <Loader2 className="w-4 h-4 inline mr-2 animate-spin" />
+                            Analyzing...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-4 h-4 inline mr-2" />
+                            Analyze
+                          </>
+                        )}
+                      </button>
+                    </div>
                   </div>
 
                   {/* Quick Analysis Buttons */}
                   <div className="flex flex-wrap gap-2 mb-6">
-                    <button
-                      onClick={() => { setAiQuery('What are the main trends and patterns?'); runAIAnalysis() }}
-                      className="px-3 py-1.5 rounded-lg bg-white/5 text-xs text-white/60 hover:text-white hover:bg-white/10 transition-all"
-                    >
-                      Trends & Patterns
-                    </button>
-                    <button
-                      onClick={() => { setAiQuery('Are there any outliers or anomalies?'); runAIAnalysis() }}
-                      className="px-3 py-1.5 rounded-lg bg-white/5 text-xs text-white/60 hover:text-white hover:bg-white/10 transition-all"
-                    >
-                      Outlier Detection
-                    </button>
-                    <button
-                      onClick={() => { setAiQuery('What correlations exist between variables?'); runAIAnalysis() }}
-                      className="px-3 py-1.5 rounded-lg bg-white/5 text-xs text-white/60 hover:text-white hover:bg-white/10 transition-all"
-                    >
-                      Correlations
-                    </button>
-                    <button
-                      onClick={() => { setAiQuery('Generate a summary report of this data'); runAIAnalysis() }}
-                      className="px-3 py-1.5 rounded-lg bg-white/5 text-xs text-white/60 hover:text-white hover:bg-white/10 transition-all"
-                    >
-                      Full Report
-                    </button>
+                    {[
+                      { label: 'Trends & Patterns', query: 'What are the main trends and patterns?' },
+                      { label: 'Outlier Detection', query: 'Are there any outliers or anomalies?' },
+                      { label: 'Correlations', query: 'What correlations exist between variables?' },
+                      { label: 'Data Quality', query: 'What is the quality of this data?' },
+                      { label: 'Summary Report', query: 'Generate a comprehensive summary report' }
+                    ].map((btn) => (
+                      <button
+                        key={btn.label}
+                        onClick={() => {
+                          setAiQuery(btn.query)
+                          setTimeout(runAIAnalysis, 100)
+                        }}
+                        className="px-3 py-1.5 rounded-lg bg-white/5 text-xs text-white/60 hover:text-white hover:bg-white/10 transition-all"
+                      >
+                        {btn.label}
+                      </button>
+                    ))}
                   </div>
 
                   {/* AI Analysis Results */}
                   {aiAnalysis && (
                     <div className="space-y-4">
+                      {/* Warnings */}
+                      {aiAnalysis.warnings && aiAnalysis.warnings.length > 0 && (
+                        <div className="p-4 bg-rose-gold-500/10 border border-rose-gold-400/30 rounded-xl">
+                          <h3 className="text-sm font-semibold text-rose-gold-400 mb-2 flex items-center gap-2">
+                            <AlertCircle className="w-4 h-4" />
+                            Warnings
+                          </h3>
+                          <ul className="space-y-1">
+                            {aiAnalysis.warnings.map((warning, i) => (
+                              <li key={i} className="text-sm text-rose-gold-400/80">{warning}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* Summary */}
                       <div className="morphic-card p-4 rounded-xl">
                         <h3 className="text-sm font-semibold text-white mb-2 flex items-center gap-2">
                           <FileText className="w-4 h-4 text-rose-gold-400" />
@@ -1059,6 +1238,7 @@ Example JSON:
                         <p className="text-sm text-white/70 leading-relaxed">{aiAnalysis.summary}</p>
                       </div>
 
+                      {/* Insights */}
                       {aiAnalysis.insights.length > 0 && (
                         <div className="morphic-card p-4 rounded-xl">
                           <h3 className="text-sm font-semibold text-white mb-2 flex items-center gap-2">
@@ -1068,7 +1248,7 @@ Example JSON:
                           <ul className="space-y-2">
                             {aiAnalysis.insights.map((insight, i) => (
                               <li key={i} className="flex items-start gap-2 text-sm text-white/70">
-                                <CheckCircle2 className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
+                                <CheckCircle2 className="w-4 h-4 text-rose-gold-400 flex-shrink-0 mt-0.5" />
                                 {insight}
                               </li>
                             ))}
@@ -1076,6 +1256,7 @@ Example JSON:
                         </div>
                       )}
 
+                      {/* Recommendations */}
                       {aiAnalysis.recommendations.length > 0 && (
                         <div className="morphic-card p-4 rounded-xl">
                           <h3 className="text-sm font-semibold text-white mb-2 flex items-center gap-2">
@@ -1085,7 +1266,7 @@ Example JSON:
                           <ul className="space-y-2">
                             {aiAnalysis.recommendations.map((rec, i) => (
                               <li key={i} className="flex items-start gap-2 text-sm text-white/70">
-                                <span className="text-rose-gold-400">-</span>
+                                <Zap className="w-4 h-4 text-rose-gold-400 flex-shrink-0 mt-0.5" />
                                 {rec}
                               </li>
                             ))}
@@ -1104,10 +1285,26 @@ Example JSON:
   )
 }
 
-// Column Statistics Card
-function ColumnCard({ column }: { column: DataColumn }) {
+// ============================================================================
+// Helper Components
+// ============================================================================
+
+function formatCellValue(value: unknown): string {
+  if (value === null || value === undefined) return '-'
+  if (value instanceof Date) return value.toLocaleDateString()
+  if (typeof value === 'number') {
+    if (Number.isInteger(value)) return value.toLocaleString()
+    return value.toLocaleString(undefined, { maximumFractionDigits: 2 })
+  }
+  if (typeof value === 'boolean') return value ? 'Yes' : 'No'
+  return String(value)
+}
+
+function ColumnStatsCard({ column }: { column: DataColumn }) {
   const [expanded, setExpanded] = useState(false)
   const stats = column.stats
+
+  if (!stats) return null
 
   return (
     <div className="morphic-card rounded-xl overflow-hidden">
@@ -1116,29 +1313,31 @@ function ColumnCard({ column }: { column: DataColumn }) {
         className="w-full p-4 flex items-center justify-between hover:bg-white/5 transition-colors"
       >
         <div className="flex items-center gap-3">
-          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-            column.type === 'number' ? 'bg-blue-500/20' :
-            column.type === 'string' ? 'bg-green-500/20' :
-            column.type === 'date' ? 'bg-rose-gold-500/20' :
-            'bg-gray-500/20'
+          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+            column.type === 'number' ? 'bg-rose-gold-500/20 text-rose-gold-400' :
+            column.type === 'string' ? 'bg-rose-gold-500/20 text-rose-gold-400' :
+            column.type === 'date' ? 'bg-rose-gold-500/20 text-rose-gold-400' :
+            column.type === 'boolean' ? 'bg-rose-gold-500/20 text-rose-gold-400' :
+            'bg-white/10 text-white/60'
           }`}>
             {column.type === 'number' ? '#' :
              column.type === 'string' ? 'Aa' :
-             column.type === 'date' ? 'D' : '?'}
+             column.type === 'date' ? 'D' :
+             column.type === 'boolean' ? 'B' : '?'}
           </div>
           <div className="text-left">
             <h3 className="text-sm font-semibold text-white">{column.name}</h3>
-            <p className="text-xs text-white/50">{column.type} - {stats?.unique} unique values</p>
+            <p className="text-xs text-white/50">{column.type} - {stats.unique} unique values</p>
           </div>
         </div>
         {expanded ? <ChevronUp className="w-4 h-4 text-white/40" /> : <ChevronDown className="w-4 h-4 text-white/40" />}
       </button>
 
-      {expanded && stats && (
+      {expanded && (
         <div className="p-4 pt-0 border-t border-white/10">
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <StatItem label="Count" value={stats.count} />
-            <StatItem label="Unique" value={stats.unique} />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+            <StatItem label="Count" value={stats.count.toLocaleString()} />
+            <StatItem label="Unique" value={stats.unique.toLocaleString()} />
             <StatItem label="Missing" value={`${stats.nullCount} (${stats.nullPercentage.toFixed(1)}%)`} />
             <StatItem label="Mode" value={stats.mode !== undefined ? String(stats.mode) : 'N/A'} />
 
@@ -1147,37 +1346,86 @@ function ColumnCard({ column }: { column: DataColumn }) {
                 <StatItem label="Mean" value={stats.mean?.toFixed(2) ?? 'N/A'} />
                 <StatItem label="Median" value={stats.median?.toFixed(2) ?? 'N/A'} />
                 <StatItem label="Std Dev" value={stats.stdDev?.toFixed(2) ?? 'N/A'} />
+                <StatItem label="Variance" value={stats.variance?.toFixed(2) ?? 'N/A'} />
                 <StatItem label="Sum" value={stats.sum?.toLocaleString() ?? 'N/A'} />
                 <StatItem label="Min" value={stats.min !== undefined ? String(stats.min) : 'N/A'} />
                 <StatItem label="Max" value={stats.max !== undefined ? String(stats.max) : 'N/A'} />
+                <StatItem label="Range" value={stats.min !== undefined && stats.max !== undefined ? String(Number(stats.max) - Number(stats.min)) : 'N/A'} />
                 <StatItem label="Q1 (25%)" value={stats.q1?.toFixed(2) ?? 'N/A'} />
                 <StatItem label="Q3 (75%)" value={stats.q3?.toFixed(2) ?? 'N/A'} />
+                <StatItem label="IQR" value={stats.iqr?.toFixed(2) ?? 'N/A'} />
+                <StatItem label="Skewness" value={stats.skewness?.toFixed(3) ?? 'N/A'} />
               </>
             )}
 
             {column.type === 'string' && (
               <>
-                <StatItem label="Min" value={stats.min !== undefined ? String(stats.min) : 'N/A'} />
-                <StatItem label="Max" value={stats.max !== undefined ? String(stats.max) : 'N/A'} />
+                <StatItem label="Min Length" value={stats.minLength?.toString() ?? 'N/A'} />
+                <StatItem label="Max Length" value={stats.maxLength?.toString() ?? 'N/A'} />
+                <StatItem label="Avg Length" value={stats.avgLength?.toFixed(1) ?? 'N/A'} />
               </>
             )}
           </div>
 
-          {/* Missing Value Bar */}
-          {stats.nullPercentage > 0 && (
-            <div className="mt-3">
-              <div className="flex justify-between text-xs mb-1">
-                <span className="text-white/50">Completeness</span>
-                <span className="text-white/70">{(100 - stats.nullPercentage).toFixed(1)}%</span>
-              </div>
-              <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-green-500 rounded-full transition-all"
-                  style={{ width: `${100 - stats.nullPercentage}%` }}
-                />
+          {/* Top Values */}
+          {stats.topValues && stats.topValues.length > 0 && (
+            <div className="mt-4">
+              <h4 className="text-xs font-semibold text-white/50 mb-2">Top Values</h4>
+              <div className="space-y-1">
+                {stats.topValues.slice(0, 5).map((item, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <span className="text-xs text-white/70 truncate w-24">{String(item.value)}</span>
+                    <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-rose-gold-400 rounded-full"
+                        style={{ width: `${item.percentage}%` }}
+                      />
+                    </div>
+                    <span className="text-xs text-white/50 w-12 text-right">{item.percentage.toFixed(1)}%</span>
+                  </div>
+                ))}
               </div>
             </div>
           )}
+
+          {/* Histogram for numeric columns */}
+          {column.type === 'number' && stats.histogram && stats.histogram.length > 0 && (
+            <div className="mt-4">
+              <h4 className="text-xs font-semibold text-white/50 mb-2">Distribution</h4>
+              <div className="flex items-end gap-0.5 h-16">
+                {stats.histogram.map((bin, idx) => {
+                  const maxCount = Math.max(...stats.histogram!.map(h => h.count))
+                  const height = maxCount > 0 ? (bin.count / maxCount) * 100 : 0
+                  return (
+                    <div
+                      key={idx}
+                      className="flex-1 bg-rose-gold-400/60 hover:bg-rose-gold-400 transition-colors rounded-t"
+                      style={{ height: `${height}%` }}
+                      title={`${bin.bin}: ${bin.count}`}
+                    />
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Completeness Bar */}
+          <div className="mt-4">
+            <div className="flex justify-between text-xs mb-1">
+              <span className="text-white/50">Completeness</span>
+              <span className="text-white/70">{(100 - stats.nullPercentage).toFixed(1)}%</span>
+            </div>
+            <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all ${
+                  stats.nullPercentage > 20 ? 'bg-rose-gold-500' :
+                  stats.nullPercentage > 5 ? 'bg-rose-gold-500' :
+                  'bg-rose-gold-500'
+                }`}
+                style={{ width: `${100 - stats.nullPercentage}%` }}
+              />
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -1188,211 +1436,7 @@ function StatItem({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="px-3 py-2 bg-white/5 rounded-lg">
       <p className="text-[10px] text-white/40 uppercase tracking-wider">{label}</p>
-      <p className="text-sm text-white font-mono truncate">{value}</p>
-    </div>
-  )
-}
-
-// CSS-based Bar Chart
-function BarChartCSS({ data }: { data: ChartData }) {
-  const maxValue = Math.max(...data.values, 1)
-
-  if (data.labels.length === 0) {
-    return <div className="text-center py-12 text-white/40">No data to display</div>
-  }
-
-  return (
-    <div className="space-y-3">
-      <h3 className="text-sm font-semibold text-white/80 mb-4">Bar Chart</h3>
-      {data.labels.map((label, idx) => {
-        const percentage = (data.values[idx] / maxValue) * 100
-        const color = data.colors?.[idx % (data.colors?.length || 1)] || CHART_COLORS[idx % CHART_COLORS.length]
-
-        return (
-          <div key={label} className="group">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs text-white/70 truncate max-w-[150px]">{label}</span>
-              <span className="text-xs text-white/50 font-mono">{data.values[idx].toLocaleString()}</span>
-            </div>
-            <div className="h-6 bg-white/10 rounded-lg overflow-hidden relative">
-              <div
-                className="h-full rounded-lg transition-all duration-500 ease-out group-hover:brightness-110 relative"
-                style={{
-                  width: `${percentage}%`,
-                  backgroundColor: color,
-                }}
-              >
-                <div
-                  className="absolute inset-0 bg-gradient-to-r from-transparent to-white/20"
-                  style={{ width: '100%' }}
-                />
-              </div>
-            </div>
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
-// CSS-based Line Chart
-function LineChartCSS({ data }: { data: ChartData }) {
-  const maxValue = Math.max(...data.values, 1)
-  const minValue = Math.min(...data.values, 0)
-  const range = maxValue - minValue || 1
-
-  if (data.labels.length === 0) {
-    return <div className="text-center py-12 text-white/40">No data to display</div>
-  }
-
-  return (
-    <div>
-      <h3 className="text-sm font-semibold text-white/80 mb-4">Line Chart</h3>
-      <div className="relative h-64 bg-white/5 rounded-xl p-4">
-        {/* Y-axis labels */}
-        <div className="absolute left-0 top-4 bottom-8 w-12 flex flex-col justify-between text-[10px] text-white/40">
-          <span>{maxValue.toLocaleString()}</span>
-          <span>{((maxValue + minValue) / 2).toLocaleString()}</span>
-          <span>{minValue.toLocaleString()}</span>
-        </div>
-
-        {/* Chart area */}
-        <div className="ml-14 h-full relative">
-          {/* Grid lines */}
-          <div className="absolute inset-0 flex flex-col justify-between">
-            {[0, 1, 2].map((i) => (
-              <div key={i} className="border-t border-white/10" />
-            ))}
-          </div>
-
-          {/* Data points and lines */}
-          <svg className="w-full h-full" preserveAspectRatio="none">
-            {/* Line */}
-            <polyline
-              fill="none"
-              stroke="#06b6d4"
-              strokeWidth="2"
-              points={data.values.map((val, idx) => {
-                const x = (idx / (data.values.length - 1 || 1)) * 100
-                const y = 100 - ((val - minValue) / range) * 100
-                return `${x}%,${y}%`
-              }).join(' ')}
-            />
-
-            {/* Area fill */}
-            <polygon
-              fill="url(#lineGradient)"
-              opacity="0.3"
-              points={`0%,100% ${data.values.map((val, idx) => {
-                const x = (idx / (data.values.length - 1 || 1)) * 100
-                const y = 100 - ((val - minValue) / range) * 100
-                return `${x}%,${y}%`
-              }).join(' ')} 100%,100%`}
-            />
-
-            {/* Gradient definition */}
-            <defs>
-              <linearGradient id="lineGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#06b6d4" />
-                <stop offset="100%" stopColor="#06b6d4" stopOpacity="0" />
-              </linearGradient>
-            </defs>
-
-            {/* Data points */}
-            {data.values.map((val, idx) => {
-              const x = (idx / (data.values.length - 1 || 1)) * 100
-              const y = 100 - ((val - minValue) / range) * 100
-              return (
-                <g key={idx}>
-                  <circle
-                    cx={`${x}%`}
-                    cy={`${y}%`}
-                    r="4"
-                    fill="#06b6d4"
-                    className="hover:r-6 transition-all"
-                  />
-                  <title>{`${data.labels[idx]}: ${val.toLocaleString()}`}</title>
-                </g>
-              )
-            })}
-          </svg>
-        </div>
-
-        {/* X-axis labels */}
-        <div className="ml-14 flex justify-between mt-2 text-[10px] text-white/40">
-          {data.labels.map((label, idx) => (
-            <span key={idx} className="truncate max-w-[60px]" title={label}>
-              {label}
-            </span>
-          ))}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// CSS-based Pie Chart
-function PieChartCSS({ data }: { data: ChartData }) {
-  const total = data.values.reduce((a, b) => a + b, 0) || 1
-
-  if (data.labels.length === 0) {
-    return <div className="text-center py-12 text-white/40">No data to display</div>
-  }
-
-  // Build conic gradient segments
-  let currentAngle = 0
-  const segments = data.values.map((val, idx) => {
-    const percentage = (val / total) * 100
-    const startAngle = currentAngle
-    currentAngle += percentage
-    return {
-      label: data.labels[idx],
-      value: val,
-      percentage,
-      startAngle,
-      color: data.colors?.[idx % (data.colors?.length || 1)] || CHART_COLORS[idx % CHART_COLORS.length]
-    }
-  })
-
-  const gradientStops = segments.map((seg, idx) => {
-    const prevEnd = idx === 0 ? 0 : segments.slice(0, idx).reduce((a, s) => a + s.percentage, 0)
-    return `${seg.color} ${prevEnd}% ${prevEnd + seg.percentage}%`
-  }).join(', ')
-
-  return (
-    <div>
-      <h3 className="text-sm font-semibold text-white/80 mb-4">Pie Chart</h3>
-      <div className="flex items-center gap-8">
-        {/* Pie */}
-        <div
-          className="w-48 h-48 rounded-full flex-shrink-0 relative"
-          style={{
-            background: `conic-gradient(${gradientStops})`,
-          }}
-        >
-          {/* Center circle for donut effect */}
-          <div className="absolute inset-8 rounded-full bg-dark-400 flex items-center justify-center">
-            <div className="text-center">
-              <p className="text-lg font-bold text-white">{total.toLocaleString()}</p>
-              <p className="text-[10px] text-white/50">Total</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Legend */}
-        <div className="flex-1 space-y-2 max-h-48 overflow-y-auto morphic-scrollbar">
-          {segments.map((seg, idx) => (
-            <div key={idx} className="flex items-center gap-2">
-              <div
-                className="w-3 h-3 rounded-sm flex-shrink-0"
-                style={{ backgroundColor: seg.color }}
-              />
-              <span className="text-xs text-white/70 truncate flex-1">{seg.label}</span>
-              <span className="text-xs text-white/50 font-mono">{seg.percentage.toFixed(1)}%</span>
-            </div>
-          ))}
-        </div>
-      </div>
+      <p className="text-sm text-white font-mono truncate" title={String(value)}>{value}</p>
     </div>
   )
 }

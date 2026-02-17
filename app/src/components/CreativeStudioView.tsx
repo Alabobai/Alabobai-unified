@@ -1,16 +1,45 @@
 /**
  * Creative Studio View Component
  * AI-powered creative content generation with real image generation
+ * Features:
+ * - Image generation using Pollinations.ai (free)
+ * - Canvas-based image editor
+ * - Template library
+ * - Gallery with local storage
+ * - AI prompt suggestions
+ * - Export options
  */
 
-import { useState, useCallback, useRef, useEffect } from 'react'
+import { useState, useCallback, useRef, useEffect, lazy, Suspense } from 'react'
 import {
   Palette, Image, FileText, Type, Wand2, Download, Copy,
   RefreshCw, Loader2, CheckCircle2, Sparkles, Grid,
   PenTool, Layout, Mail, ShoppingBag, MessageSquare,
-  Zap, Trash2, ExternalLink, AlertCircle, X, ChevronDown, Film
+  Zap, Trash2, ExternalLink, AlertCircle, X, ChevronDown, Film,
+  Plus, Edit3, Share2, Lightbulb, Bookmark, Clock, Filter,
+  SlidersHorizontal, Heart, MoreHorizontal, Shuffle, Save,
+  Expand, FolderOpen, Star, Layers, Maximize2
 } from 'lucide-react'
 import { aiService } from '@/services/ai'
+import {
+  imageGenerationService,
+  IMAGE_STYLES,
+  IMAGE_SIZES,
+  IMAGE_MODELS,
+  STYLE_MODIFIERS,
+  PROMPT_SUGGESTIONS,
+  NEGATIVE_PROMPT_PRESETS,
+  type GeneratedImage as ImageGenResult,
+  type ImageStyle,
+  type ImageSize,
+  type ImageModel
+} from '@/services/imageGeneration'
+import { generateVideo as generateVideoService } from '@/services/mediaGeneration'
+import { BRAND } from '@/config/brand'
+
+// Lazy load heavy components
+const ImageEditor = lazy(() => import('./ImageEditor'))
+const TemplateLibrary = lazy(() => import('./TemplateLibrary'))
 
 // Types
 interface GeneratedImage {
@@ -20,9 +49,12 @@ interface GeneratedImage {
   url: string
   width: number
   height: number
+  model: string
   createdAt: Date
   status: 'generating' | 'complete' | 'error'
   error?: string
+  seed?: number
+  isFavorite?: boolean
 }
 
 interface GeneratedVideo {
@@ -56,29 +88,6 @@ interface FontPairing {
   accent: string
 }
 
-// Image style presets
-const IMAGE_STYLES = [
-  { id: 'photo', name: 'Photorealistic', prompt: 'photorealistic, high quality, detailed, 8k uhd' },
-  { id: 'art', name: 'Digital Art', prompt: 'digital art, vibrant colors, detailed illustration' },
-  { id: 'sketch', name: 'Sketch', prompt: 'pencil sketch, hand drawn, artistic sketch style' },
-  { id: 'watercolor', name: 'Watercolor', prompt: 'watercolor painting, soft colors, artistic' },
-  { id: 'logo', name: 'Logo Design', prompt: 'minimalist logo design, vector style, clean lines' },
-  { id: 'anime', name: 'Anime', prompt: 'anime style, japanese animation, vibrant' },
-  { id: '3d', name: '3D Render', prompt: '3d render, octane render, volumetric lighting, highly detailed' },
-  { id: 'pixel', name: 'Pixel Art', prompt: 'pixel art style, retro game graphics, 16-bit' },
-  { id: 'cyberpunk', name: 'Cyberpunk', prompt: 'cyberpunk style, neon lights, futuristic, dark atmosphere' },
-  { id: 'fantasy', name: 'Fantasy', prompt: 'fantasy art, magical, ethereal, detailed fantasy illustration' }
-]
-
-// Image size presets
-const IMAGE_SIZES = [
-  { id: 'square', name: 'Square', width: 512, height: 512 },
-  { id: 'landscape', name: 'Landscape', width: 768, height: 512 },
-  { id: 'portrait', name: 'Portrait', width: 512, height: 768 },
-  { id: 'wide', name: 'Wide', width: 1024, height: 512 },
-  { id: 'tall', name: 'Tall', width: 512, height: 1024 }
-]
-
 // Content type templates
 const CONTENT_TYPES = [
   { id: 'blog', name: 'Blog Post', icon: FileText, description: 'Long-form article content' },
@@ -105,17 +114,25 @@ const FONT_PAIRINGS: FontPairing[] = [
   { heading: 'DM Sans', body: 'Plus Jakarta Sans', accent: 'Fraunces' }
 ]
 
-type TabType = 'images' | 'video' | 'content' | 'design' | 'gallery'
+type TabType = 'images' | 'video' | 'content' | 'design' | 'gallery' | 'templates'
 
 export default function CreativeStudioView() {
   const [activeTab, setActiveTab] = useState<TabType>('images')
 
   // Image generation state
   const [imagePrompt, setImagePrompt] = useState('')
-  const [selectedStyle, setSelectedStyle] = useState(IMAGE_STYLES[0])
-  const [selectedSize, setSelectedSize] = useState(IMAGE_SIZES[0])
+  const [selectedStyle, setSelectedStyle] = useState<ImageStyle>(IMAGE_STYLES[0])
+  const [selectedSize, setSelectedSize] = useState<ImageSize>(IMAGE_SIZES[0])
+  const [selectedModel, setSelectedModel] = useState<ImageModel>(IMAGE_MODELS[0])
+  const [negativePrompt, setNegativePrompt] = useState('')
+  const [selectedNegativePresets, setSelectedNegativePresets] = useState<string[]>(['quality'])
+  const [enhancePrompt, setEnhancePrompt] = useState(true)
   const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([])
   const [isGeneratingImage, setIsGeneratingImage] = useState(false)
+  const [showPromptSuggestions, setShowPromptSuggestions] = useState(false)
+  const [selectedModifiers, setSelectedModifiers] = useState<string[]>([])
+
+  // Video generation state
   const [videoPrompt, setVideoPrompt] = useState('')
   const [generatedVideos, setGeneratedVideos] = useState<GeneratedVideo[]>([])
   const [isGeneratingVideo, setIsGeneratingVideo] = useState(false)
@@ -134,10 +151,33 @@ export default function CreativeStudioView() {
   const [isGeneratingPalette, setIsGeneratingPalette] = useState(false)
   const [selectedFontPairing, setSelectedFontPairing] = useState<FontPairing | null>(null)
 
+  // Gallery state
+  const [galleryImages, setGalleryImages] = useState<GeneratedImage[]>([])
+  const [galleryFilter, setGalleryFilter] = useState<'all' | 'favorites'>('all')
+  const [selectedGalleryImage, setSelectedGalleryImage] = useState<GeneratedImage | null>(null)
+
+  // Editor state
+  const [showEditor, setShowEditor] = useState(false)
+  const [editingImage, setEditingImage] = useState<string | null>(null)
+
+  // Template state
+  const [showTemplateLibrary, setShowTemplateLibrary] = useState(false)
+
   // Notification state
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
 
   const contentRef = useRef<HTMLDivElement>(null)
+
+  // Load gallery from local storage
+  useEffect(() => {
+    const saved = imageGenerationService.getGallery()
+    if (saved.length > 0) {
+      setGalleryImages(saved.map(img => ({
+        ...img,
+        status: 'complete' as const
+      })))
+    }
+  }, [])
 
   // Auto-dismiss notifications
   useEffect(() => {
@@ -147,19 +187,38 @@ export default function CreativeStudioView() {
     }
   }, [notification])
 
-  // Generate image via local inference API
+  // Generate image using Pollinations.ai
   const generateImage = useCallback(async () => {
     if (!imagePrompt.trim()) return
 
     setIsGeneratingImage(true)
 
+    // Build prompt with modifiers
+    let fullPrompt = imagePrompt
+    if (selectedModifiers.length > 0) {
+      const modifierValues = selectedModifiers
+        .map(id => STYLE_MODIFIERS.find(m => m.id === id)?.value)
+        .filter(Boolean)
+      fullPrompt += ', ' + modifierValues.join(', ')
+    }
+
+    // Build negative prompt
+    let fullNegativePrompt = negativePrompt
+    if (selectedNegativePresets.length > 0) {
+      const presetValues = imageGenerationService.buildNegativePrompt(selectedNegativePresets)
+      fullNegativePrompt = fullNegativePrompt
+        ? `${fullNegativePrompt}, ${presetValues}`
+        : presetValues
+    }
+
     const newImage: GeneratedImage = {
       id: crypto.randomUUID(),
-      prompt: imagePrompt,
+      prompt: fullPrompt,
       style: selectedStyle.name,
       url: '',
       width: selectedSize.width,
       height: selectedSize.height,
+      model: selectedModel.name,
       createdAt: new Date(),
       status: 'generating'
     }
@@ -167,25 +226,33 @@ export default function CreativeStudioView() {
     setGeneratedImages(prev => [newImage, ...prev])
 
     try {
-      const response = await fetch('/api/generate-image', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt: `${imagePrompt}, ${selectedStyle.prompt}`,
-          width: selectedSize.width,
-          height: selectedSize.height,
-          style: selectedStyle.id,
-        }),
+      const result = await imageGenerationService.generateImage({
+        prompt: fullPrompt,
+        style: selectedStyle,
+        size: selectedSize,
+        negativePrompt: fullNegativePrompt,
+        enhance: enhancePrompt,
+        model: selectedModel
       })
 
-      if (!response.ok) {
-        throw new Error(`Image generation failed: ${response.status}`)
+      const updatedImage: GeneratedImage = {
+        ...newImage,
+        url: result.url,
+        seed: result.seed,
+        status: 'complete'
       }
 
-      const data = await response.json() as { url: string }
       setGeneratedImages(prev =>
-        prev.map(i => (i.id === newImage.id ? { ...i, status: 'complete', url: data.url } : i))
+        prev.map(i => i.id === newImage.id ? updatedImage : i)
       )
+
+      // Save to gallery
+      imageGenerationService.saveToGallery({
+        ...result,
+        id: newImage.id
+      })
+      setGalleryImages(prev => [updatedImage, ...prev])
+
       setNotification({ type: 'success', message: 'Image generated successfully!' })
     } catch (error) {
       setGeneratedImages(prev =>
@@ -197,9 +264,9 @@ export default function CreativeStudioView() {
     } finally {
       setIsGeneratingImage(false)
     }
-  }, [imagePrompt, selectedStyle, selectedSize])
+  }, [imagePrompt, selectedStyle, selectedSize, selectedModel, negativePrompt, selectedNegativePresets, enhancePrompt, selectedModifiers])
 
-  // Generate video via local inference API
+  // Generate video using media generation service with fallbacks
   const generateVideo = useCallback(async () => {
     if (!videoPrompt.trim()) return
     setIsGeneratingVideo(true)
@@ -216,42 +283,59 @@ export default function CreativeStudioView() {
     setGeneratedVideos(prev => [newVideo, ...prev])
 
     try {
-      const response = await fetch('/api/generate-video', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt: videoPrompt,
-          durationSeconds: 4,
-          fps: 16,
-          width: 512,
-          height: 512,
-        }),
+      // Use the self-healing media generation service
+      const result = await generateVideoService({
+        prompt: videoPrompt,
+        width: 512,
+        height: 512,
+        duration: 4,
+        fps: 16
       })
 
-      if (!response.ok) {
-        throw new Error(`Video generation failed: ${response.status}`)
-      }
-
-      const data = await response.json() as { url: string; durationSeconds?: number }
       setGeneratedVideos(prev =>
         prev.map(v =>
           v.id === newVideo.id
-            ? { ...v, status: 'complete', url: data.url, durationSeconds: data.durationSeconds || 4 }
+            ? { ...v, status: 'complete', url: result.url, durationSeconds: 4 }
             : v
         )
       )
-      setNotification({ type: 'success', message: 'Video generated successfully!' })
+      setNotification({ type: 'success', message: `Video generated via ${result.provider}!` })
     } catch (error) {
       setGeneratedVideos(prev =>
         prev.map(v => v.id === newVideo.id
           ? { ...v, status: 'error', error: error instanceof Error ? error.message : 'Failed to generate video' }
           : v)
       )
-      setNotification({ type: 'error', message: 'Failed to generate video' })
+      setNotification({ type: 'error', message: 'Failed to generate video. Trying fallback providers...' })
     } finally {
       setIsGeneratingVideo(false)
     }
   }, [videoPrompt])
+
+  // Generate abstract art
+  const generateAbstractArt = useCallback((artStyle: 'geometric' | 'flow' | 'particles' | 'waves' | 'gradient') => {
+    const dataUrl = imageGenerationService.generateAbstractArt(
+      selectedSize.width,
+      selectedSize.height,
+      artStyle
+    )
+
+    const newImage: GeneratedImage = {
+      id: crypto.randomUUID(),
+      prompt: `Abstract ${artStyle} art`,
+      style: 'Abstract',
+      url: dataUrl,
+      width: selectedSize.width,
+      height: selectedSize.height,
+      model: 'Algorithm',
+      createdAt: new Date(),
+      status: 'complete'
+    }
+
+    setGeneratedImages(prev => [newImage, ...prev])
+    setGalleryImages(prev => [newImage, ...prev])
+    setNotification({ type: 'success', message: 'Abstract art generated!' })
+  }, [selectedSize])
 
   // Generate content using AI service
   const generateContent = useCallback(async () => {
@@ -390,7 +474,7 @@ export default function CreativeStudioView() {
 
   // Generate random palette as fallback
   const generateRandomPalette = (): string[] => {
-    const palettes: Record<string, string[]> = {
+    const paletteMap: Record<string, string[]> = {
       'Modern & Clean': ['#2563EB', '#3B82F6', '#60A5FA', '#93C5FD', '#DBEAFE'],
       'Vibrant & Bold': ['#DC2626', '#F97316', '#FACC15', '#22C55E', '#8B5CF6'],
       'Pastel & Soft': ['#FCA5A5', '#FDBA74', '#FDE047', '#86EFAC', '#A5B4FC'],
@@ -400,7 +484,7 @@ export default function CreativeStudioView() {
       'Minimalist': ['#18181B', '#3F3F46', '#71717A', '#A1A1AA', '#E4E4E7'],
       'Luxury & Elegant': ['#1C1917', '#44403C', '#78716C', '#D6D3D1', '#F5F5F4']
     }
-    return palettes[paletteTheme] || ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6']
+    return paletteMap[paletteTheme] || ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6']
   }
 
   // Copy to clipboard
@@ -414,25 +498,59 @@ export default function CreativeStudioView() {
   }
 
   // Download image
-  const downloadImage = async (image: GeneratedImage) => {
+  const downloadImage = async (image: GeneratedImage, format: 'png' | 'jpg' | 'webp' = 'png') => {
     try {
-      const response = await fetch(image.url)
-      const blob = await response.blob()
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `creative-studio-${image.id.slice(0, 8)}.png`
-      a.click()
-      URL.revokeObjectURL(url)
+      await imageGenerationService.downloadImage(
+        image.url,
+        `creative-studio-${image.id.slice(0, 8)}`,
+        format
+      )
       setNotification({ type: 'success', message: 'Image downloaded!' })
     } catch {
       setNotification({ type: 'error', message: 'Failed to download image' })
     }
   }
 
+  // Copy image to clipboard
+  const copyImageToClipboard = async (url: string) => {
+    try {
+      await imageGenerationService.copyToClipboard(url)
+      setNotification({ type: 'success', message: 'Image copied to clipboard!' })
+    } catch {
+      setNotification({ type: 'error', message: 'Failed to copy image' })
+    }
+  }
+
+  // Share image (generate data URL)
+  const shareImage = async (image: GeneratedImage) => {
+    try {
+      const dataUrl = await imageGenerationService.generateShareUrl(image.url)
+      await navigator.clipboard.writeText(dataUrl)
+      setNotification({ type: 'success', message: 'Share URL copied!' })
+    } catch {
+      setNotification({ type: 'error', message: 'Failed to generate share URL' })
+    }
+  }
+
+  // Toggle favorite
+  const toggleFavorite = (imageId: string) => {
+    setGalleryImages(prev =>
+      prev.map(img =>
+        img.id === imageId ? { ...img, isFavorite: !img.isFavorite } : img
+      )
+    )
+    setGeneratedImages(prev =>
+      prev.map(img =>
+        img.id === imageId ? { ...img, isFavorite: !img.isFavorite } : img
+      )
+    )
+  }
+
   // Delete image
   const deleteImage = (id: string) => {
     setGeneratedImages(prev => prev.filter(i => i.id !== id))
+    setGalleryImages(prev => prev.filter(i => i.id !== id))
+    imageGenerationService.removeFromGallery(id)
     setNotification({ type: 'success', message: 'Image deleted' })
   }
 
@@ -448,22 +566,48 @@ export default function CreativeStudioView() {
     setNotification({ type: 'success', message: 'Palette deleted' })
   }
 
+  // Open image in editor
+  const openInEditor = (imageUrl: string) => {
+    setEditingImage(imageUrl)
+    setShowEditor(true)
+  }
+
+  // Handle template selection
+  const handleTemplateSelect = (template: { width: number; height: number; name: string }) => {
+    // Find matching size or create custom
+    const matchingSize = IMAGE_SIZES.find(
+      s => s.width === template.width && s.height === template.height
+    )
+    if (matchingSize) {
+      setSelectedSize(matchingSize)
+    }
+    setShowTemplateLibrary(false)
+    setActiveTab('images')
+    setNotification({ type: 'success', message: `Template "${template.name}" applied!` })
+  }
+
+  // Get random prompt
+  const getRandomPrompt = () => {
+    setImagePrompt(imageGenerationService.getRandomPrompt())
+  }
+
   // Render tabs
   const renderTabs = () => (
-    <div className="flex gap-1 p-1 bg-white/5 rounded-xl">
+    <div className="flex gap-1 p-1 bg-white/5 rounded-xl overflow-x-auto">
       {[
         { id: 'images', name: 'Image Gen', icon: Image },
         { id: 'video', name: 'Video Gen', icon: Film },
         { id: 'content', name: 'Content', icon: FileText },
         { id: 'design', name: 'Design Tools', icon: Palette },
+        { id: 'templates', name: 'Templates', icon: Layout },
         { id: 'gallery', name: 'Gallery', icon: Grid }
       ].map(tab => (
         <button
           key={tab.id}
           onClick={() => setActiveTab(tab.id as TabType)}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
             activeTab === tab.id
-              ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg'
+              ? 'bg-gradient-to-r from-rose-gold-400 to-rose-gold-600 text-dark-500 shadow-lg'
               : 'text-white/60 hover:text-white hover:bg-white/10'
           }`}
         >
@@ -474,6 +618,7 @@ export default function CreativeStudioView() {
     </div>
   )
 
+  // Render Video Tab
   const renderVideoTab = () => (
     <div className="flex flex-col lg:flex-row gap-6 h-full">
       <div className="lg:w-80 space-y-4">
@@ -492,7 +637,7 @@ export default function CreativeStudioView() {
         <button
           onClick={generateVideo}
           disabled={!videoPrompt.trim() || isGeneratingVideo}
-          className="w-full morphic-btn bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 py-3 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed group"
+          className="w-full morphic-btn py-3 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed group"
         >
           <span className="flex items-center justify-center gap-2">
             {isGeneratingVideo ? (
@@ -536,8 +681,8 @@ export default function CreativeStudioView() {
                   {video.status === 'error' && (
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div className="text-center px-3">
-                        <AlertCircle className="w-8 h-8 text-red-400 mx-auto mb-2" />
-                        <p className="text-xs text-red-400">{video.error}</p>
+                        <AlertCircle className="w-8 h-8 text-rose-gold-400 mx-auto mb-2" />
+                        <p className="text-xs text-rose-gold-400">{video.error}</p>
                       </div>
                     </div>
                   )}
@@ -563,31 +708,127 @@ export default function CreativeStudioView() {
   const renderImageTab = () => (
     <div className="flex flex-col lg:flex-row gap-6 h-full">
       {/* Controls */}
-      <div className="lg:w-80 space-y-4">
+      <div className="lg:w-80 space-y-4 overflow-y-auto morphic-scrollbar max-h-full">
+        {/* Prompt input */}
         <div className="morphic-card p-4 rounded-xl">
           <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-            <Wand2 className="w-4 h-4 text-pink-400" />
+            <Wand2 className="w-4 h-4 text-rose-gold-400" />
             Image Prompt
           </h3>
-          <textarea
-            value={imagePrompt}
-            onChange={(e) => setImagePrompt(e.target.value)}
-            placeholder="Describe the image you want to create..."
-            className="w-full h-24 p-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/30 resize-none focus:outline-none focus:ring-2 focus:ring-pink-500/50 text-sm"
-          />
+          <div className="relative">
+            <textarea
+              value={imagePrompt}
+              onChange={(e) => setImagePrompt(e.target.value)}
+              placeholder="Describe the image you want to create..."
+              className="w-full h-24 p-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/30 resize-none focus:outline-none focus:ring-2 focus:ring-rose-gold-400/50 text-sm"
+            />
+            <div className="absolute bottom-2 right-2 flex gap-1">
+              <button
+                onClick={getRandomPrompt}
+                className="p-1.5 bg-white/10 rounded hover:bg-white/20 transition-colors"
+                title="Random prompt"
+              >
+                <Shuffle className="w-3 h-3 text-white/60" />
+              </button>
+              <button
+                onClick={() => setShowPromptSuggestions(!showPromptSuggestions)}
+                className="p-1.5 bg-white/10 rounded hover:bg-white/20 transition-colors"
+                title="Prompt suggestions"
+              >
+                <Lightbulb className="w-3 h-3 text-white/60" />
+              </button>
+            </div>
+          </div>
+
+          {/* Enhance prompt toggle */}
+          <div className="flex items-center justify-between mt-3">
+            <label className="text-xs text-white/60 flex items-center gap-2">
+              <Sparkles className="w-3 h-3" />
+              Auto-enhance prompt
+            </label>
+            <button
+              onClick={() => setEnhancePrompt(!enhancePrompt)}
+              className={`w-10 h-5 rounded-full transition-colors ${
+                enhancePrompt ? 'bg-rose-gold-400' : 'bg-white/20'
+              }`}
+            >
+              <div className={`w-4 h-4 rounded-full bg-white transition-transform ${
+                enhancePrompt ? 'translate-x-5' : 'translate-x-0.5'
+              }`} />
+            </button>
+          </div>
+        </div>
+
+        {/* Prompt suggestions dropdown */}
+        {showPromptSuggestions && (
+          <div className="morphic-card p-4 rounded-xl">
+            <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-2">
+              Prompt Ideas
+            </h3>
+            <div className="space-y-3 max-h-48 overflow-y-auto">
+              {PROMPT_SUGGESTIONS.slice(0, 4).map(category => (
+                <div key={category.category}>
+                  <span className="text-[10px] text-rose-gold-400/70">{category.category}</span>
+                  <div className="space-y-1 mt-1">
+                    {category.suggestions.slice(0, 2).map(suggestion => (
+                      <button
+                        key={suggestion}
+                        onClick={() => {
+                          setImagePrompt(suggestion)
+                          setShowPromptSuggestions(false)
+                        }}
+                        className="w-full text-left text-xs text-white/60 hover:text-white p-1.5 rounded hover:bg-white/5 transition-colors line-clamp-1"
+                      >
+                        {suggestion}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Style modifiers */}
+        <div className="morphic-card p-4 rounded-xl">
+          <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+            <SlidersHorizontal className="w-4 h-4 text-rose-gold-400" />
+            Style Modifiers
+          </h3>
+          <div className="flex flex-wrap gap-1.5">
+            {STYLE_MODIFIERS.slice(0, 8).map(modifier => (
+              <button
+                key={modifier.id}
+                onClick={() => {
+                  setSelectedModifiers(prev =>
+                    prev.includes(modifier.id)
+                      ? prev.filter(id => id !== modifier.id)
+                      : [...prev, modifier.id]
+                  )
+                }}
+                className={`px-2 py-1 rounded text-[10px] transition-all ${
+                  selectedModifiers.includes(modifier.id)
+                    ? 'bg-rose-gold-400/30 text-rose-gold-400 border border-rose-gold-400/50'
+                    : 'bg-white/5 text-white/60 hover:bg-white/10 border border-transparent'
+                }`}
+              >
+                {modifier.name}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Style Selection */}
         <div className="morphic-card p-4 rounded-xl">
           <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-            <PenTool className="w-4 h-4 text-purple-400" />
+            <PenTool className="w-4 h-4 text-rose-gold-400" />
             Style
           </h3>
           <div className="relative">
             <select
               value={selectedStyle.id}
               onChange={(e) => setSelectedStyle(IMAGE_STYLES.find(s => s.id === e.target.value) || IMAGE_STYLES[0])}
-              className="w-full p-3 bg-white/5 border border-white/10 rounded-lg text-white appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-pink-500/50 text-sm"
+              className="w-full p-3 bg-white/5 border border-white/10 rounded-lg text-white appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-rose-gold-400/50 text-sm"
             >
               {IMAGE_STYLES.map(style => (
                 <option key={style.id} value={style.id} className="bg-dark-500">
@@ -599,20 +840,43 @@ export default function CreativeStudioView() {
           </div>
         </div>
 
+        {/* Model Selection */}
+        <div className="morphic-card p-4 rounded-xl">
+          <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+            <Layers className="w-4 h-4 text-rose-gold-400" />
+            AI Model
+          </h3>
+          <div className="relative">
+            <select
+              value={selectedModel.id}
+              onChange={(e) => setSelectedModel(IMAGE_MODELS.find(m => m.id === e.target.value) || IMAGE_MODELS[0])}
+              className="w-full p-3 bg-white/5 border border-white/10 rounded-lg text-white appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-rose-gold-400/50 text-sm"
+            >
+              {IMAGE_MODELS.map(model => (
+                <option key={model.id} value={model.id} className="bg-dark-500">
+                  {model.name}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 pointer-events-none" />
+          </div>
+          <p className="text-[10px] text-white/40 mt-2">{selectedModel.description}</p>
+        </div>
+
         {/* Size Selection */}
         <div className="morphic-card p-4 rounded-xl">
           <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-            <Layout className="w-4 h-4 text-blue-400" />
+            <Layout className="w-4 h-4 text-rose-gold-400" />
             Size
           </h3>
           <div className="grid grid-cols-3 gap-2">
-            {IMAGE_SIZES.map(size => (
+            {IMAGE_SIZES.slice(0, 6).map(size => (
               <button
                 key={size.id}
                 onClick={() => setSelectedSize(size)}
                 className={`p-2 rounded-lg text-xs transition-all ${
                   selectedSize.id === size.id
-                    ? 'bg-pink-500/20 text-pink-400 border border-pink-500/30'
+                    ? 'bg-rose-gold-400/20 text-rose-gold-400 border border-rose-gold-400/30'
                     : 'bg-white/5 text-white/60 hover:bg-white/10 border border-transparent'
                 }`}
               >
@@ -621,15 +885,51 @@ export default function CreativeStudioView() {
             ))}
           </div>
           <p className="text-[10px] text-white/40 mt-2">
-            {selectedSize.width} x {selectedSize.height}px
+            {selectedSize.width} x {selectedSize.height}px ({selectedSize.aspectRatio})
           </p>
+        </div>
+
+        {/* Negative Prompts */}
+        <div className="morphic-card p-4 rounded-xl">
+          <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+            <X className="w-4 h-4 text-rose-gold-400" />
+            Negative Prompts
+          </h3>
+          <div className="flex flex-wrap gap-1.5 mb-2">
+            {NEGATIVE_PROMPT_PRESETS.map(preset => (
+              <button
+                key={preset.id}
+                onClick={() => {
+                  setSelectedNegativePresets(prev =>
+                    prev.includes(preset.id)
+                      ? prev.filter(id => id !== preset.id)
+                      : [...prev, preset.id]
+                  )
+                }}
+                className={`px-2 py-1 rounded text-[10px] transition-all ${
+                  selectedNegativePresets.includes(preset.id)
+                    ? 'bg-rose-gold-500/20 text-rose-gold-400 border border-rose-gold-400/30'
+                    : 'bg-white/5 text-white/60 hover:bg-white/10 border border-transparent'
+                }`}
+              >
+                {preset.name}
+              </button>
+            ))}
+          </div>
+          <input
+            type="text"
+            value={negativePrompt}
+            onChange={(e) => setNegativePrompt(e.target.value)}
+            placeholder="Custom negative prompts..."
+            className="w-full p-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/30 text-xs focus:outline-none focus:ring-2 focus:ring-rose-gold-400/50"
+          />
         </div>
 
         {/* Generate Button */}
         <button
           onClick={generateImage}
           disabled={!imagePrompt.trim() || isGeneratingImage}
-          className="w-full morphic-btn bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 py-3 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed group"
+          className="w-full morphic-btn bg-gradient-to-r from-rose-gold-400 to-rose-gold-600 text-dark-500 py-3 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed group shadow-lg"
         >
           <span className="flex items-center justify-center gap-2">
             {isGeneratingImage ? (
@@ -646,24 +946,20 @@ export default function CreativeStudioView() {
           </span>
         </button>
 
-        {/* Quick Prompts */}
+        {/* Abstract Art Generator */}
         <div className="morphic-card p-4 rounded-xl">
           <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-2">
-            Quick Prompts
+            Quick Abstract Art
           </h3>
-          <div className="space-y-2">
-            {[
-              'A futuristic city at sunset',
-              'Cute robot reading a book',
-              'Abstract geometric patterns',
-              'Cozy coffee shop interior'
-            ].map(prompt => (
+          <div className="grid grid-cols-5 gap-1">
+            {(['geometric', 'flow', 'particles', 'waves', 'gradient'] as const).map(style => (
               <button
-                key={prompt}
-                onClick={() => setImagePrompt(prompt)}
-                className="w-full text-left text-xs text-white/60 hover:text-white p-2 rounded-lg hover:bg-white/5 transition-colors"
+                key={style}
+                onClick={() => generateAbstractArt(style)}
+                className="p-2 bg-white/5 rounded-lg text-[9px] text-white/60 hover:bg-white/10 hover:text-white transition-colors capitalize"
+                title={`Generate ${style} art`}
               >
-                {prompt}
+                {style.slice(0, 4)}
               </button>
             ))}
           </div>
@@ -675,12 +971,12 @@ export default function CreativeStudioView() {
         {generatedImages.length === 0 ? (
           <div className="h-full flex items-center justify-center">
             <div className="text-center">
-              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-pink-400/20 to-purple-600/20 border border-pink-400/30 flex items-center justify-center mx-auto mb-4">
-                <Image className="w-10 h-10 text-pink-400" />
+              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-rose-gold-400/20 to-rose-gold-600/20 border border-rose-gold-400/30 flex items-center justify-center mx-auto mb-4">
+                <Image className="w-10 h-10 text-rose-gold-400" />
               </div>
               <h2 className="text-xl font-bold text-white mb-2">AI Image Generation</h2>
               <p className="text-white/50 text-sm max-w-md">
-                Describe any image and let AI create it for you. Try different styles for unique results.
+                Powered by Pollinations.ai - Create stunning images from text descriptions for free.
               </p>
             </div>
           </div>
@@ -694,13 +990,16 @@ export default function CreativeStudioView() {
                 <div className="relative aspect-square bg-white/5">
                   {image.status === 'generating' ? (
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <Loader2 className="w-8 h-8 text-pink-400 animate-spin" />
+                      <div className="text-center">
+                        <Loader2 className="w-8 h-8 text-rose-gold-400 animate-spin mx-auto mb-2" />
+                        <p className="text-xs text-white/40">Generating with {image.model}...</p>
+                      </div>
                     </div>
                   ) : image.status === 'error' ? (
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div className="text-center">
-                        <AlertCircle className="w-8 h-8 text-red-400 mx-auto mb-2" />
-                        <p className="text-xs text-red-400">{image.error}</p>
+                        <AlertCircle className="w-8 h-8 text-rose-gold-400 mx-auto mb-2" />
+                        <p className="text-xs text-rose-gold-400">{image.error}</p>
                       </div>
                     </div>
                   ) : (
@@ -708,18 +1007,49 @@ export default function CreativeStudioView() {
                       src={image.url}
                       alt={image.prompt}
                       className="w-full h-full object-cover"
+                      loading="lazy"
                     />
                   )}
 
                   {/* Overlay Actions */}
                   {image.status === 'complete' && (
-                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                    <div className="absolute inset-0 bg-dark-400/80 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 flex-wrap p-4">
                       <button
                         onClick={() => downloadImage(image)}
                         className="p-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors"
-                        title="Download"
+                        title="Download PNG"
                       >
                         <Download className="w-5 h-5 text-white" />
+                      </button>
+                      <button
+                        onClick={() => copyImageToClipboard(image.url)}
+                        className="p-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors"
+                        title="Copy to clipboard"
+                      >
+                        <Copy className="w-5 h-5 text-white" />
+                      </button>
+                      <button
+                        onClick={() => openInEditor(image.url)}
+                        className="p-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors"
+                        title="Edit image"
+                      >
+                        <Edit3 className="w-5 h-5 text-white" />
+                      </button>
+                      <button
+                        onClick={() => shareImage(image)}
+                        className="p-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors"
+                        title="Get share link"
+                      >
+                        <Share2 className="w-5 h-5 text-white" />
+                      </button>
+                      <button
+                        onClick={() => toggleFavorite(image.id)}
+                        className={`p-2 rounded-lg transition-colors ${
+                          image.isFavorite ? 'bg-rose-gold-400/30' : 'bg-white/20 hover:bg-white/30'
+                        }`}
+                        title="Favorite"
+                      >
+                        <Heart className={`w-5 h-5 ${image.isFavorite ? 'text-rose-gold-400 fill-current' : 'text-white'}`} />
                       </button>
                       <button
                         onClick={() => window.open(image.url, '_blank')}
@@ -730,10 +1060,10 @@ export default function CreativeStudioView() {
                       </button>
                       <button
                         onClick={() => deleteImage(image.id)}
-                        className="p-2 bg-red-500/20 rounded-lg hover:bg-red-500/30 transition-colors"
+                        className="p-2 bg-rose-gold-500/20 rounded-lg hover:bg-rose-gold-500/30 transition-colors"
                         title="Delete"
                       >
-                        <Trash2 className="w-5 h-5 text-red-400" />
+                        <Trash2 className="w-5 h-5 text-rose-gold-400" />
                       </button>
                     </div>
                   )}
@@ -746,6 +1076,14 @@ export default function CreativeStudioView() {
                       {image.width}x{image.height}
                     </span>
                   </div>
+                  {image.seed && (
+                    <button
+                      onClick={() => copyToClipboard(image.seed!.toString())}
+                      className="text-[10px] text-white/30 hover:text-white/50 mt-1"
+                    >
+                      Seed: {image.seed}
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
@@ -762,7 +1100,7 @@ export default function CreativeStudioView() {
       <div className="lg:w-80 space-y-4">
         <div className="morphic-card p-4 rounded-xl">
           <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-            <Type className="w-4 h-4 text-blue-400" />
+            <Type className="w-4 h-4 text-rose-gold-400" />
             Content Type
           </h3>
           <div className="grid grid-cols-2 gap-2">
@@ -772,7 +1110,7 @@ export default function CreativeStudioView() {
                 onClick={() => setContentType(type.id as any)}
                 className={`p-3 rounded-lg text-left transition-all ${
                   contentType === type.id
-                    ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                    ? 'bg-rose-gold-400/20 text-rose-gold-400 border border-rose-gold-400/30'
                     : 'bg-white/5 text-white/60 hover:bg-white/10 border border-transparent'
                 }`}
               >
@@ -789,7 +1127,7 @@ export default function CreativeStudioView() {
             value={contentTopic}
             onChange={(e) => setContentTopic(e.target.value)}
             placeholder="What should the content be about?"
-            className="w-full h-24 p-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/30 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-sm"
+            className="w-full h-24 p-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/30 resize-none focus:outline-none focus:ring-2 focus:ring-rose-gold-400/50 text-sm"
           />
         </div>
 
@@ -799,7 +1137,7 @@ export default function CreativeStudioView() {
             <select
               value={contentTone}
               onChange={(e) => setContentTone(e.target.value)}
-              className="w-full p-3 bg-white/5 border border-white/10 rounded-lg text-white appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-sm"
+              className="w-full p-3 bg-white/5 border border-white/10 rounded-lg text-white appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-rose-gold-400/50 text-sm"
             >
               <option value="professional" className="bg-dark-500">Professional</option>
               <option value="casual" className="bg-dark-500">Casual & Friendly</option>
@@ -815,7 +1153,7 @@ export default function CreativeStudioView() {
         <button
           onClick={generateContent}
           disabled={!contentTopic.trim() || isGeneratingContent}
-          className="w-full morphic-btn bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 py-3 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed group"
+          className="w-full morphic-btn py-3 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed group"
         >
           <span className="flex items-center justify-center gap-2">
             {isGeneratingContent ? (
@@ -862,8 +1200,8 @@ export default function CreativeStudioView() {
           {!currentContent && !isGeneratingContent && generatedContent.length === 0 ? (
             <div className="h-full flex items-center justify-center">
               <div className="text-center">
-                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-400/20 to-cyan-600/20 border border-blue-400/30 flex items-center justify-center mx-auto mb-4">
-                  <FileText className="w-10 h-10 text-blue-400" />
+                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-rose-gold-400/20 to-rose-gold-600/20 border border-rose-gold-400/30 flex items-center justify-center mx-auto mb-4">
+                  <FileText className="w-10 h-10 text-rose-gold-400" />
                 </div>
                 <h2 className="text-xl font-bold text-white mb-2">AI Content Generator</h2>
                 <p className="text-white/50 text-sm max-w-md">
@@ -878,7 +1216,7 @@ export default function CreativeStudioView() {
                 <div className="morphic-card p-6 rounded-xl">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                      <Sparkles className="w-5 h-5 text-blue-400" />
+                      <Sparkles className="w-5 h-5 text-rose-gold-400" />
                       {isGeneratingContent ? 'Generating...' : 'Generated Content'}
                     </h3>
                     {currentContent && (
@@ -898,7 +1236,7 @@ export default function CreativeStudioView() {
                       {currentContent || 'Starting generation...'}
                     </pre>
                     {isGeneratingContent && (
-                      <span className="inline-block w-2 h-4 bg-blue-400 animate-pulse ml-1" />
+                      <span className="inline-block w-2 h-4 bg-rose-gold-400 animate-pulse ml-1" />
                     )}
                   </div>
                 </div>
@@ -922,10 +1260,10 @@ export default function CreativeStudioView() {
                       </button>
                       <button
                         onClick={() => deleteContent(content.id)}
-                        className="p-2 bg-red-500/10 rounded-lg hover:bg-red-500/20 transition-colors"
+                        className="p-2 bg-rose-gold-500/10 rounded-lg hover:bg-rose-gold-500/20 transition-colors"
                         title="Delete"
                       >
-                        <Trash2 className="w-4 h-4 text-red-400" />
+                        <Trash2 className="w-4 h-4 text-rose-gold-400" />
                       </button>
                     </div>
                   </div>
@@ -947,7 +1285,7 @@ export default function CreativeStudioView() {
       {/* Color Palette Generator */}
       <div className="morphic-card p-6 rounded-xl">
         <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-          <Palette className="w-5 h-5 text-pink-400" />
+          <Palette className="w-5 h-5 text-rose-gold-400" />
           Color Palette Generator
         </h3>
 
@@ -958,7 +1296,7 @@ export default function CreativeStudioView() {
               <select
                 value={paletteTheme}
                 onChange={(e) => setPaletteTheme(e.target.value)}
-                className="w-full p-3 bg-white/5 border border-white/10 rounded-lg text-white appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-pink-500/50 text-sm"
+                className="w-full p-3 bg-white/5 border border-white/10 rounded-lg text-white appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-rose-gold-400/50 text-sm"
               >
                 {PALETTE_THEMES.map(theme => (
                   <option key={theme} value={theme} className="bg-dark-500">
@@ -973,7 +1311,7 @@ export default function CreativeStudioView() {
           <button
             onClick={generateColorPalette}
             disabled={isGeneratingPalette}
-            className="w-full morphic-btn bg-rose-gold-400/20 text-rose-gold-400 border-rose-gold-400/30 hover:bg-rose-gold-400/30 py-3 text-sm font-semibold disabled:opacity-50"
+            className="w-full morphic-btn py-3 text-sm font-semibold disabled:opacity-50"
           >
             {isGeneratingPalette ? (
               <span className="flex items-center justify-center gap-2">
@@ -1004,10 +1342,10 @@ export default function CreativeStudioView() {
                     </button>
                     <button
                       onClick={() => deletePalette(palette.id)}
-                      className="p-1 hover:bg-red-500/20 rounded"
+                      className="p-1 hover:bg-rose-gold-500/20 rounded"
                       title="Delete"
                     >
-                      <Trash2 className="w-3 h-3 text-red-400" />
+                      <Trash2 className="w-3 h-3 text-rose-gold-400" />
                     </button>
                   </div>
                 </div>
@@ -1020,7 +1358,7 @@ export default function CreativeStudioView() {
                       style={{ backgroundColor: color }}
                       title={color}
                     >
-                      <span className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 text-white text-[10px] font-mono">
+                      <span className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-dark-400/60 text-white text-[10px] font-mono">
                         {color}
                       </span>
                     </button>
@@ -1035,7 +1373,7 @@ export default function CreativeStudioView() {
       {/* Font Pairing Suggestions */}
       <div className="morphic-card p-6 rounded-xl">
         <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-          <Type className="w-5 h-5 text-blue-400" />
+          <Type className="w-5 h-5 text-rose-gold-400" />
           Font Pairing Suggestions
         </h3>
 
@@ -1046,14 +1384,14 @@ export default function CreativeStudioView() {
               onClick={() => setSelectedFontPairing(pairing)}
               className={`w-full p-4 rounded-lg text-left transition-all ${
                 selectedFontPairing === pairing
-                  ? 'bg-blue-500/20 border border-blue-500/30'
+                  ? 'bg-rose-gold-400/20 border border-rose-gold-400/30'
                   : 'bg-white/5 hover:bg-white/10 border border-transparent'
               }`}
             >
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs text-white/40">Pairing #{index + 1}</span>
                 {selectedFontPairing === pairing && (
-                  <CheckCircle2 className="w-4 h-4 text-blue-400" />
+                  <CheckCircle2 className="w-4 h-4 text-rose-gold-400" />
                 )}
               </div>
               <div className="space-y-1">
@@ -1074,12 +1412,12 @@ export default function CreativeStudioView() {
         {selectedFontPairing && (
           <div className="mt-4 p-4 bg-white/5 rounded-lg">
             <h4 className="text-sm font-semibold text-white mb-3">CSS Import</h4>
-            <pre className="text-xs text-white/60 bg-black/30 p-3 rounded overflow-x-auto">
+            <pre className="text-xs text-white/60 bg-dark-400/50 p-3 rounded overflow-x-auto">
 {`@import url('https://fonts.googleapis.com/css2?family=${selectedFontPairing.heading.replace(' ', '+')}&family=${selectedFontPairing.body.replace(' ', '+')}&family=${selectedFontPairing.accent.replace(' ', '+')}&display=swap');`}
             </pre>
             <button
               onClick={() => copyToClipboard(`@import url('https://fonts.googleapis.com/css2?family=${selectedFontPairing.heading.replace(' ', '+')}&family=${selectedFontPairing.body.replace(' ', '+')}&family=${selectedFontPairing.accent.replace(' ', '+')}&display=swap');`)}
-              className="mt-2 text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1"
+              className="mt-2 text-xs text-rose-gold-400 hover:text-rose-gold-300 flex items-center gap-1"
             >
               <Copy className="w-3 h-3" />
               Copy import
@@ -1091,7 +1429,7 @@ export default function CreativeStudioView() {
       {/* Layout Recommendations */}
       <div className="morphic-card p-6 rounded-xl lg:col-span-2">
         <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-          <Layout className="w-5 h-5 text-green-400" />
+          <Layout className="w-5 h-5 text-rose-gold-400" />
           Layout Recommendations
         </h3>
 
@@ -1119,7 +1457,7 @@ export default function CreativeStudioView() {
               <ul className="space-y-1">
                 {layout.tips.map((tip, i) => (
                   <li key={i} className="text-xs text-white/60 flex items-center gap-2">
-                    <CheckCircle2 className="w-3 h-3 text-green-400 flex-shrink-0" />
+                    <CheckCircle2 className="w-3 h-3 text-rose-gold-400 flex-shrink-0" />
                     {tip}
                   </li>
                 ))}
@@ -1131,167 +1469,228 @@ export default function CreativeStudioView() {
     </div>
   )
 
-  // Render Gallery Tab
-  const renderGalleryTab = () => (
-    <div className="h-full overflow-y-auto morphic-scrollbar p-4">
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* Images Section */}
-        <div className="lg:col-span-2">
-          <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-            <Image className="w-5 h-5 text-pink-400" />
-            Generated Images ({generatedImages.filter(i => i.status === 'complete').length})
-          </h3>
+  // Render Templates Tab
+  const renderTemplatesTab = () => (
+    <Suspense fallback={
+      <div className="flex items-center justify-center h-full">
+        <Loader2 className="w-8 h-8 text-rose-gold-400 animate-spin" />
+      </div>
+    }>
+      <TemplateLibrary
+        onSelectTemplate={handleTemplateSelect}
+      />
+    </Suspense>
+  )
 
-          {generatedImages.filter(i => i.status === 'complete').length === 0 ? (
-            <div className="morphic-card p-8 rounded-xl text-center">
-              <Image className="w-12 h-12 text-white/20 mx-auto mb-3" />
-              <p className="text-white/40 text-sm">No images generated yet</p>
+  // Render Gallery Tab
+  const renderGalleryTab = () => {
+    const filteredImages = galleryFilter === 'favorites'
+      ? galleryImages.filter(img => img.isFavorite)
+      : galleryImages
+
+    return (
+      <div className="h-full w-full flex flex-col">
+        {/* Gallery Header */}
+        <div className="p-4 border-b border-white/10 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+              <Grid className="w-5 h-5 text-rose-gold-400" />
+              Gallery ({filteredImages.length})
+            </h3>
+            <div className="flex gap-1 bg-white/5 rounded-lg p-1">
+              <button
+                onClick={() => setGalleryFilter('all')}
+                className={`px-3 py-1 rounded text-xs transition-colors ${
+                  galleryFilter === 'all'
+                    ? 'bg-rose-gold-400/20 text-rose-gold-400'
+                    : 'text-white/60 hover:text-white'
+                }`}
+              >
+                All
+              </button>
+              <button
+                onClick={() => setGalleryFilter('favorites')}
+                className={`px-3 py-1 rounded text-xs transition-colors flex items-center gap-1 ${
+                  galleryFilter === 'favorites'
+                    ? 'bg-rose-gold-400/20 text-rose-gold-400'
+                    : 'text-white/60 hover:text-white'
+                }`}
+              >
+                <Heart className="w-3 h-3" />
+                Favorites
+              </button>
+            </div>
+          </div>
+
+          {galleryImages.length > 0 && (
+            <button
+              onClick={() => {
+                if (confirm('Clear all images from gallery?')) {
+                  imageGenerationService.clearGallery()
+                  setGalleryImages([])
+                  setNotification({ type: 'success', message: 'Gallery cleared' })
+                }
+              }}
+              className="text-xs text-rose-gold-400 hover:text-rose-gold-400 flex items-center gap-1"
+            >
+              <Trash2 className="w-3 h-3" />
+              Clear All
+            </button>
+          )}
+        </div>
+
+        {/* Gallery Grid */}
+        <div className="flex-1 overflow-y-auto morphic-scrollbar p-4">
+          {filteredImages.length === 0 ? (
+            <div className="h-full flex items-center justify-center">
+              <div className="text-center">
+                <FolderOpen className="w-12 h-12 text-white/20 mx-auto mb-3" />
+                <p className="text-white/40">
+                  {galleryFilter === 'favorites' ? 'No favorite images yet' : 'No images in gallery'}
+                </p>
+                {galleryFilter === 'all' && (
+                  <p className="text-white/30 text-sm mt-1">
+                    Generate some images to see them here
+                  </p>
+                )}
+              </div>
             </div>
           ) : (
-            <div className="grid sm:grid-cols-2 gap-4">
-              {generatedImages
-                .filter(i => i.status === 'complete')
-                .map(image => (
-                  <div key={image.id} className="morphic-card rounded-xl overflow-hidden group">
-                    <div className="relative aspect-square">
-                      <img
-                        src={image.url}
-                        alt={image.prompt}
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+              {filteredImages.map(image => (
+                <div
+                  key={image.id}
+                  className="group relative aspect-square rounded-xl overflow-hidden bg-white/5 cursor-pointer"
+                  onClick={() => setSelectedGalleryImage(image)}
+                >
+                  <img
+                    src={image.url}
+                    alt={image.prompt}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+
+                  {/* Favorite indicator */}
+                  {image.isFavorite && (
+                    <div className="absolute top-2 right-2">
+                      <Heart className="w-4 h-4 text-rose-gold-400 fill-current" />
+                    </div>
+                  )}
+
+                  {/* Hover overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-dark-500/90 via-dark-500/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3">
+                    <p className="text-xs text-white truncate">{image.prompt}</p>
+                    <div className="flex items-center justify-between mt-1">
+                      <span className="text-[10px] text-white/50">{image.style}</span>
+                      <div className="flex gap-1">
                         <button
-                          onClick={() => downloadImage(image)}
-                          className="p-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            openInEditor(image.url)
+                          }}
+                          className="p-1 bg-white/20 rounded hover:bg-white/30 transition-colors"
                         >
-                          <Download className="w-5 h-5 text-white" />
+                          <Edit3 className="w-3 h-3 text-white" />
                         </button>
                         <button
-                          onClick={() => deleteImage(image.id)}
-                          className="p-2 bg-red-500/20 rounded-lg hover:bg-red-500/30 transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            downloadImage(image)
+                          }}
+                          className="p-1 bg-white/20 rounded hover:bg-white/30 transition-colors"
                         >
-                          <Trash2 className="w-5 h-5 text-red-400" />
+                          <Download className="w-3 h-3 text-white" />
                         </button>
                       </div>
                     </div>
-                    <div className="p-3">
-                      <p className="text-sm text-white truncate">{image.prompt}</p>
-                      <p className="text-xs text-white/40">{image.style}</p>
-                    </div>
                   </div>
-                ))}
+                </div>
+              ))}
             </div>
           )}
         </div>
 
-        {/* Content & Palettes Section */}
-        <div className="space-y-6">
-          {/* Generated Content */}
-          <div>
-            <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-              <FileText className="w-5 h-5 text-blue-400" />
-              Generated Content ({generatedContent.length})
-            </h3>
-
-            {generatedContent.length === 0 ? (
-              <div className="morphic-card p-6 rounded-xl text-center">
-                <FileText className="w-10 h-10 text-white/20 mx-auto mb-2" />
-                <p className="text-white/40 text-sm">No content generated yet</p>
+        {/* Image Preview Modal */}
+        {selectedGalleryImage && (
+          <div
+            className="fixed inset-0 bg-dark-500/95 z-50 flex items-center justify-center p-4"
+            onClick={() => setSelectedGalleryImage(null)}
+          >
+            <div
+              className="max-w-4xl max-h-full flex flex-col"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-white truncate max-w-md">
+                    {selectedGalleryImage.prompt}
+                  </h3>
+                  <p className="text-sm text-white/50">
+                    {selectedGalleryImage.style} - {selectedGalleryImage.width}x{selectedGalleryImage.height}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => toggleFavorite(selectedGalleryImage.id)}
+                    className={`p-2 rounded-lg transition-colors ${
+                      selectedGalleryImage.isFavorite ? 'bg-rose-gold-400/20' : 'bg-white/10 hover:bg-white/20'
+                    }`}
+                  >
+                    <Heart className={`w-5 h-5 ${selectedGalleryImage.isFavorite ? 'text-rose-gold-400 fill-current' : 'text-white'}`} />
+                  </button>
+                  <button
+                    onClick={() => openInEditor(selectedGalleryImage.url)}
+                    className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
+                  >
+                    <Edit3 className="w-5 h-5 text-white" />
+                  </button>
+                  <button
+                    onClick={() => downloadImage(selectedGalleryImage)}
+                    className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
+                  >
+                    <Download className="w-5 h-5 text-white" />
+                  </button>
+                  <button
+                    onClick={() => copyImageToClipboard(selectedGalleryImage.url)}
+                    className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
+                  >
+                    <Copy className="w-5 h-5 text-white" />
+                  </button>
+                  <button
+                    onClick={() => setSelectedGalleryImage(null)}
+                    className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
+                  >
+                    <X className="w-5 h-5 text-white" />
+                  </button>
+                </div>
               </div>
-            ) : (
-              <div className="space-y-3">
-                {generatedContent.slice(0, 5).map(content => (
-                  <div key={content.id} className="morphic-card p-4 rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-white font-medium truncate flex-1">
-                        {content.title}
-                      </span>
-                      <span className="text-xs text-white/40 capitalize ml-2">{content.type}</span>
-                    </div>
-                    <p className="text-xs text-white/50 line-clamp-2">
-                      {content.content.slice(0, 150)}...
-                    </p>
-                    <div className="flex gap-2 mt-2">
-                      <button
-                        onClick={() => copyToClipboard(content.content)}
-                        className="text-xs text-blue-400 hover:text-blue-300"
-                      >
-                        Copy
-                      </button>
-                      <button
-                        onClick={() => deleteContent(content.id)}
-                        className="text-xs text-red-400 hover:text-red-300"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+              <img
+                src={selectedGalleryImage.url}
+                alt={selectedGalleryImage.prompt}
+                className="max-h-[70vh] rounded-xl object-contain"
+              />
+            </div>
           </div>
-
-          {/* Color Palettes */}
-          <div>
-            <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-              <Palette className="w-5 h-5 text-pink-400" />
-              Color Palettes ({palettes.length})
-            </h3>
-
-            {palettes.length === 0 ? (
-              <div className="morphic-card p-6 rounded-xl text-center">
-                <Palette className="w-10 h-10 text-white/20 mx-auto mb-2" />
-                <p className="text-white/40 text-sm">No palettes generated yet</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {palettes.slice(0, 5).map(palette => (
-                  <div key={palette.id} className="morphic-card p-3 rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-white">{palette.name}</span>
-                      <button
-                        onClick={() => deletePalette(palette.id)}
-                        className="text-xs text-red-400 hover:text-red-300"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                    <div className="flex gap-1 rounded overflow-hidden">
-                      {palette.colors.map((color, i) => (
-                        <div
-                          key={i}
-                          className="flex-1 h-8 cursor-pointer"
-                          style={{ backgroundColor: color }}
-                          onClick={() => copyToClipboard(color)}
-                          title={`Click to copy: ${color}`}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+        )}
       </div>
-    </div>
-  )
+    )
+  }
 
   return (
-    <div className="h-full flex flex-col bg-dark-500 overflow-hidden">
+    <div className="h-full w-full flex flex-col bg-dark-500 overflow-hidden">
       {/* Header */}
       <div className="glass-morphic-header p-4 border-b border-white/10">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-4">
-            {/* Alabobai Logo */}
+            {/* Brand Logo */}
             <div className="flex items-center gap-2">
-              <img src="/logo.png" alt="Alabobai" className="w-8 h-8 rounded-lg" />
+              <img src={BRAND.assets.logo} alt={BRAND.name} className="w-8 h-8 object-contain logo-render" />
               <div className="h-6 w-px bg-white/10" />
             </div>
             {/* View Header */}
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-400 to-purple-600 flex items-center justify-center shadow-glow-lg">
-                <Palette className="w-5 h-5 text-white" />
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-gold-400 to-rose-gold-600 flex items-center justify-center shadow-glow-lg">
+                <Palette className="w-5 h-5 text-dark-500" />
               </div>
               <div>
                 <h2 className="text-lg font-bold text-white">Creative Studio</h2>
@@ -1310,20 +1709,59 @@ export default function CreativeStudioView() {
         {activeTab === 'video' && renderVideoTab()}
         {activeTab === 'content' && renderContentTab()}
         {activeTab === 'design' && renderDesignTab()}
+        {activeTab === 'templates' && renderTemplatesTab()}
         {activeTab === 'gallery' && renderGalleryTab()}
       </div>
 
+      {/* Image Editor Modal */}
+      {showEditor && editingImage && (
+        <div className="fixed inset-0 bg-dark-500/95 z-50 p-4">
+          <Suspense fallback={
+            <div className="h-full flex items-center justify-center">
+              <Loader2 className="w-8 h-8 text-rose-gold-400 animate-spin" />
+            </div>
+          }>
+            <ImageEditor
+              imageUrl={editingImage}
+              onSave={(dataUrl) => {
+                // Save edited image to gallery
+                const editedImage: GeneratedImage = {
+                  id: crypto.randomUUID(),
+                  prompt: 'Edited image',
+                  style: 'Custom',
+                  url: dataUrl,
+                  width: 0,
+                  height: 0,
+                  model: 'Editor',
+                  createdAt: new Date(),
+                  status: 'complete'
+                }
+                setGeneratedImages(prev => [editedImage, ...prev])
+                setGalleryImages(prev => [editedImage, ...prev])
+                setShowEditor(false)
+                setEditingImage(null)
+                setNotification({ type: 'success', message: 'Image saved!' })
+              }}
+              onClose={() => {
+                setShowEditor(false)
+                setEditingImage(null)
+              }}
+            />
+          </Suspense>
+        </div>
+      )}
+
       {/* Notification Toast */}
       {notification && (
-        <div className={`fixed bottom-4 right-4 p-4 rounded-xl shadow-xl flex items-center gap-3 animate-slide-in ${
+        <div className={`fixed bottom-4 right-4 p-4 rounded-xl shadow-xl flex items-center gap-3 animate-slide-in z-50 ${
           notification.type === 'success'
-            ? 'bg-green-500/20 border border-green-500/30'
-            : 'bg-red-500/20 border border-red-500/30'
+            ? 'bg-rose-gold-400/20 border border-rose-gold-400/30'
+            : 'bg-rose-gold-500/20 border border-rose-gold-400/30'
         }`}>
           {notification.type === 'success' ? (
-            <CheckCircle2 className="w-5 h-5 text-green-400" />
+            <CheckCircle2 className="w-5 h-5 text-rose-gold-400" />
           ) : (
-            <AlertCircle className="w-5 h-5 text-red-400" />
+            <AlertCircle className="w-5 h-5 text-rose-gold-400" />
           )}
           <span className="text-white text-sm">{notification.message}</span>
           <button

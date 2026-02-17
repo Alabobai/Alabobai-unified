@@ -14,13 +14,121 @@ import {
   SlidersHorizontal,
   Waves,
   Play,
-  Sparkles
+  Sparkles,
+  RefreshCw,
+  Zap,
+  Radio,
+  Bell,
+  BellOff
 } from 'lucide-react'
-import { voiceService, type NeuralVoice } from '@/services/voiceService'
+import { voiceService, type NeuralVoice, type BrowserVoice, VOICE_COMMANDS } from '@/services/voiceService'
 import { useAppStore } from '@/stores/appStore'
 import aiService from '@/services/ai'
+import { BRAND } from '@/config/brand'
 
-type VoiceStatus = 'idle' | 'listening' | 'processing' | 'speaking' | 'error'
+type VoiceStatus = 'idle' | 'listening' | 'processing' | 'speaking' | 'error' | 'wake_word'
+
+// Waveform component for real-time audio visualization
+function AudioWaveform({
+  isActive,
+  volume,
+  status
+}: {
+  isActive: boolean
+  volume: number
+  status: VoiceStatus
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const animationRef = useRef<number | null>(null)
+  const barsRef = useRef<number[]>(Array(32).fill(0))
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    const animate = () => {
+      const width = canvas.width
+      const height = canvas.height
+      const barCount = 32
+      const barWidth = width / barCount - 2
+      const maxBarHeight = height * 0.8
+
+      // Clear canvas
+      ctx.clearRect(0, 0, width, height)
+
+      // Update bars based on status
+      for (let i = 0; i < barCount; i++) {
+        let targetHeight = 0
+
+        if (status === 'listening' || status === 'wake_word') {
+          // Use actual volume with some randomness for visual interest
+          targetHeight = isActive
+            ? (volume * maxBarHeight * 0.7) + (Math.random() * maxBarHeight * 0.3)
+            : Math.random() * maxBarHeight * 0.1 + 5
+        } else if (status === 'speaking') {
+          // Animated wave pattern when speaking
+          const time = Date.now() / 200
+          targetHeight = (Math.sin(time + i * 0.5) * 0.5 + 0.5) * maxBarHeight * 0.6 + 10
+        } else if (status === 'processing') {
+          // Loading animation
+          const time = Date.now() / 150
+          const wave = Math.sin(time + i * 0.3) * 0.5 + 0.5
+          targetHeight = wave * maxBarHeight * 0.4 + 5
+        } else {
+          targetHeight = 5
+        }
+
+        // Smooth transition
+        barsRef.current[i] += (targetHeight - barsRef.current[i]) * 0.15
+        const barHeight = Math.max(3, barsRef.current[i])
+
+        // Gradient color based on status
+        let color = 'rgba(255, 255, 255, 0.2)'
+        if (status === 'listening') {
+          const intensity = barHeight / maxBarHeight
+          color = `rgba(244, 63, 94, ${0.4 + intensity * 0.6})` // rose-500
+        } else if (status === 'wake_word') {
+          color = `rgba(34, 197, 94, ${0.4 + (barHeight / maxBarHeight) * 0.6})` // green-500
+        } else if (status === 'speaking') {
+          color = `rgba(168, 85, 247, ${0.4 + (barHeight / maxBarHeight) * 0.6})` // purple-500
+        } else if (status === 'processing') {
+          color = `rgba(251, 191, 36, ${0.4 + (barHeight / maxBarHeight) * 0.6})` // amber-400
+        }
+
+        ctx.fillStyle = color
+        const x = i * (barWidth + 2) + 1
+        const y = (height - barHeight) / 2
+
+        // Rounded rectangle
+        ctx.beginPath()
+        ctx.roundRect(x, y, barWidth, barHeight, 2)
+        ctx.fill()
+      }
+
+      animationRef.current = requestAnimationFrame(animate)
+    }
+
+    animate()
+
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current)
+      }
+    }
+  }, [isActive, volume, status])
+
+  return (
+    <canvas
+      ref={canvasRef}
+      width={300}
+      height={60}
+      className="w-full h-[60px]"
+    />
+  )
+}
 
 export default function VoiceInterfaceView() {
   // State
@@ -38,11 +146,20 @@ export default function VoiceInterfaceView() {
   // Voice settings
   const [selectedLanguage, setSelectedLanguage] = useState('en-US')
   const [neuralVoices, setNeuralVoices] = useState<NeuralVoice[]>([])
+  const [browserVoices, setBrowserVoices] = useState<BrowserVoice[]>([])
   const [selectedVoiceId, setSelectedVoiceId] = useState('brian')
+  const [selectedBrowserVoiceURI, setSelectedBrowserVoiceURI] = useState('')
   const [speechRate, setSpeechRate] = useState(1)
+  const [speechPitch, setSpeechPitch] = useState(1)
   const [speechVolume, setSpeechVolume] = useState(1)
   const [useNeural, setUseNeural] = useState(true)
   const [previewingVoice, setPreviewingVoice] = useState<string | null>(null)
+  const [wakeWordEnabled, setWakeWordEnabled] = useState(false)
+
+  // Voice activity state
+  const [voiceActive, setVoiceActive] = useState(false)
+  const [currentVolume, setCurrentVolume] = useState(0)
+  const [micPermission, setMicPermission] = useState<PermissionState>('prompt')
 
   // Animation state
   const [waveformIntensity, setWaveformIntensity] = useState(0)
@@ -63,12 +180,27 @@ export default function VoiceInterfaceView() {
     const voices = voiceService.getNeuralVoices()
     setNeuralVoices(voices)
 
+    // Load browser voices
+    const loadBrowserVoices = () => {
+      const bVoices = voiceService.getBrowserVoices()
+      setBrowserVoices(bVoices)
+    }
+    loadBrowserVoices()
+    // Reload when voices change
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.onvoiceschanged = loadBrowserVoices
+    }
+
     // Get current speech config
     const config = voiceService.getSpeechConfig()
     setSelectedVoiceId(config.voice)
     setSpeechRate(config.rate)
+    setSpeechPitch(config.pitch)
     setSpeechVolume(config.volume)
     setUseNeural(config.useNeural)
+
+    // Check microphone permission
+    voiceService.checkMicrophonePermission().then(setMicPermission)
   }, [])
 
   // Apply voice settings changes
@@ -85,12 +217,22 @@ export default function VoiceInterfaceView() {
   }, [speechRate])
 
   useEffect(() => {
+    voiceService.setPitch(speechPitch)
+  }, [speechPitch])
+
+  useEffect(() => {
     voiceService.setVolume(speechVolume)
   }, [speechVolume])
 
   useEffect(() => {
     voiceService.setUseNeural(useNeural)
   }, [useNeural])
+
+  useEffect(() => {
+    if (selectedBrowserVoiceURI) {
+      voiceService.setBrowserVoice(selectedBrowserVoiceURI)
+    }
+  }, [selectedBrowserVoiceURI])
 
   // Waveform animation
   const startWaveformAnimation = useCallback(() => {
@@ -108,10 +250,54 @@ export default function VoiceInterfaceView() {
     setWaveformIntensity(0)
   }, [])
 
+  // Handle voice commands
+  const handleVoiceCommand = useCallback((command: string) => {
+    switch (command) {
+      case 'STOP_LISTENING':
+        stopListening()
+        break
+      case 'READ_AGAIN':
+        voiceService.repeatLastResponse(() => {
+          setVoiceStatus('idle')
+          stopWaveformAnimation()
+        })
+        setVoiceStatus('speaking')
+        startWaveformAnimation()
+        break
+      case 'CLEAR':
+        clearConversation()
+        break
+      case 'SEND':
+        sendToAI()
+        break
+    }
+  }, [])
+
+  // Handle wake word detection
+  const handleWakeWord = useCallback(() => {
+    setVoiceStatus('wake_word')
+    // Play a subtle acknowledgment sound or visual feedback
+    setTimeout(() => {
+      if (voiceService.getIsListening()) {
+        setVoiceStatus('listening')
+      }
+    }, 1500)
+  }, [])
+
   // Start listening
-  const startListening = useCallback(() => {
+  const startListening = useCallback(async () => {
     setError(null)
     setInterimTranscript('')
+
+    // Request permission if needed
+    if (micPermission !== 'granted') {
+      const granted = await voiceService.requestMicrophonePermission()
+      if (!granted) {
+        setError('Microphone permission is required for voice input')
+        return
+      }
+      setMicPermission('granted')
+    }
 
     const success = voiceService.startListening(
       (text, isFinal) => {
@@ -126,6 +312,16 @@ export default function VoiceInterfaceView() {
         setError(errorMsg)
         setVoiceStatus('error')
         stopWaveformAnimation()
+        setVoiceActive(false)
+      },
+      {
+        onVoiceActivity: (isActive, volume) => {
+          setVoiceActive(isActive)
+          setCurrentVolume(volume)
+        },
+        onVoiceCommand: handleVoiceCommand,
+        onWakeWord: handleWakeWord,
+        enableWakeWord: wakeWordEnabled
       }
     )
 
@@ -133,18 +329,20 @@ export default function VoiceInterfaceView() {
       setVoiceStatus('listening')
       startWaveformAnimation()
     }
-  }, [startWaveformAnimation, stopWaveformAnimation])
+  }, [startWaveformAnimation, stopWaveformAnimation, handleVoiceCommand, handleWakeWord, wakeWordEnabled, micPermission])
 
   // Stop listening
   const stopListening = useCallback(() => {
     voiceService.stopListening()
     setVoiceStatus('idle')
     stopWaveformAnimation()
+    setVoiceActive(false)
+    setCurrentVolume(0)
   }, [stopWaveformAnimation])
 
   // Toggle listening
   const toggleListening = useCallback(() => {
-    if (voiceStatus === 'listening') {
+    if (voiceStatus === 'listening' || voiceStatus === 'wake_word') {
       stopListening()
     } else if (voiceStatus === 'idle' || voiceStatus === 'error') {
       startListening()
@@ -253,6 +451,19 @@ export default function VoiceInterfaceView() {
     stopWaveformAnimation()
   }, [stopWaveformAnimation])
 
+  // Repeat last response
+  const repeatLastResponse = useCallback(() => {
+    const lastResponse = voiceService.getLastResponse()
+    if (lastResponse) {
+      setVoiceStatus('speaking')
+      startWaveformAnimation()
+      voiceService.repeatLastResponse(() => {
+        setVoiceStatus('idle')
+        stopWaveformAnimation()
+      })
+    }
+  }, [startWaveformAnimation, stopWaveformAnimation])
+
   // Test/preview voice
   const previewVoice = useCallback(async (voiceId: string) => {
     setPreviewingVoice(voiceId)
@@ -279,26 +490,65 @@ export default function VoiceInterfaceView() {
 
   const languages = voiceService.getSupportedLanguages()
 
+  // Get status color
+  const getStatusColor = () => {
+    switch (voiceStatus) {
+      case 'listening': return 'from-rose-400 to-rose-600'
+      case 'wake_word': return 'from-rose-gold-500 to-rose-gold-600'
+      case 'speaking': return 'from-rose-gold-500 to-rose-gold-600'
+      case 'processing': return 'from-rose-gold-500 to-rose-gold-600'
+      case 'error': return 'from-rose-gold-500 to-rose-gold-600'
+      default: return 'from-rose-gold-400 to-rose-gold-600'
+    }
+  }
+
+  // Get pulse animation
+  const getPulseClass = () => {
+    if (voiceStatus === 'listening' && voiceActive) return 'animate-pulse'
+    if (voiceStatus === 'wake_word') return 'animate-bounce'
+    if (voiceStatus === 'speaking') return 'animate-pulse'
+    return ''
+  }
+
   return (
-    <div className="h-full flex flex-col bg-dark-400">
+    <div className="h-full w-full flex flex-col bg-dark-400">
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center animate-pulse-glow">
-            <Mic className="w-5 h-5 text-white" />
+          <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${getStatusColor()} flex items-center justify-center ${getPulseClass()}`}>
+            {voiceStatus === 'speaking' ? (
+              <Waves className="w-5 h-5 text-dark-500" />
+            ) : voiceStatus === 'wake_word' ? (
+              <Zap className="w-5 h-5 text-dark-500" />
+            ) : (
+              <Mic className="w-5 h-5 text-dark-500" />
+            )}
           </div>
           <div>
             <h2 className="text-lg font-semibold text-white">Voice Interface</h2>
             <p className="text-xs text-white/40">
               {voiceStatus === 'idle' && 'Ready to listen'}
-              {voiceStatus === 'listening' && 'Listening...'}
+              {voiceStatus === 'listening' && (voiceActive ? 'Hearing you...' : 'Listening...')}
               {voiceStatus === 'processing' && 'Processing...'}
               {voiceStatus === 'speaking' && 'Speaking...'}
+              {voiceStatus === 'wake_word' && 'Wake word detected!'}
               {voiceStatus === 'error' && 'Error occurred'}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {/* Wake Word Toggle */}
+          <button
+            onClick={() => setWakeWordEnabled(!wakeWordEnabled)}
+            className={`p-2 rounded-lg transition-colors ${
+              wakeWordEnabled
+                ? 'text-rose-gold-400 bg-rose-gold-500/10'
+                : 'text-white/60 hover:text-white hover:bg-white/5'
+            }`}
+            title={wakeWordEnabled ? `Wake word ON (say "Hey ${BRAND.name}")` : 'Wake word OFF'}
+          >
+            {wakeWordEnabled ? <Bell className="w-5 h-5" /> : <BellOff className="w-5 h-5" />}
+          </button>
           <button
             onClick={() => setVoiceOutputEnabled(!voiceOutputEnabled)}
             className={`p-2 rounded-lg transition-colors ${
@@ -325,12 +575,12 @@ export default function VoiceInterfaceView() {
 
       {/* Browser Support Warning */}
       {(!speechRecognitionSupported || !speechSynthesisSupported) && (
-        <div className="mx-6 mt-4 p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
-          <div className="flex items-center gap-2 text-yellow-400">
+        <div className="mx-6 mt-4 p-4 rounded-lg bg-rose-gold-500/10 border border-rose-gold-400/30">
+          <div className="flex items-center gap-2 text-rose-gold-400">
             <AlertCircle className="w-5 h-5" />
             <span className="font-medium">Limited Browser Support</span>
           </div>
-          <p className="text-sm text-yellow-400/70 mt-1">
+          <p className="text-sm text-rose-gold-400/70 mt-1">
             {!speechRecognitionSupported && 'Speech recognition is not supported. '}
             {!speechSynthesisSupported && 'Speech synthesis is not supported. '}
             Try using Chrome or Edge for full functionality.
@@ -338,9 +588,32 @@ export default function VoiceInterfaceView() {
         </div>
       )}
 
+      {/* Microphone Permission Request */}
+      {micPermission === 'denied' && (
+        <div className="mx-6 mt-4 p-4 rounded-lg bg-rose-gold-500/10 border border-rose-gold-400/30">
+          <div className="flex items-center gap-2 text-rose-gold-400">
+            <MicOff className="w-5 h-5" />
+            <span className="font-medium">Microphone Access Denied</span>
+          </div>
+          <p className="text-sm text-rose-gold-400/70 mt-1">
+            Please enable microphone access in your browser settings to use voice input.
+          </p>
+        </div>
+      )}
+
+      {/* Voice Commands Help */}
+      {voiceStatus === 'listening' && (
+        <div className="mx-6 mt-4 p-3 rounded-lg bg-rose-gold-400/5 border border-rose-gold-400/20">
+          <p className="text-xs text-white/50 flex items-center gap-2">
+            <Radio className="w-3 h-3 text-rose-gold-400" />
+            Voice commands: "Stop listening" | "Read that again" | "Clear" | "Send"
+          </p>
+        </div>
+      )}
+
       {/* Settings Panel */}
       {showSettings && (
-        <div className="mx-6 mt-4 p-4 rounded-xl bg-dark-300/50 border border-white/10 space-y-4 max-h-96 overflow-y-auto morphic-scrollbar">
+        <div className="mx-6 mt-4 p-4 rounded-xl bg-dark-300/50 border border-white/10 space-y-4 max-h-[400px] overflow-y-auto morphic-scrollbar">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-white/80 font-medium">
               <SlidersHorizontal className="w-4 h-4" />
@@ -392,85 +665,106 @@ export default function VoiceInterfaceView() {
           </div>
 
           {/* Neural Voice Selection */}
-          <div>
-            <label className="text-sm text-white/60 mb-2 block">Output Voice</label>
-
-            {/* Female Voices */}
-            <div className="mb-3">
-              <span className="text-xs text-white/40 uppercase tracking-wider">Female Voices</span>
-              <div className="mt-2 grid grid-cols-2 gap-2">
-                {neuralVoices.filter(v => v.gender === 'female').map((voice) => (
-                  <button
-                    key={voice.id}
-                    onClick={() => setSelectedVoiceId(voice.id)}
-                    className={`group relative p-2 rounded-lg text-left transition-all ${
-                      selectedVoiceId === voice.id
-                        ? 'bg-rose-gold-400/20 border border-rose-gold-400/50'
-                        : 'bg-dark-500/50 border border-white/5 hover:border-white/20'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className={`text-sm ${selectedVoiceId === voice.id ? 'text-rose-gold-400' : 'text-white/80'}`}>
-                        {voice.name}
-                      </span>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          previewVoice(voice.id)
-                        }}
-                        disabled={previewingVoice === voice.id}
-                        className="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-white/10 transition-all"
-                      >
-                        {previewingVoice === voice.id ? (
-                          <Loader2 className="w-3 h-3 text-rose-gold-400 animate-spin" />
-                        ) : (
-                          <Play className="w-3 h-3 text-white/60" />
-                        )}
-                      </button>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Male Voices */}
+          {useNeural && (
             <div>
-              <span className="text-xs text-white/40 uppercase tracking-wider">Male Voices</span>
-              <div className="mt-2 grid grid-cols-2 gap-2">
-                {neuralVoices.filter(v => v.gender === 'male').map((voice) => (
-                  <button
-                    key={voice.id}
-                    onClick={() => setSelectedVoiceId(voice.id)}
-                    className={`group relative p-2 rounded-lg text-left transition-all ${
-                      selectedVoiceId === voice.id
-                        ? 'bg-rose-gold-400/20 border border-rose-gold-400/50'
-                        : 'bg-dark-500/50 border border-white/5 hover:border-white/20'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className={`text-sm ${selectedVoiceId === voice.id ? 'text-rose-gold-400' : 'text-white/80'}`}>
-                        {voice.name}
-                      </span>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          previewVoice(voice.id)
-                        }}
-                        disabled={previewingVoice === voice.id}
-                        className="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-white/10 transition-all"
-                      >
-                        {previewingVoice === voice.id ? (
-                          <Loader2 className="w-3 h-3 text-rose-gold-400 animate-spin" />
-                        ) : (
-                          <Play className="w-3 h-3 text-white/60" />
-                        )}
-                      </button>
-                    </div>
-                  </button>
-                ))}
+              <label className="text-sm text-white/60 mb-2 block">Output Voice (Neural)</label>
+
+              {/* Female Voices */}
+              <div className="mb-3">
+                <span className="text-xs text-white/40 uppercase tracking-wider">Female Voices</span>
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  {neuralVoices.filter(v => v.gender === 'female').map((voice) => (
+                    <button
+                      key={voice.id}
+                      onClick={() => setSelectedVoiceId(voice.id)}
+                      className={`group relative p-2 rounded-lg text-left transition-all ${
+                        selectedVoiceId === voice.id
+                          ? 'bg-rose-gold-400/20 border border-rose-gold-400/50'
+                          : 'bg-dark-500/50 border border-white/5 hover:border-white/20'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className={`text-sm ${selectedVoiceId === voice.id ? 'text-rose-gold-400' : 'text-white/80'}`}>
+                          {voice.name}
+                        </span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            previewVoice(voice.id)
+                          }}
+                          disabled={previewingVoice === voice.id}
+                          className="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-white/10 transition-all"
+                        >
+                          {previewingVoice === voice.id ? (
+                            <Loader2 className="w-3 h-3 text-rose-gold-400 animate-spin" />
+                          ) : (
+                            <Play className="w-3 h-3 text-white/60" />
+                          )}
+                        </button>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Male Voices */}
+              <div>
+                <span className="text-xs text-white/40 uppercase tracking-wider">Male Voices</span>
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  {neuralVoices.filter(v => v.gender === 'male').map((voice) => (
+                    <button
+                      key={voice.id}
+                      onClick={() => setSelectedVoiceId(voice.id)}
+                      className={`group relative p-2 rounded-lg text-left transition-all ${
+                        selectedVoiceId === voice.id
+                          ? 'bg-rose-gold-400/20 border border-rose-gold-400/50'
+                          : 'bg-dark-500/50 border border-white/5 hover:border-white/20'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className={`text-sm ${selectedVoiceId === voice.id ? 'text-rose-gold-400' : 'text-white/80'}`}>
+                          {voice.name}
+                        </span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            previewVoice(voice.id)
+                          }}
+                          disabled={previewingVoice === voice.id}
+                          className="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-white/10 transition-all"
+                        >
+                          {previewingVoice === voice.id ? (
+                            <Loader2 className="w-3 h-3 text-rose-gold-400 animate-spin" />
+                          ) : (
+                            <Play className="w-3 h-3 text-white/60" />
+                          )}
+                        </button>
+                      </div>
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
+          )}
+
+          {/* Browser Voice Selection (when not using neural) */}
+          {!useNeural && browserVoices.length > 0 && (
+            <div>
+              <label className="text-sm text-white/60 mb-2 block">Browser Voice</label>
+              <select
+                value={selectedBrowserVoiceURI}
+                onChange={(e) => setSelectedBrowserVoiceURI(e.target.value)}
+                className="w-full bg-dark-500 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-rose-gold-400/50"
+              >
+                <option value="">Auto-select best voice</option>
+                {browserVoices.map((voice) => (
+                  <option key={voice.voiceURI} value={voice.voiceURI}>
+                    {voice.name} ({voice.lang})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {/* Speed */}
           <div>
@@ -484,9 +778,27 @@ export default function VoiceInterfaceView() {
               step="0.1"
               value={speechRate}
               onChange={(e) => setSpeechRate(parseFloat(e.target.value))}
-              className="w-full accent-cyan-400"
+              className="w-full accent-rose-gold-400"
             />
           </div>
+
+          {/* Pitch (only for browser TTS) */}
+          {!useNeural && (
+            <div>
+              <label className="text-sm text-white/60 mb-2 block">
+                Pitch: {speechPitch.toFixed(1)}
+              </label>
+              <input
+                type="range"
+                min="0"
+                max="2"
+                step="0.1"
+                value={speechPitch}
+                onChange={(e) => setSpeechPitch(parseFloat(e.target.value))}
+                className="w-full accent-rose-gold-400"
+              />
+            </div>
+          )}
 
           {/* Volume */}
           <div>
@@ -500,7 +812,7 @@ export default function VoiceInterfaceView() {
               step="0.1"
               value={speechVolume}
               onChange={(e) => setSpeechVolume(parseFloat(e.target.value))}
-              className="w-full accent-cyan-400"
+              className="w-full accent-rose-gold-400"
             />
           </div>
 
@@ -516,92 +828,94 @@ export default function VoiceInterfaceView() {
       )}
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6 py-8 overflow-y-auto">
+      <div className="flex-1 flex flex-col items-center justify-center px-6 py-8 overflow-y-auto morphic-scrollbar">
         {/* Waveform Visualization */}
-        <div className="relative w-48 h-48 mb-8">
-          {/* Outer rings */}
-          <div
-            className={`absolute inset-0 rounded-full border-2 transition-all duration-200 ${
-              voiceStatus === 'listening'
-                ? 'border-rose-gold-400 animate-ping'
-                : voiceStatus === 'speaking'
-                ? 'border-blue-400 animate-ping'
-                : 'border-white/10'
-            }`}
-            style={{
-              opacity: waveformIntensity * 0.3,
-              transform: `scale(${1 + waveformIntensity * 0.2})`
-            }}
-          />
-          <div
-            className={`absolute inset-4 rounded-full border-2 transition-all duration-200 ${
-              voiceStatus === 'listening'
-                ? 'border-rose-gold-400'
-                : voiceStatus === 'speaking'
-                ? 'border-blue-400'
-                : 'border-white/10'
-            }`}
-            style={{
-              opacity: waveformIntensity * 0.5,
-              transform: `scale(${1 + waveformIntensity * 0.15})`
-            }}
-          />
-          <div
-            className={`absolute inset-8 rounded-full border-2 transition-all duration-200 ${
-              voiceStatus === 'listening'
-                ? 'border-rose-gold-400'
-                : voiceStatus === 'speaking'
-                ? 'border-blue-400'
-                : 'border-white/10'
-            }`}
-            style={{
-              opacity: waveformIntensity * 0.7,
-              transform: `scale(${1 + waveformIntensity * 0.1})`
-            }}
-          />
+        <div className="relative w-full max-w-md mb-8">
+          {/* Audio Waveform */}
+          <div className="mb-6">
+            <AudioWaveform
+              isActive={voiceActive}
+              volume={currentVolume}
+              status={voiceStatus}
+            />
+          </div>
 
           {/* Center button */}
-          <button
-            onClick={toggleListening}
-            disabled={!speechRecognitionSupported || voiceStatus === 'processing'}
-            className={`absolute inset-12 rounded-full flex items-center justify-center transition-all duration-300 ${
-              voiceStatus === 'listening'
-                ? 'bg-rose-gold-400 shadow-lg shadow-rose-gold-400/50'
-                : voiceStatus === 'speaking'
-                ? 'bg-blue-500 shadow-lg shadow-blue-500/50'
-                : voiceStatus === 'processing'
-                ? 'bg-rose-gold-500 shadow-lg shadow-rose-gold-500/50'
-                : voiceStatus === 'error'
-                ? 'bg-red-500 shadow-lg shadow-red-500/50'
-                : 'bg-gradient-to-br from-cyan-400 to-blue-600 hover:shadow-lg hover:shadow-cyan-500/30'
-            } ${!speechRecognitionSupported ? 'opacity-50 cursor-not-allowed' : ''}`}
-          >
-            {voiceStatus === 'listening' && <MicOff className="w-10 h-10 text-white" />}
-            {voiceStatus === 'speaking' && <Waves className="w-10 h-10 text-white animate-pulse" />}
-            {voiceStatus === 'processing' && (
-              <Loader2 className="w-10 h-10 text-white animate-spin" />
-            )}
-            {voiceStatus === 'error' && <AlertCircle className="w-10 h-10 text-white" />}
-            {voiceStatus === 'idle' && <Mic className="w-10 h-10 text-white" />}
-          </button>
+          <div className="flex justify-center">
+            <button
+              onClick={toggleListening}
+              disabled={!speechRecognitionSupported || voiceStatus === 'processing' || micPermission === 'denied'}
+              className={`relative w-24 h-24 rounded-full flex items-center justify-center transition-all duration-300 ${
+                voiceStatus === 'listening'
+                  ? 'bg-gradient-to-br from-rose-400 to-rose-600 shadow-lg shadow-rose-500/50'
+                  : voiceStatus === 'wake_word'
+                  ? 'bg-gradient-to-br from-rose-gold-500 to-rose-gold-600 shadow-lg shadow-green-500/50'
+                  : voiceStatus === 'speaking'
+                  ? 'bg-gradient-to-br from-rose-gold-500 to-rose-gold-600 shadow-lg shadow-purple-500/50'
+                  : voiceStatus === 'processing'
+                  ? 'bg-gradient-to-br from-rose-gold-500 to-rose-gold-600 shadow-lg shadow-amber-500/50'
+                  : voiceStatus === 'error'
+                  ? 'bg-gradient-to-br from-rose-gold-500 to-rose-gold-600 shadow-lg shadow-red-500/50'
+                  : 'bg-gradient-to-br from-rose-gold-400 to-rose-gold-600 hover:shadow-lg hover:shadow-rose-gold-500/30'
+              } ${(!speechRecognitionSupported || micPermission === 'denied') ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              {/* Pulsing rings when listening */}
+              {(voiceStatus === 'listening' || voiceStatus === 'wake_word') && (
+                <>
+                  <div className={`absolute inset-0 rounded-full border-2 ${voiceStatus === 'wake_word' ? 'border-rose-gold-400' : 'border-rose-400'} animate-ping opacity-30`} />
+                  <div className={`absolute inset-[-8px] rounded-full border ${voiceStatus === 'wake_word' ? 'border-rose-gold-400' : 'border-rose-400'} animate-pulse opacity-20`} />
+                  <div className={`absolute inset-[-16px] rounded-full border ${voiceStatus === 'wake_word' ? 'border-rose-gold-400' : 'border-rose-400'} animate-pulse opacity-10`} style={{ animationDelay: '0.2s' }} />
+                </>
+              )}
+
+              {voiceStatus === 'listening' && <MicOff className="w-10 h-10 text-dark-500" />}
+              {voiceStatus === 'wake_word' && <Zap className="w-10 h-10 text-dark-500 animate-pulse" />}
+              {voiceStatus === 'speaking' && <Waves className="w-10 h-10 text-dark-500 animate-pulse" />}
+              {voiceStatus === 'processing' && (
+                <Loader2 className="w-10 h-10 text-dark-500 animate-spin" />
+              )}
+              {voiceStatus === 'error' && <AlertCircle className="w-10 h-10 text-dark-500" />}
+              {voiceStatus === 'idle' && <Mic className="w-10 h-10 text-dark-500" />}
+            </button>
+          </div>
+
+          {/* Volume indicator */}
+          {voiceStatus === 'listening' && (
+            <div className="mt-4 flex justify-center">
+              <div className="w-32 h-2 bg-white/10 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-rose-gold-400 to-rose-gold-600 transition-all duration-100"
+                  style={{ width: `${currentVolume * 100}%` }}
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Status Text */}
         <div className="text-center mb-6">
           {voiceStatus === 'idle' && (
-            <p className="text-white/60">Click the microphone to start speaking</p>
+            <p className="text-white/60">
+              {wakeWordEnabled
+                ? `Say "Hey ${BRAND.name}" or click the microphone`
+                : 'Click the microphone to start speaking'
+              }
+            </p>
           )}
           {voiceStatus === 'listening' && (
             <p className="text-rose-gold-400 animate-pulse">Listening... Speak now</p>
+          )}
+          {voiceStatus === 'wake_word' && (
+            <p className="text-rose-gold-400 font-medium">I'm listening! How can I help?</p>
           )}
           {voiceStatus === 'processing' && (
             <p className="text-rose-gold-400">Processing your request...</p>
           )}
           {voiceStatus === 'speaking' && (
-            <p className="text-blue-400">AI is speaking...</p>
+            <p className="text-rose-gold-400">AI is speaking...</p>
           )}
           {voiceStatus === 'error' && error && (
-            <p className="text-red-400">{error}</p>
+            <p className="text-rose-gold-400">{error}</p>
           )}
         </div>
 
@@ -626,9 +940,20 @@ export default function VoiceInterfaceView() {
           {/* AI Response */}
           {aiResponse && (
             <div className="morphic-card p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <CheckCircle className="w-4 h-4 text-blue-400" />
-                <span className="text-sm font-medium text-blue-400">AI Response</span>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-rose-gold-400" />
+                  <span className="text-sm font-medium text-rose-gold-400">AI Response</span>
+                </div>
+                {voiceOutputEnabled && voiceStatus !== 'speaking' && (
+                  <button
+                    onClick={repeatLastResponse}
+                    className="p-1 rounded hover:bg-white/5 transition-colors"
+                    title="Read again"
+                  >
+                    <RefreshCw className="w-4 h-4 text-white/40 hover:text-white/60" />
+                  </button>
+                )}
               </div>
               <p className="text-white whitespace-pre-wrap">{aiResponse}</p>
             </div>
@@ -651,10 +976,21 @@ export default function VoiceInterfaceView() {
           {voiceStatus === 'speaking' && (
             <button
               onClick={stopSpeaking}
-              className="py-2 px-4 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors text-sm flex items-center gap-2"
+              className="py-2 px-4 rounded-lg bg-rose-gold-500/20 text-rose-gold-400 hover:bg-rose-gold-500/30 transition-colors text-sm flex items-center gap-2"
             >
               <Square className="w-4 h-4" />
               <span>Stop</span>
+            </button>
+          )}
+
+          {/* Read Again */}
+          {voiceService.getLastResponse() && voiceStatus === 'idle' && (
+            <button
+              onClick={repeatLastResponse}
+              className="py-2 px-4 rounded-lg bg-rose-gold-500/20 text-rose-gold-400 hover:bg-rose-gold-500/30 transition-colors text-sm flex items-center gap-2"
+            >
+              <RefreshCw className="w-4 h-4" />
+              <span>Read Again</span>
             </button>
           )}
 
@@ -679,18 +1015,18 @@ export default function VoiceInterfaceView() {
                 className={`p-3 rounded-lg ${
                   msg.role === 'user'
                     ? 'bg-rose-gold-400/10 border border-rose-gold-400/20'
-                    : 'bg-blue-500/10 border border-blue-500/20'
+                    : 'bg-rose-gold-500/10 border border-rose-gold-400/20'
                 }`}
               >
                 <div className="flex items-center gap-2 mb-1">
                   {msg.role === 'user' ? (
                     <Mic className="w-3 h-3 text-rose-gold-400" />
                   ) : (
-                    <Volume2 className="w-3 h-3 text-blue-400" />
+                    <Volume2 className="w-3 h-3 text-rose-gold-400" />
                   )}
                   <span
                     className={`text-xs font-medium ${
-                      msg.role === 'user' ? 'text-rose-gold-400' : 'text-blue-400'
+                      msg.role === 'user' ? 'text-rose-gold-400' : 'text-rose-gold-400'
                     }`}
                   >
                     {msg.role === 'user' ? 'You' : 'AI'}

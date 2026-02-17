@@ -51,7 +51,7 @@ export default function Sidebar() {
       </div>
 
       {/* New Chat Button */}
-      <div className="p-3">
+      <div className="p-3 flex-shrink-0">
         <button
           onClick={createChat}
           className="w-full morphic-glass border border-rose-gold-400/20 hover:border-rose-gold-400/40 hover:bg-rose-gold-400/10 flex items-center justify-center gap-2 py-2.5 rounded-xl text-rose-gold-400 transition-all duration-200"
@@ -61,8 +61,10 @@ export default function Sidebar() {
         </button>
       </div>
 
+      {/* Scrollable Content Area */}
+      <div className="flex-1 overflow-y-auto morphic-scrollbar pb-4">
       {/* Chat List */}
-      <div className="flex-1 overflow-y-auto morphic-scrollbar px-3">
+      <div className="px-3">
         <div className="text-xs font-medium text-rose-gold-400/50 uppercase tracking-wider px-2 py-2">
           Recent Chats
         </div>
@@ -75,7 +77,10 @@ export default function Sidebar() {
             chats.map(chat => (
               <button
                 key={chat.id}
-                onClick={() => setActiveChat(chat.id)}
+                onClick={() => {
+                  setActiveChat(chat.id)
+                  setView('chat')
+                }}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all ${
                   activeChat === chat.id
                     ? 'bg-rose-gold-400/15 text-rose-gold-400 border border-rose-gold-400/30'
@@ -362,6 +367,7 @@ export default function Sidebar() {
           </button>
         </div>
       </div>
+      </div>{/* End Scrollable Content Area */}
     </div>
   )
 }
