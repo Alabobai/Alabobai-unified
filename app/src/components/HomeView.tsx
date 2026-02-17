@@ -462,7 +462,7 @@ export default function HomeView() {
                 </button>
                 <button
                   onClick={openOnboarding}
-                  className="morphic-btn bg-gradient-to-r from-rose-gold-500 to-rose-gold-600 text-white border-0 px-6 py-2 text-sm font-semibold hover:opacity-90"
+                  className="morphic-btn bg-gradient-to-r from-rose-gold-500 to-rose-gold-600 text-dark-500 border-0 px-6 py-2 text-sm font-semibold hover:opacity-90"
                 >
                   Start Tour
                 </button>
