@@ -140,7 +140,7 @@ function WelcomeStep() {
       >
         <h2 className="text-3xl font-bold text-white">
           Welcome to{' '}
-          <span className="bg-gradient-to-r from-rose-gold-300 to-rose-gold-500 bg-clip-text text-transparent">
+          <span className="text-white font-bold">
             {BRAND.name}
           </span>
         </h2>
