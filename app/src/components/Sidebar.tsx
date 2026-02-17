@@ -7,10 +7,10 @@ export default function Sidebar() {
 
   if (!sidebarOpen) {
     return (
-      <div className="w-14 morphic-glass border-r border-rose-gold-400/10 flex flex-col items-center py-4 bg-dark-400/95">
+      <div className="sidebar-rail w-14 morphic-glass border-r border-rose-gold-400/10 flex flex-col items-center py-4 bg-dark-400/95">
         {/* Collapsed Logo */}
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-gold-300 to-rose-gold-600 flex items-center justify-center mb-4 shadow-glow-sm">
-          <span className="text-lg font-bold text-dark-500">A</span>
+        <div className="w-12 h-12 rounded-2xl overflow-hidden border border-rose-gold-400/40 shadow-glow-lg mb-4 bg-dark-300/90 p-0">
+          <img src="/logo.png" alt="Alabobai" className="w-full h-full object-contain scale-[1.22]" />
         </div>
         <button
           onClick={toggleSidebar}
@@ -30,12 +30,12 @@ export default function Sidebar() {
   }
 
   return (
-    <div className="w-72 morphic-glass border-r border-rose-gold-400/10 flex flex-col bg-dark-400/95">
+    <div className="sidebar-rail w-72 morphic-glass border-r border-rose-gold-400/10 flex flex-col bg-dark-400/95">
       {/* Header with Prominent Logo */}
       <div className="p-4 flex items-center justify-between border-b border-rose-gold-400/10">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-gold-300 to-rose-gold-600 flex items-center justify-center shadow-glow-sm animate-pulse-glow">
-            <span className="text-lg font-bold text-dark-500">A</span>
+          <div className="w-12 h-12 rounded-2xl overflow-hidden border border-rose-gold-400/40 shadow-glow-lg animate-pulse-glow bg-dark-300/90 p-0">
+            <img src="/logo.png" alt="Alabobai" className="w-full h-full object-contain scale-[1.22]" />
           </div>
           <div>
             <h1 className="text-base font-semibold text-white tracking-wide">Alabobai</h1>
@@ -79,7 +79,7 @@ export default function Sidebar() {
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all ${
                   activeChat === chat.id
                     ? 'bg-rose-gold-400/15 text-rose-gold-400 border border-rose-gold-400/30'
-                    : 'text-white/70 hover:bg-white/5 hover:text-white'
+                    : 'text-white/70 hover:bg-rose-gold-400/10 hover:text-rose-gold-300'
                 }`}
               >
                 <MessageSquare className="w-4 h-4 flex-shrink-0" />
@@ -91,7 +91,7 @@ export default function Sidebar() {
       </div>
 
       {/* Autonomous Agents Section */}
-      <div className="border-t border-rose-gold-400/10 p-3">
+      <div className="border-t border-rose-gold-400/15 p-3 bg-dark-300/35">
         <div className="text-xs font-medium text-rose-gold-400/50 uppercase tracking-wider px-2 py-2">
           AI Workforce
         </div>
@@ -100,8 +100,8 @@ export default function Sidebar() {
             onClick={() => setView('local-ai-brain')}
             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group ${
               currentView === 'local-ai-brain'
-                ? 'morphic-glass bg-rose-gold-400/15 text-rose-gold-400 border border-rose-gold-400/30 shadow-glow-sm'
-                : 'text-white/70 hover:bg-rose-gold-400/5 hover:text-rose-gold-400/90'
+                ? 'bg-rose-gold-400/12 text-rose-gold-300 border border-rose-gold-400/35'
+                : 'text-white/75 bg-dark-300/70 border border-rose-gold-400/15 hover:bg-rose-gold-400/10 hover:text-rose-gold-300'
             }`}
           >
             <Cpu className={`w-4 h-4 ${currentView === 'local-ai-brain' ? 'animate-pulse text-rose-gold-400' : ''}`} />
@@ -118,8 +118,8 @@ export default function Sidebar() {
             onClick={() => setView('autonomous-agents')}
             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group ${
               currentView === 'autonomous-agents'
-                ? 'morphic-glass bg-rose-gold-400/15 text-rose-gold-400 border border-rose-gold-400/30 shadow-glow-sm'
-                : 'text-white/70 hover:bg-rose-gold-400/5 hover:text-rose-gold-400/90'
+                ? 'bg-rose-gold-400/12 text-rose-gold-300 border border-rose-gold-400/35'
+                : 'text-white/75 bg-dark-300/70 border border-rose-gold-400/15 hover:bg-rose-gold-400/10 hover:text-rose-gold-300'
             }`}
           >
             <Brain className={`w-4 h-4 ${currentView === 'autonomous-agents' ? 'animate-pulse' : ''}`} />
@@ -130,8 +130,8 @@ export default function Sidebar() {
             onClick={() => setView('self-annealing')}
             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group ${
               currentView === 'self-annealing'
-                ? 'morphic-glass bg-rose-gold-400/15 text-rose-gold-400 border border-rose-gold-400/30 shadow-glow-sm'
-                : 'text-white/70 hover:bg-rose-gold-400/5 hover:text-rose-gold-400/90'
+                ? 'bg-rose-gold-400/12 text-rose-gold-300 border border-rose-gold-400/35'
+                : 'text-white/75 bg-dark-300/70 border border-rose-gold-400/15 hover:bg-rose-gold-400/10 hover:text-rose-gold-300'
             }`}
           >
             <Flame className={`w-4 h-4 ${currentView === 'self-annealing' ? 'animate-pulse text-rose-gold-400' : ''}`} />
@@ -148,8 +148,8 @@ export default function Sidebar() {
             onClick={() => setView('deep-research')}
             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group ${
               currentView === 'deep-research'
-                ? 'morphic-glass bg-rose-gold-400/15 text-rose-gold-400 border border-rose-gold-400/30 shadow-glow-sm'
-                : 'text-white/70 hover:bg-rose-gold-400/5 hover:text-rose-gold-400/90'
+                ? 'bg-rose-gold-400/12 text-rose-gold-300 border border-rose-gold-400/35'
+                : 'text-white/75 bg-dark-300/70 border border-rose-gold-400/15 hover:bg-rose-gold-400/10 hover:text-rose-gold-300'
             }`}
           >
             <Search className={`w-4 h-4 ${currentView === 'deep-research' ? 'animate-pulse text-rose-gold-400' : ''}`} />
@@ -166,8 +166,8 @@ export default function Sidebar() {
             onClick={() => setView('privacy-fortress')}
             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group ${
               currentView === 'privacy-fortress'
-                ? 'morphic-glass bg-rose-gold-400/15 text-rose-gold-400 border border-rose-gold-400/30 shadow-glow-sm'
-                : 'text-white/70 hover:bg-rose-gold-400/5 hover:text-rose-gold-400/90'
+                ? 'bg-rose-gold-400/12 text-rose-gold-300 border border-rose-gold-400/35'
+                : 'text-white/75 bg-dark-300/70 border border-rose-gold-400/15 hover:bg-rose-gold-400/10 hover:text-rose-gold-300'
             }`}
           >
             <Shield className={`w-4 h-4 ${currentView === 'privacy-fortress' ? 'animate-pulse text-rose-gold-400' : ''}`} />
@@ -184,8 +184,8 @@ export default function Sidebar() {
             onClick={() => setView('financial-guardian')}
             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group ${
               currentView === 'financial-guardian'
-                ? 'morphic-glass bg-rose-gold-400/15 text-rose-gold-400 border border-rose-gold-400/30 shadow-glow-sm'
-                : 'text-white/70 hover:bg-rose-gold-400/5 hover:text-rose-gold-400/90'
+                ? 'bg-rose-gold-400/12 text-rose-gold-300 border border-rose-gold-400/35'
+                : 'text-white/75 bg-dark-300/70 border border-rose-gold-400/15 hover:bg-rose-gold-400/10 hover:text-rose-gold-300'
             }`}
           >
             <Wallet className={`w-4 h-4 ${currentView === 'financial-guardian' ? 'animate-pulse text-rose-gold-400' : ''}`} />
@@ -202,8 +202,8 @@ export default function Sidebar() {
             onClick={() => setView('creative-studio')}
             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group ${
               currentView === 'creative-studio'
-                ? 'morphic-glass bg-rose-gold-400/15 text-rose-gold-400 border border-rose-gold-400/30 shadow-glow-sm'
-                : 'text-white/70 hover:bg-rose-gold-400/5 hover:text-rose-gold-400/90'
+                ? 'bg-rose-gold-400/12 text-rose-gold-300 border border-rose-gold-400/35'
+                : 'text-white/75 bg-dark-300/70 border border-rose-gold-400/15 hover:bg-rose-gold-400/10 hover:text-rose-gold-300'
             }`}
           >
             <Palette className={`w-4 h-4 ${currentView === 'creative-studio' ? 'animate-pulse text-rose-gold-400' : ''}`} />
@@ -220,8 +220,8 @@ export default function Sidebar() {
             onClick={() => setView('data-analyst')}
             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group ${
               currentView === 'data-analyst'
-                ? 'morphic-glass bg-rose-gold-400/15 text-rose-gold-400 border border-rose-gold-400/30 shadow-glow-sm'
-                : 'text-white/70 hover:bg-rose-gold-400/5 hover:text-rose-gold-400/90'
+                ? 'bg-rose-gold-400/12 text-rose-gold-300 border border-rose-gold-400/35'
+                : 'text-white/75 bg-dark-300/70 border border-rose-gold-400/15 hover:bg-rose-gold-400/10 hover:text-rose-gold-300'
             }`}
           >
             <BarChart3 className={`w-4 h-4 ${currentView === 'data-analyst' ? 'animate-pulse text-rose-gold-400' : ''}`} />
@@ -238,8 +238,8 @@ export default function Sidebar() {
             onClick={() => setView('voice-interface')}
             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group ${
               currentView === 'voice-interface'
-                ? 'morphic-glass bg-rose-gold-400/15 text-rose-gold-400 border border-rose-gold-400/30 shadow-glow-sm'
-                : 'text-white/70 hover:bg-rose-gold-400/5 hover:text-rose-gold-400/90'
+                ? 'bg-rose-gold-400/12 text-rose-gold-300 border border-rose-gold-400/35'
+                : 'text-white/75 bg-dark-300/70 border border-rose-gold-400/15 hover:bg-rose-gold-400/10 hover:text-rose-gold-300'
             }`}
           >
             <Mic className={`w-4 h-4 ${currentView === 'voice-interface' ? 'animate-pulse text-rose-gold-400' : ''}`} />
@@ -256,8 +256,8 @@ export default function Sidebar() {
             onClick={() => setView('trust-architect')}
             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group ${
               currentView === 'trust-architect'
-                ? 'morphic-glass bg-rose-gold-400/15 text-rose-gold-400 border border-rose-gold-400/30 shadow-glow-sm'
-                : 'text-white/70 hover:bg-rose-gold-400/5 hover:text-rose-gold-400/90'
+                ? 'bg-rose-gold-400/12 text-rose-gold-300 border border-rose-gold-400/35'
+                : 'text-white/75 bg-dark-300/70 border border-rose-gold-400/15 hover:bg-rose-gold-400/10 hover:text-rose-gold-300'
             }`}
           >
             <ShieldCheck className={`w-4 h-4 ${currentView === 'trust-architect' ? 'animate-pulse text-rose-gold-400' : ''}`} />
@@ -274,7 +274,7 @@ export default function Sidebar() {
       </div>
 
       {/* Company Section */}
-      <div className="border-t border-rose-gold-400/10 p-3">
+      <div className="border-t border-rose-gold-400/15 p-3 bg-dark-300/35">
         <div className="text-xs font-medium text-rose-gold-400/50 uppercase tracking-wider px-2 py-2">
           Your Company
         </div>
@@ -283,8 +283,8 @@ export default function Sidebar() {
             onClick={() => setView('company-wizard')}
             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${
               currentView === 'company-wizard'
-                ? 'morphic-glass bg-rose-gold-400/15 text-rose-gold-400 border border-rose-gold-400/30 shadow-glow-sm'
-                : 'text-white/70 hover:bg-rose-gold-400/5 hover:text-rose-gold-400/90'
+                ? 'bg-rose-gold-400/12 text-rose-gold-300 border border-rose-gold-400/35'
+                : 'text-white/75 bg-dark-300/70 border border-rose-gold-400/15 hover:bg-rose-gold-400/10 hover:text-rose-gold-300'
             }`}
           >
             <Rocket className="w-4 h-4" />
@@ -294,8 +294,8 @@ export default function Sidebar() {
             onClick={() => setView('company-dashboard')}
             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${
               currentView === 'company-dashboard'
-                ? 'morphic-glass bg-rose-gold-400/15 text-rose-gold-400 border border-rose-gold-400/30 shadow-glow-sm'
-                : 'text-white/70 hover:bg-rose-gold-400/5 hover:text-rose-gold-400/90'
+                ? 'bg-rose-gold-400/12 text-rose-gold-300 border border-rose-gold-400/35'
+                : 'text-white/75 bg-dark-300/70 border border-rose-gold-400/15 hover:bg-rose-gold-400/10 hover:text-rose-gold-300'
             }`}
           >
             <LayoutDashboard className="w-4 h-4" />
@@ -305,8 +305,8 @@ export default function Sidebar() {
             onClick={() => setView('chat')}
             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${
               currentView === 'chat'
-                ? 'morphic-glass bg-rose-gold-400/15 text-rose-gold-400 border border-rose-gold-400/30 shadow-glow-sm'
-                : 'text-white/70 hover:bg-rose-gold-400/5 hover:text-rose-gold-400/90'
+                ? 'bg-rose-gold-400/12 text-rose-gold-300 border border-rose-gold-400/35'
+                : 'text-white/75 bg-dark-300/70 border border-rose-gold-400/15 hover:bg-rose-gold-400/10 hover:text-rose-gold-300'
             }`}
           >
             <MessageSquare className="w-4 h-4" />
@@ -316,11 +316,11 @@ export default function Sidebar() {
       </div>
 
       {/* Projects Section */}
-      <div className="border-t border-rose-gold-400/10 p-3">
+      <div className="border-t border-rose-gold-400/15 p-3 bg-dark-300/35">
         <div className="text-xs font-medium text-rose-gold-400/50 uppercase tracking-wider px-2 py-2">
           Projects
         </div>
-        <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-white/70 hover:bg-rose-gold-400/5 hover:text-rose-gold-400/90 transition-colors">
+        <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-white/75 bg-dark-300/70 border border-rose-gold-400/15 hover:bg-rose-gold-400/10 hover:text-rose-gold-300 transition-colors">
           <FolderOpen className="w-4 h-4" />
           <span className="text-sm">Browse Projects</span>
         </button>
@@ -330,7 +330,7 @@ export default function Sidebar() {
       <AgentsPanel />
 
       {/* System Section */}
-      <div className="border-t border-rose-gold-400/10 p-3">
+      <div className="border-t border-rose-gold-400/15 p-3 bg-dark-300/35">
         <div className="text-xs font-medium text-rose-gold-400/50 uppercase tracking-wider px-2 py-2">
           System
         </div>
@@ -339,8 +339,8 @@ export default function Sidebar() {
             onClick={() => setView('integration-hub')}
             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group ${
               currentView === 'integration-hub'
-                ? 'morphic-glass bg-rose-gold-400/15 text-rose-gold-400 border border-rose-gold-400/30 shadow-glow-sm'
-                : 'text-white/70 hover:bg-rose-gold-400/5 hover:text-rose-gold-400/90'
+                ? 'bg-rose-gold-400/12 text-rose-gold-300 border border-rose-gold-400/35'
+                : 'text-white/75 bg-dark-300/70 border border-rose-gold-400/15 hover:bg-rose-gold-400/10 hover:text-rose-gold-300'
             }`}
           >
             <Plug className={`w-4 h-4 ${currentView === 'integration-hub' ? 'animate-pulse text-rose-gold-400' : ''}`} />
@@ -355,7 +355,7 @@ export default function Sidebar() {
           </button>
           <button
             onClick={toggleSettings}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-white/70 hover:bg-rose-gold-400/5 hover:text-rose-gold-400/90 transition-colors"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-white/75 bg-dark-300/70 border border-rose-gold-400/15 hover:bg-rose-gold-400/10 hover:text-rose-gold-300 transition-colors"
           >
             <Settings className="w-4 h-4" />
             <span className="text-sm">Settings</span>
