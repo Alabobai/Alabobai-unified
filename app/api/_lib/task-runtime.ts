@@ -242,12 +242,12 @@ async function dispatchInProcess(step: PlanStep, origin: string): Promise<Respon
         return (await import('../local-ai/chat')).default(request)
       case '/api/local-ai/models':
         return (await import('../local-ai/models')).default(request)
-      case '/api/local-ai/stats':
-        return (await import('../local-ai/stats')).default(request)
-      case '/api/local-ai/ingest':
-        return (await import('../local-ai/ingest')).default(request)
-      case '/api/local-ai/search':
-        return (await import('../local-ai/search')).default(request)
+      case '/api/local-ai/knowledge/stats':
+        return (await import('../local-ai/knowledge/stats')).default(request)
+      case '/api/local-ai/knowledge/ingest':
+        return (await import('../local-ai/knowledge/ingest')).default(request)
+      case '/api/local-ai/knowledge/search':
+        return (await import('../local-ai/knowledge/search')).default(request)
       default:
         return null
     }

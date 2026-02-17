@@ -82,14 +82,8 @@ export default function MonacoEditor({
     })
   }
 
-  useEffect(() => {
-    if (editorRef.current && displayValue) {
-      const currentValue = editorRef.current.getValue()
-      if (currentValue !== displayValue) {
-        editorRef.current.setValue(displayValue)
-      }
-    }
-  }, [displayValue])
+  // Keep editor controlled via <Editor value={displayValue} />.
+  // Avoid imperative setValue here because it can force cursor/scroll jumps while streaming.
 
   // Update remote cursor decorations
   useEffect(() => {

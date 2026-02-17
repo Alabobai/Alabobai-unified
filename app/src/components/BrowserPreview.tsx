@@ -158,16 +158,16 @@ export default function BrowserPreview({
       }
     }
 
-    browserControl.on('screenshot', handleScreenshot)
-    browserControl.on('cursor:update', handleCursorUpdate)
-    browserControl.on('action', handleAction)
-    browserControl.on('session:updated', handleSessionUpdate)
+    browserControl.on('screenshot', handleScreenshot as (...args: unknown[]) => void)
+    browserControl.on('cursor:update', handleCursorUpdate as (...args: unknown[]) => void)
+    browserControl.on('action', handleAction as (...args: unknown[]) => void)
+    browserControl.on('session:updated', handleSessionUpdate as (...args: unknown[]) => void)
 
     return () => {
-      browserControl.off('screenshot', handleScreenshot)
-      browserControl.off('cursor:update', handleCursorUpdate)
-      browserControl.off('action', handleAction)
-      browserControl.off('session:updated', handleSessionUpdate)
+      browserControl.off('screenshot', handleScreenshot as (...args: unknown[]) => void)
+      browserControl.off('cursor:update', handleCursorUpdate as (...args: unknown[]) => void)
+      browserControl.off('action', handleAction as (...args: unknown[]) => void)
+      browserControl.off('session:updated', handleSessionUpdate as (...args: unknown[]) => void)
     }
   }, [sessionId, onAction])
 
@@ -360,11 +360,18 @@ export default function BrowserPreview({
     }
   }
 
-  // Demo sites that are iframe-friendly
+  // Iframe mode state
+  const [useIframeMode, setUseIframeMode] = useState(true)
+  const [iframeError, setIframeError] = useState(false)
+
+  // Demo sites that are iframe-friendly (many sites block iframes)
   const demoSites = [
     { name: 'Wikipedia', url: 'https://en.wikipedia.org' },
     { name: 'Example', url: 'https://example.com' },
     { name: 'HTTPBin', url: 'https://httpbin.org' },
+    { name: 'MDN Docs', url: 'https://developer.mozilla.org' },
+    { name: 'W3Schools', url: 'https://www.w3schools.com' },
+    { name: 'JSON Placeholder', url: 'https://jsonplaceholder.typicode.com' },
   ]
 
   const isLoading = displayState?.isLoading || isLoadingInternal
@@ -678,9 +685,26 @@ export default function BrowserPreview({
             </div>
           )}
 
-          {/* Fallback: Simulated Page */}
+          {/* Fallback: Iframe or Simulated Page */}
           {!screenshot && !isLoading && displayState && (
-            <SimulatedWebPage url={displayState.url} title={displayState.title} />
+            useIframeMode && !iframeError ? (
+              <div className="w-full h-full relative">
+                <iframe
+                  src={displayState.url}
+                  className="w-full h-full border-0"
+                  sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-presentation"
+                  title={displayState.title || 'Browser Preview'}
+                  onLoad={() => setIframeError(false)}
+                  onError={() => setIframeError(true)}
+                />
+                {/* Note about iframe limitations */}
+                <div className="absolute bottom-2 right-2 px-2 py-1 bg-dark-400/80 backdrop-blur-sm rounded text-xs text-white/50">
+                  Iframe mode - some sites may not load due to security policies
+                </div>
+              </div>
+            ) : (
+              <SimulatedWebPage url={displayState.url} title={displayState.title} />
+            )
           )}
 
           {/* AI Cursor Overlay */}

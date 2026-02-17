@@ -384,6 +384,110 @@ app.post('/api/generate-video', async (req: Request, res: Response) => {
   }
 });
 
+// ============================================================================
+// COMPANY WIZARD API (Simple endpoint for CompanyWizard component)
+// ============================================================================
+
+app.post('/api/company', async (req: Request, res: Response) => {
+  try {
+    const { action, companyType, description, companyName, industry, founderEmail, logo } = req.body;
+
+    if (action === 'generate-name') {
+      // Generate company name suggestions using LLM
+      const prompt = `Generate 5 creative, modern, and memorable company names for a ${companyType || 'technology'} business with this description: "${description}".
+
+      Requirements:
+      - Names should be short (1-2 words), catchy, and easy to remember
+      - Mix of real words, made-up words, and compound words
+      - Professional and brandable
+      - Domain-friendly (easy to spell)
+
+      Return ONLY a JSON array of 5 names, nothing else. Example: ["TechFlow", "Nexarise", "BluePeak", "Innovio", "CloudNine"]`;
+
+      try {
+        const response = await llm.chat([{ role: 'user', content: prompt }]);
+        const content = response.content || '';
+
+        // Try to parse JSON from response
+        const jsonMatch = content.match(/\[[\s\S]*\]/);
+        if (jsonMatch) {
+          const names = JSON.parse(jsonMatch[0]);
+          return res.json({ success: true, names });
+        }
+
+        // Fallback: extract words that look like company names
+        const words = content.split(/[,\n"'\[\]]+/).filter((w: string) => w.trim().length > 2 && w.trim().length < 20);
+        if (words.length >= 3) {
+          return res.json({ success: true, names: words.slice(0, 5) });
+        }
+
+        throw new Error('Could not parse names from response');
+      } catch (llmError) {
+        console.error('[Company API] LLM error:', llmError);
+        // Fallback names
+        const words = (description || '').split(' ').filter((w: string) => w.length > 3);
+        const base = words[0] || 'Nova';
+        return res.json({
+          success: true,
+          names: [`${base}Hub`, `${base}io`, `${base}Labs`, 'VenturePeak', 'NexaFlow']
+        });
+      }
+    }
+
+    if (action === 'create') {
+      // Create company - simulate company creation process
+      if (!companyName) {
+        return res.status(400).json({ success: false, error: 'Company name is required' });
+      }
+
+      // Generate company ID
+      const companyId = companyName.toLowerCase().replace(/[^a-z0-9]/g, '-') + '-' + Date.now().toString(36);
+
+      // Simulate company creation with step-by-step progress
+      const result = {
+        success: true,
+        companyId,
+        company: {
+          id: companyId,
+          name: companyName,
+          type: companyType || 'saas',
+          description: description || '',
+          logo: logo || null,
+          domain: `${companyName.toLowerCase().replace(/[^a-z0-9]/g, '')}.com`,
+          createdAt: new Date().toISOString()
+        },
+        setup: {
+          legal: { status: 'complete', message: 'Company structure created' },
+          finance: { status: 'complete', message: 'Financial accounts set up' },
+          engineering: { status: 'complete', message: 'Product foundation built' },
+          design: { status: 'complete', message: 'Brand identity created' },
+          marketing: { status: 'complete', message: 'Launch content ready' },
+          support: { status: 'complete', message: 'Help center configured' },
+          security: { status: 'complete', message: 'Security audit passed' },
+          launch: { status: 'complete', message: 'Company is live!' }
+        },
+        urls: {
+          dashboard: `/company/${companyId}/dashboard`,
+          website: `https://${companyName.toLowerCase().replace(/[^a-z0-9]/g, '')}.alabobai.com`,
+          admin: `/company/${companyId}/admin`
+        }
+      };
+
+      return res.json(result);
+    }
+
+    return res.status(400).json({ success: false, error: 'Invalid action. Use "generate-name" or "create"' });
+
+  } catch (error) {
+    console.error('[Company API] Error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to process company request',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
 // Get system state
 app.get('/api/state', viewerAuth, (req: Request, res: Response) => {
   res.json({

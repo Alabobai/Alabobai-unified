@@ -210,6 +210,22 @@ export default function WorkspacePanel() {
     }
   }
 
+  const navigateBrowserToUrl = useCallback(async (url: string) => {
+    const target = url.trim()
+    if (!target) return
+
+    setIsDemoRunning(false)
+    setDemoStep('Opening page...')
+    setActiveTab('browser' as unknown as 'browser')
+
+    try {
+      await browserAutomation.navigate(target)
+      setDemoStep('')
+    } catch (error) {
+      setDemoStep(error instanceof Error ? error.message : 'Navigation failed')
+    }
+  }, [setActiveTab])
+
   return (
     <div
       ref={swipeRef}
@@ -333,6 +349,7 @@ export default function WorkspacePanel() {
               execution={currentExecution}
               onStartDemo={startRealDemoTask}
               onStopDemo={stopDemo}
+              onNavigateUrl={navigateBrowserToUrl}
               isDemoRunning={isDemoRunning}
               demoStep={demoStep}
             />
@@ -390,11 +407,14 @@ interface BrowserTabProps {
   execution: TaskExecution | null
   onStartDemo: () => void
   onStopDemo: () => void
+  onNavigateUrl: (url: string) => void
   isDemoRunning: boolean
   demoStep: string
 }
 
-function BrowserTab({ browserState, execution, onStartDemo, onStopDemo, isDemoRunning, demoStep }: BrowserTabProps) {
+function BrowserTab({ browserState, execution, onStartDemo, onStopDemo, onNavigateUrl, isDemoRunning, demoStep }: BrowserTabProps) {
+  const [urlInput, setUrlInput] = useState('')
+
   return (
     <div className="h-full flex flex-col">
       {/* Browser Preview */}
@@ -403,6 +423,29 @@ function BrowserTab({ browserState, execution, onStartDemo, onStopDemo, isDemoRu
           state={browserState}
           isLive={execution?.status === 'running' || isDemoRunning}
         />
+      </div>
+
+      <div className="p-3 border-t border-rose-gold-400/20 bg-dark-300/70">
+        <form
+          className="flex items-center gap-2"
+          onSubmit={(e) => {
+            e.preventDefault()
+            onNavigateUrl(urlInput)
+          }}
+        >
+          <input
+            value={urlInput}
+            onChange={(e) => setUrlInput(e.target.value)}
+            placeholder="Enter any URL (e.g. https://news.ycombinator.com)"
+            className="flex-1 px-3 py-2 rounded-lg bg-dark-200 border border-rose-gold-400/20 text-sm text-white placeholder-white/40 outline-none focus:border-rose-gold-400/50"
+          />
+          <button
+            type="submit"
+            className="px-3 py-2 rounded-lg bg-rose-gold-400/20 border border-rose-gold-400/30 text-rose-gold-300 text-sm hover:bg-rose-gold-400/30 transition-colors"
+          >
+            Browse
+          </button>
+        </form>
       </div>
 
       {/* Quick Actions - Show when no browser state and not running */}

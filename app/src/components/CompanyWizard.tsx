@@ -628,7 +628,7 @@ export default function CompanyWizard() {
               </button>
               <button
                 onClick={startBuilding}
-                disabled={!selectedLogoId && logoVariations.length > 0}
+                disabled={isGeneratingLogos || !companyName}
                 className="px-8 py-3 rounded-xl bg-gradient-to-r from-rose-gold-400 to-rose-gold-600 text-dark-500 font-semibold flex items-center gap-2 hover:from-rose-gold-300 hover:to-rose-gold-500 transition-all shadow-glow-lg disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Wand2 className="w-5 h-5" /> Build My Company

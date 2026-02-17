@@ -5,7 +5,7 @@ export const config = {
 };
 
 interface CompanyRequest {
-  action: 'generate-plan' | 'generate-logo' | 'generate-name' | 'create';
+  action: 'generate-plan' | 'generate-logo' | 'generate-name' | 'create' | string;
   companyType?: string;
   description?: string;
   name?: string;
@@ -161,8 +161,12 @@ export default async function handler(req: Request) {
     const body: CompanyRequest = await req.json();
     const { action, companyType, description, name, industry, logoUrl } = body;
 
-    switch (action) {
-      case 'generate-name': {
+    const normalizedAction = (action || '').toString().trim().toLowerCase().replace(/_/g, '-')
+
+    switch (normalizedAction) {
+      case 'generate-name':
+      case 'name':
+      case 'generate company name': {
         const prompt = `Generate 5 creative, memorable company names for a ${companyType} company in the ${industry || 'technology'} industry.
 Description: ${description}
 
@@ -193,7 +197,9 @@ Only return the JSON array, nothing else.`;
         });
       }
 
-      case 'generate-plan': {
+      case 'generate-plan':
+      case 'plan':
+      case 'generate business plan': {
         const prompt = `Create a comprehensive business plan for:
 Company Name: ${name}
 Type: ${companyType}
@@ -247,7 +253,8 @@ Only return valid JSON.`;
         });
       }
 
-      case 'generate-logo': {
+      case 'generate-logo':
+      case 'logo': {
         // Generate logo using Pollinations
         const logoPrompt = `${name} ${companyType} company`;
         const encodedPrompt = encodeURIComponent(
@@ -264,7 +271,8 @@ Only return valid JSON.`;
         });
       }
 
-      case 'create': {
+      case 'create':
+      case 'create-company': {
         // Create the company (in a real app, this would save to a database)
         const companyId = crypto.randomUUID();
 

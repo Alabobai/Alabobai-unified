@@ -61,7 +61,7 @@ export function ChatMemoryIntegration({
 
   const [showMemoryIndicator, setShowMemoryIndicator] = useState(false)
   const [commandResult, setCommandResult] = useState<MemoryCommandState | null>(null)
-  const extractionTimeoutRef = useRef<NodeJS.Timeout>()
+  const extractionTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Clear command result after display
   useEffect(() => {

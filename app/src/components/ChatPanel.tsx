@@ -149,11 +149,14 @@ export default function ChatPanel() {
   const [executeTaskError, setExecuteTaskError] = useState<string | null>(null)
   const [isDraggingFile, setIsDraggingFile] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const composerFormRef = useRef<HTMLFormElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const cancelStreamRef = useRef(false)
   const dragCounterRef = useRef(0)
+  const userHasScrolledRef = useRef(false)
+  const lastMessageCountRef = useRef(0)
 
   // File store
   const {
@@ -185,9 +188,41 @@ export default function ChatPanel() {
 
   const currentChat = chats.find(c => c.id === activeChat)
 
+  // Smart auto-scroll: only scroll to bottom if user hasn't scrolled up
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [currentChat?.messages])
+    const container = messagesContainerRef.current
+    if (!container) return
+
+    const handleScroll = () => {
+      // Check if user is near the bottom (within 100px)
+      const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100
+      userHasScrolledRef.current = !isNearBottom
+    }
+
+    container.addEventListener('scroll', handleScroll)
+    return () => container.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  // Scroll to bottom only when new messages arrive and user is at bottom
+  useEffect(() => {
+    const messageCount = currentChat?.messages.length || 0
+    const isNewMessage = messageCount > lastMessageCountRef.current
+    lastMessageCountRef.current = messageCount
+
+    // Always scroll on new user message or if user is already at bottom
+    if (isNewMessage && !userHasScrolledRef.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
+
+    // Reset scroll tracking when a new message is added (not during streaming updates)
+    if (isNewMessage && messageCount > 0) {
+      const lastMsg = currentChat?.messages[messageCount - 1]
+      if (lastMsg?.role === 'user') {
+        userHasScrolledRef.current = false
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+      }
+    }
+  }, [currentChat?.messages.length])
 
   // Hide suggestions when there are messages
   useEffect(() => {
@@ -725,7 +760,7 @@ export default function ChatPanel() {
       )}
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto morphic-scrollbar px-3 sm:px-6 py-4">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto morphic-scrollbar px-3 sm:px-6 py-4">
         {!currentChat || currentChat.messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center px-4">
             <div

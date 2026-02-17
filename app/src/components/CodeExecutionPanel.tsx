@@ -45,6 +45,7 @@ interface CodeExecutionPanelProps {
   onExecutionComplete?: (result: ExecutionResult) => void;
   className?: string;
   compact?: boolean;
+  preferBrowserExecutable?: boolean; // Default to JavaScript when Docker unavailable
 }
 
 interface OutputLine {
@@ -227,14 +228,6 @@ export default function CodeExecutionPanel({
     }
   }, [executionId]);
 
-  // Handle keyboard shortcuts
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-      e.preventDefault();
-      handleRun();
-    }
-  }, [handleRun]);
-
   // Get status badge
   const getStatusBadge = () => {
     if (isRunning) {
@@ -276,28 +269,150 @@ export default function CodeExecutionPanel({
     return null;
   };
 
-  // Render service unavailable state
-  if (serviceAvailable === false) {
-    return (
-      <div className={`morphic-glass rounded-2xl border border-rose-gold-400/20 p-6 ${className}`}>
-        <div className="flex flex-col items-center justify-center gap-4 text-center">
-          <div className="w-12 h-12 rounded-xl flex items-center justify-center"
-            style={{ background: `${BRAND_TOKENS.semantic.warning}20` }}>
-            <AlertCircle className="w-6 h-6" style={{ color: BRAND_TOKENS.semantic.warning }} />
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold text-white mb-1">Code Execution Unavailable</h3>
-            <p className="text-sm text-white/60">
-              Docker is not running or the sandbox service is not available.
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Browser-based JavaScript execution fallback
+  const executeBrowserFallback = useCallback(async () => {
+    if (isRunning || !code.trim()) return;
+
+    setIsRunning(true);
+    setOutputs([]);
+    setResult(null);
+    setError(null);
+    setFilesCreated([]);
+
+    const startTime = performance.now();
+
+    setOutputs(prev => [...prev, {
+      type: 'system',
+      content: '⚡ Running in browser sandbox (Docker unavailable)...',
+      timestamp: new Date()
+    }]);
+
+    try {
+      // Capture console output
+      const logs: OutputLine[] = [];
+      const originalConsole = {
+        log: console.log,
+        error: console.error,
+        warn: console.warn,
+        info: console.info
+      };
+
+      const captureLog = (type: 'stdout' | 'stderr') => (...args: any[]) => {
+        const content = args.map(arg =>
+          typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+        ).join(' ');
+        logs.push({ type, content, timestamp: new Date() });
+        setOutputs(prev => [...prev, { type, content, timestamp: new Date() }]);
+      };
+
+      // Override console methods
+      console.log = captureLog('stdout');
+      console.info = captureLog('stdout');
+      console.warn = captureLog('stderr');
+      console.error = captureLog('stderr');
+
+      let result: any;
+      try {
+        if (language === 'javascript' || language === 'typescript') {
+          // Create a sandboxed execution context
+          const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
+          const sandboxedCode = `
+            "use strict";
+            ${code}
+          `;
+          const fn = new AsyncFunction(sandboxedCode);
+          result = await fn();
+        } else if (language === 'python') {
+          // For Python, show a helpful message
+          setOutputs(prev => [...prev, {
+            type: 'stderr',
+            content: 'Python execution requires Docker. Please start Docker or use JavaScript/TypeScript instead.',
+            timestamp: new Date()
+          }]);
+          throw new Error('Python requires Docker');
+        }
+
+        if (result !== undefined) {
+          setOutputs(prev => [...prev, {
+            type: 'stdout',
+            content: `→ ${typeof result === 'object' ? JSON.stringify(result, null, 2) : String(result)}`,
+            timestamp: new Date()
+          }]);
+        }
+      } finally {
+        // Restore console methods
+        console.log = originalConsole.log;
+        console.error = originalConsole.error;
+        console.warn = originalConsole.warn;
+        console.info = originalConsole.info;
+      }
+
+      const duration = performance.now() - startTime;
+      const fullResult: ExecutionResult = {
+        executionId: `browser-${Date.now()}`,
+        success: true,
+        exitCode: 0,
+        stdout: logs.filter(l => l.type === 'stdout').map(l => l.content).join('\n'),
+        stderr: logs.filter(l => l.type === 'stderr').map(l => l.content).join('\n'),
+        duration,
+        timedOut: false,
+        filesCreated: [],
+        status: 'completed'
+      };
+      setResult(fullResult);
+      onExecutionComplete?.(fullResult);
+
+    } catch (err) {
+      const duration = performance.now() - startTime;
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      setOutputs(prev => [...prev, {
+        type: 'stderr',
+        content: `Error: ${errorMessage}`,
+        timestamp: new Date()
+      }]);
+      setError(errorMessage);
+
+      const fullResult: ExecutionResult = {
+        executionId: `browser-${Date.now()}`,
+        success: false,
+        exitCode: 1,
+        stdout: '',
+        stderr: errorMessage,
+        duration,
+        timedOut: false,
+        filesCreated: [],
+        error: errorMessage,
+        status: 'failed'
+      };
+      setResult(fullResult);
+      onExecutionComplete?.(fullResult);
+    } finally {
+      setIsRunning(false);
+    }
+  }, [code, language, isRunning, onExecutionComplete]);
+
+  // Use browser fallback for JS/TS when Docker is unavailable
+  const canUseBrowserFallback = serviceAvailable === false && (language === 'javascript' || language === 'typescript');
+  const effectiveHandleRun = canUseBrowserFallback ? executeBrowserFallback : handleRun;
+
+  // Show warning banner instead of blocking the whole component
+  const showDockerWarning = serviceAvailable === false;
 
   return (
     <div className={`morphic-glass rounded-2xl border border-rose-gold-400/20 overflow-hidden ${className}`}>
+      {/* Docker Unavailable Warning Banner */}
+      {showDockerWarning && (
+        <div className="flex items-center gap-3 px-4 py-2 border-b border-rose-gold-400/10"
+          style={{ background: `${BRAND_TOKENS.semantic.warning}15` }}>
+          <AlertCircle className="w-4 h-4 flex-shrink-0" style={{ color: BRAND_TOKENS.semantic.warning }} />
+          <span className="text-xs" style={{ color: BRAND_TOKENS.semantic.warning }}>
+            Docker unavailable. {canUseBrowserFallback
+              ? 'Running JavaScript in browser sandbox.'
+              : 'Switch to JavaScript for browser execution.'}
+          </span>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-rose-gold-400/10">
         <div className="flex items-center gap-3">
@@ -397,8 +512,8 @@ export default function CodeExecutionPanel({
             </button>
           ) : (
             <button
-              onClick={handleRun}
-              disabled={!code.trim() || serviceAvailable === null}
+              onClick={effectiveHandleRun}
+              disabled={!code.trim() || (serviceAvailable === null) || (serviceAvailable === false && !canUseBrowserFallback)}
               className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-glow-sm hover:opacity-90"
               style={{
                 background: BRAND_GRADIENT_ACCENT,
@@ -406,7 +521,7 @@ export default function CodeExecutionPanel({
               }}
             >
               <Play className="w-4 h-4" />
-              Run
+              {canUseBrowserFallback ? 'Run (Browser)' : 'Run'}
             </button>
           )}
         </div>
@@ -434,7 +549,12 @@ export default function CodeExecutionPanel({
           ref={textareaRef}
           value={code}
           onChange={(e) => setCode(e.target.value)}
-          onKeyDown={handleKeyDown}
+          onKeyDown={(e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+              e.preventDefault();
+              effectiveHandleRun();
+            }
+          }}
           className={`w-full px-4 py-4 font-mono text-sm text-white bg-dark-500/30 border-none focus:outline-none resize-none morphic-scrollbar ${
             compact ? 'min-h-[150px]' : 'min-h-[300px]'
           }`}

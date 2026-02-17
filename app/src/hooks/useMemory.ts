@@ -343,7 +343,7 @@ export function useMemorySearch(initialQuery?: string) {
   const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  const debounceRef = useRef<NodeJS.Timeout>();
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
   const search = useCallback(async (searchQuery: string, options?: {
     types?: MemoryType[];

@@ -204,7 +204,7 @@ function SettingsPanel({
   onUpdate,
   isLoading
 }: {
-  settings: MemorySettings | null
+  settings: MemorySettings | null | undefined
   onUpdate: (settings: Partial<MemorySettings>) => void
   isLoading: boolean
 }) {

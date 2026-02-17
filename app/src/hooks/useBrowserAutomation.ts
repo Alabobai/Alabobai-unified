@@ -195,22 +195,22 @@ export function useBrowserAutomation(
       }
     };
 
-    browserControl.on('connected', handleConnected);
-    browserControl.on('disconnected', handleDisconnected);
-    browserControl.on('error', handleError);
-    browserControl.on('screenshot', handleScreenshot);
-    browserControl.on('cursor:update', handleCursorUpdate);
-    browserControl.on('action', handleAction);
-    browserControl.on('session:updated', handleSessionUpdate);
+    browserControl.on('connected', handleConnected as (...args: unknown[]) => void);
+    browserControl.on('disconnected', handleDisconnected as (...args: unknown[]) => void);
+    browserControl.on('error', handleError as (...args: unknown[]) => void);
+    browserControl.on('screenshot', handleScreenshot as (...args: unknown[]) => void);
+    browserControl.on('cursor:update', handleCursorUpdate as (...args: unknown[]) => void);
+    browserControl.on('action', handleAction as (...args: unknown[]) => void);
+    browserControl.on('session:updated', handleSessionUpdate as (...args: unknown[]) => void);
 
     return () => {
-      browserControl.off('connected', handleConnected);
-      browserControl.off('disconnected', handleDisconnected);
-      browserControl.off('error', handleError);
-      browserControl.off('screenshot', handleScreenshot);
-      browserControl.off('cursor:update', handleCursorUpdate);
-      browserControl.off('action', handleAction);
-      browserControl.off('session:updated', handleSessionUpdate);
+      browserControl.off('connected', handleConnected as (...args: unknown[]) => void);
+      browserControl.off('disconnected', handleDisconnected as (...args: unknown[]) => void);
+      browserControl.off('error', handleError as (...args: unknown[]) => void);
+      browserControl.off('screenshot', handleScreenshot as (...args: unknown[]) => void);
+      browserControl.off('cursor:update', handleCursorUpdate as (...args: unknown[]) => void);
+      browserControl.off('action', handleAction as (...args: unknown[]) => void);
+      browserControl.off('session:updated', handleSessionUpdate as (...args: unknown[]) => void);
     };
   }, [onAction, onError]);
 
