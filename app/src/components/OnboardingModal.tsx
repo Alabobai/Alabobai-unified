@@ -119,20 +119,17 @@ function WelcomeStep() {
 
   return (
     <div className="text-center py-8 px-4">
-      {/* Animated Logo */}
+      {/* Logo */}
       <div
         className={`relative mx-auto w-24 h-24 mb-8 transition-all duration-700 ${
           showContent ? 'opacity-100 scale-100' : 'opacity-0 scale-75'
         }`}
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-rose-gold-300 to-rose-gold-600 rounded-3xl animate-pulse-glow" />
-        <div className="absolute inset-0 bg-gradient-to-br from-rose-gold-300 to-rose-gold-600 rounded-3xl flex items-center justify-center">
-          <span className="text-4xl font-bold text-dark-500">A</span>
-        </div>
-        {/* Floating particles */}
-        <div className="absolute -top-2 -right-2 w-4 h-4 bg-rose-gold-400 rounded-full animate-float opacity-60" />
-        <div className="absolute -bottom-1 -left-1 w-3 h-3 bg-rose-gold-300 rounded-full animate-float opacity-50" style={{ animationDelay: '0.5s' }} />
-        <div className="absolute top-1/2 -right-4 w-2 h-2 bg-rose-gold-500 rounded-full animate-float opacity-40" style={{ animationDelay: '1s' }} />
+        <img
+          src="/logo.png"
+          alt={BRAND.name}
+          className="w-full h-full object-contain drop-shadow-[0_0_20px_rgba(217,160,122,0.5)]"
+        />
       </div>
 
       {/* Welcome Text */}
