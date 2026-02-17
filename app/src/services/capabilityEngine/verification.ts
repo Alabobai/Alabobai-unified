@@ -5,7 +5,7 @@ import type {
   TaskIntent,
   VerificationCheck,
   VerificationSummary,
-} from './types'
+} from './types.ts'
 
 interface CompanyPlanShape {
   executive_summary?: unknown

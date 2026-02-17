@@ -1,12 +1,12 @@
 import { randomUUID } from 'node:crypto'
 import { mkdir, readFile, writeFile, appendFile } from 'node:fs/promises'
 import { dirname } from 'node:path'
-import { inferIntent, retrieveCapabilities } from '../../src/services/capabilityEngine/retriever'
-import { planExecution } from '../../src/services/capabilityEngine/planner'
+import { inferIntent, retrieveCapabilities } from '../../src/services/capabilityEngine/retriever.ts'
+import { planExecution } from '../../src/services/capabilityEngine/planner.ts'
 import {
   statusFromExecutionAndVerification,
   verifyExecutionQuality,
-} from '../../src/services/capabilityEngine/verification'
+} from '../../src/services/capabilityEngine/verification.ts'
 import type {
   CapabilityMatch,
   Diagnostics,
@@ -16,7 +16,7 @@ import type {
   PlanStep,
   TaskIntent,
   VerificationSummary,
-} from '../../src/services/capabilityEngine/types'
+} from '../../src/services/capabilityEngine/types.ts'
 
 export type RunState = 'planned' | 'running' | 'blocked' | 'retrying' | 'succeeded' | 'failed'
 

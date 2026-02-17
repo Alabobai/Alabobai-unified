@@ -10,7 +10,7 @@ import {
   pauseTaskRun,
   resumeTaskRun,
   retryTaskRun,
-} from './_lib/task-runtime'
+} from './_lib/task-runtime.ts'
 
 interface ControlRequest {
   action: 'pause' | 'resume' | 'retry' | 'watchdog-kick'
@@ -80,6 +80,11 @@ export default async function handler(req: Request) {
   }
 
   if (!body.runId) return responseJson({ error: 'runId is required' }, 400)
+
+  const supportedActions = new Set(['pause', 'resume', 'retry'])
+  if (!supportedActions.has(body.action)) {
+    return responseJson({ error: `Unsupported action '${body.action}'. Expected one of: pause, resume, retry, watchdog-kick` }, 400)
+  }
 
   const handlerByAction: Record<'pause' | 'resume' | 'retry', () => Promise<unknown>> = {
     pause: () => pauseTaskRun(body.runId!),

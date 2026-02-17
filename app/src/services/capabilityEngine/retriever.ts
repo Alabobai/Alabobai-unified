@@ -1,10 +1,10 @@
-import catalog from '@/capabilities/catalog.v1.json'
+import catalog from '../../capabilities/catalog.v1.json' with { type: 'json' }
 import type {
   CapabilityDefinition,
   CapabilityMatch,
   RetrievalInput,
   TaskIntent,
-} from './types'
+} from './types.ts'
 
 interface CatalogShape {
   version: string

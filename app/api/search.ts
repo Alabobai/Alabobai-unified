@@ -1,4 +1,4 @@
-import { degradedEnvelope, healthGate, runWithReliability } from './_lib/reliability'
+import { degradedEnvelope, healthGate, runWithReliability } from './_lib/reliability.ts'
 
 export const config = {
   runtime: 'edge',

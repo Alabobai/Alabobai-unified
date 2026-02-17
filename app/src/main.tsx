@@ -15,6 +15,13 @@ if (themeMeta) {
   themeMeta.setAttribute('content', BRAND.colors.roseGoldGlow)
 }
 
+window.addEventListener('vite:preloadError', () => {
+  const key = 'alabobai:preload-recovery'
+  if (sessionStorage.getItem(key) === '1') return
+  sessionStorage.setItem(key, '1')
+  window.location.reload()
+})
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <App />

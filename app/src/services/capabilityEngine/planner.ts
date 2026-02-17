@@ -1,4 +1,4 @@
-import type { CapabilityMatch, PlanStep, TaskIntent } from './types'
+import type { CapabilityMatch, PlanStep, TaskIntent } from './types.ts'
 
 function buildPayload(intent: TaskIntent, task: string, capability: CapabilityMatch): Record<string, unknown> {
   const defaults = capability.capability.defaultPayload || {}

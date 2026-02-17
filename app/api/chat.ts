@@ -3,7 +3,7 @@ import {
   getCircuitBreakerSnapshot,
   healthGate,
   runWithReliability,
-} from './_lib/reliability'
+} from './_lib/reliability.ts'
 
 export const config = {
   runtime: 'edge',

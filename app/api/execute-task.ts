@@ -8,7 +8,7 @@ import {
   getTaskRun,
   kickWatchdog,
   waitForRun,
-} from './_lib/task-runtime'
+} from './_lib/task-runtime.ts'
 
 interface ExecuteTaskRequest {
   task: string
@@ -17,6 +17,40 @@ interface ExecuteTaskRequest {
   async?: boolean
   waitTimeoutMs?: number
   runId?: string
+}
+
+interface FallbackAdvice {
+  reason: 'no-match' | 'blocked'
+  message: string
+  nextAction: string
+}
+
+function withFallbackAdvice<T extends Record<string, unknown>>(payload: T): T & { fallback?: FallbackAdvice } {
+  const status = String(payload?.status || '')
+
+  if (status === 'no-match') {
+    return {
+      ...payload,
+      fallback: {
+        reason: 'no-match',
+        message: 'I could not map this request to an executable capability right now.',
+        nextAction: 'Switching to AI assistant mode is recommended so your request can still be completed conversationally.',
+      },
+    }
+  }
+
+  if (status === 'blocked') {
+    return {
+      ...payload,
+      fallback: {
+        reason: 'blocked',
+        message: 'The task run was blocked by verification checks or safety gates.',
+        nextAction: 'Please review diagnostics/verification notes, then retry or continue in AI assistant mode for a best-effort result.',
+      },
+    }
+  }
+
+  return payload
 }
 
 function responseJson(payload: unknown, status = 200): Response {
@@ -47,7 +81,7 @@ export default async function handler(req: Request) {
 
     const run = await getTaskRun(runId)
     if (!run) return responseJson({ error: 'run not found' }, 404)
-    return responseJson(asExecuteTaskPayload(run), 200)
+    return responseJson(withFallbackAdvice(asExecuteTaskPayload(run) as Record<string, unknown>), 200)
   }
 
   if (req.method !== 'POST') {
@@ -132,7 +166,7 @@ export default async function handler(req: Request) {
 
     const settled = await waitForRun(run.id, Math.max(1000, Math.min(60000, body?.waitTimeoutMs || 25000)))
     const latest = settled || run
-    return responseJson(asExecuteTaskPayload(latest), 200)
+    return responseJson(withFallbackAdvice(asExecuteTaskPayload(latest) as Record<string, unknown>), 200)
   } catch (error) {
     return responseJson(
       {

@@ -1,4 +1,4 @@
-import { MessageSquare, Plus, FolderOpen, Settings, ChevronLeft, ChevronRight, Rocket, LayoutDashboard, Brain, Zap, Flame, Search, Shield, Wallet, Palette, Mic, BarChart3, ShieldCheck, Plug, Cpu, Terminal } from 'lucide-react'
+import { MessageSquare, Plus, FolderOpen, Settings, ChevronLeft, ChevronRight, Rocket, LayoutDashboard, Brain, Zap, Flame, Search, Shield, Wallet, Palette, Mic, BarChart3, ShieldCheck, Plug, Cpu, Terminal, Command, Database } from 'lucide-react'
 import { useAppStore } from '@/stores/appStore'
 import AgentsPanel from './AgentsPanel'
 
@@ -117,6 +117,24 @@ export default function Sidebar() {
                 : 'bg-green-500/20 text-green-400 opacity-0 group-hover:opacity-100'
             } transition-opacity`}>
               LOCAL
+            </span>
+          </button>
+          <button
+            onClick={() => setView('command-center')}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group ${
+              currentView === 'command-center'
+                ? 'bg-rose-gold-400/12 text-rose-gold-300 border border-rose-gold-400/35'
+                : 'text-white/75 bg-dark-300/70 border border-rose-gold-400/15 hover:bg-rose-gold-400/10 hover:text-rose-gold-300'
+            }`}
+          >
+            <Command className={`w-4 h-4 ${currentView === 'command-center' ? 'animate-pulse text-rose-gold-400' : ''}`} />
+            <span className="text-sm">Command Center</span>
+            <span className={`ml-auto text-[10px] px-1.5 py-0.5 rounded-full ${
+              currentView === 'command-center'
+                ? 'bg-rose-gold-400/30 text-rose-gold-300'
+                : 'bg-rose-gold-400/20 text-rose-gold-400 opacity-0 group-hover:opacity-100'
+            } transition-opacity`}>
+              CORE
             </span>
           </button>
           <button
@@ -374,6 +392,24 @@ export default function Sidebar() {
                 : 'bg-rose-gold-400/20 text-rose-gold-400 opacity-0 group-hover:opacity-100'
             } transition-opacity`}>
               NEW
+            </span>
+          </button>
+          <button
+            onClick={() => setView('memory-dashboard')}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group ${
+              currentView === 'memory-dashboard'
+                ? 'bg-rose-gold-400/12 text-rose-gold-300 border border-rose-gold-400/35'
+                : 'text-white/75 bg-dark-300/70 border border-rose-gold-400/15 hover:bg-rose-gold-400/10 hover:text-rose-gold-300'
+            }`}
+          >
+            <Database className={`w-4 h-4 ${currentView === 'memory-dashboard' ? 'animate-pulse text-rose-gold-400' : ''}`} />
+            <span className="text-sm">Memory Dashboard</span>
+            <span className={`ml-auto text-[10px] px-1.5 py-0.5 rounded-full ${
+              currentView === 'memory-dashboard'
+                ? 'bg-rose-gold-400/30 text-rose-gold-300'
+                : 'bg-rose-gold-400/20 text-rose-gold-400 opacity-0 group-hover:opacity-100'
+            } transition-opacity`}>
+              CORE
             </span>
           </button>
           <button
