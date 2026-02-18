@@ -3,10 +3,11 @@ import {
   Rocket, ShoppingCart, Smartphone, Building2, PenTool, Wrench,
   ArrowRight, ArrowLeft, Check, Loader2, Sparkles,
   Code2, Palette, Megaphone, DollarSign, Scale, Shield,
-  HeadphonesIcon, AlertCircle, Wand2, RefreshCw
+  HeadphonesIcon, AlertCircle, Wand2, RefreshCw, Zap, Crown
 } from 'lucide-react'
 import { useAppStore } from '@/stores/appStore'
 import { BRAND_GRADIENT_ACCENT } from '@/config/brandTokens'
+import { logoGenerator, LOGO_STYLES, type LogoVariation } from '@/services/logoGenerator'
 
 type CompanyType = 'saas' | 'ecommerce' | 'app' | 'agency' | 'content' | 'service'
 
@@ -48,68 +49,18 @@ const createBuildSteps = (): BuildStep[] => [
   { id: 'launch', name: 'Going live!', department: 'Launch', icon: Rocket, status: 'pending', description: 'Deploying your company...' },
 ]
 
-// Logo style variations for Pollinations.ai
-interface LogoVariation {
+// Using logoGenerator service for multi-provider AI logo generation
+// Supports: FLUX.1 (Black Forest Labs), SDXL, Hugging Face, Pollinations.ai
+// See: https://huggingface.co/black-forest-labs/FLUX.1-dev
+// See: https://huggingface.co/Shakker-Labs/FLUX.1-dev-LoRA-Logo-Design
+
+// Extended logo variation interface
+interface LocalLogoVariation {
   id: string
   style: string
   prompt: string
   url: string
-}
-
-function generateLogoVariations(companyName: string, companyType: string): LogoVariation[] {
-  const seed = Math.floor(Math.random() * 1000000)
-
-  const basePrompts = [
-    {
-      id: 'minimal',
-      style: 'Minimalist',
-      promptTemplate: `minimalist logo ${companyName} ${companyType} clean simple geometric modern white background`
-    },
-    {
-      id: 'gradient',
-      style: 'Modern Gradient',
-      promptTemplate: `modern gradient logo ${companyName} ${companyType} vibrant sleek professional tech startup white background`
-    },
-    {
-      id: 'abstract',
-      style: 'Abstract',
-      promptTemplate: `abstract artistic logo ${companyName} ${companyType} creative bold shapes innovative white background`
-    }
-  ]
-
-  return basePrompts.map((item, index) => ({
-    id: item.id,
-    style: item.style,
-    prompt: item.promptTemplate,
-    url: `https://image.pollinations.ai/prompt/${encodeURIComponent(item.promptTemplate)}?width=512&height=512&seed=${seed + index}&model=flux`
-  }))
-}
-
-// Fallback SVG logos when API fails
-function generateFallbackLogo(style: string, companyName: string): string {
-  const initial = companyName.charAt(0).toUpperCase()
-  const colors = {
-    minimal: { bg: '#1a1a1a', fg: '#d9a07a' },
-    gradient: { bg: 'linear-gradient(135deg, #d9a07a, #b8845c)', fg: '#1a1a1a' },
-    abstract: { bg: '#0a0808', fg: '#ecd4c0' }
-  }
-  const color = colors[style as keyof typeof colors] || colors.minimal
-
-  const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-      <defs>
-        <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style="stop-color:#d9a07a;stop-opacity:1" />
-          <stop offset="100%" style="stop-color:#b8845c;stop-opacity:1" />
-        </linearGradient>
-      </defs>
-      <rect width="512" height="512" fill="${style === 'gradient' ? 'url(#grad)' : color.bg}"/>
-      <text x="256" y="300" font-family="Arial, sans-serif" font-size="200" font-weight="bold" fill="${style === 'gradient' ? '#1a1a1a' : color.fg}" text-anchor="middle">${initial}</text>
-      ${style === 'abstract' ? '<circle cx="400" cy="120" r="60" fill="#d9a07a" opacity="0.6"/><circle cx="120" cy="400" r="40" fill="#d9a07a" opacity="0.4"/>' : ''}
-      ${style === 'minimal' ? '<rect x="156" y="350" width="200" height="8" rx="4" fill="#d9a07a" opacity="0.5"/>' : ''}
-    </svg>
-  `
-  return `data:image/svg+xml;base64,${btoa(svg)}`
+  provider?: string
 }
 
 export default function CompanyWizard() {
@@ -179,8 +130,9 @@ export default function CompanyWizard() {
     }
   }, [companyType, companyIdea])
 
-  // Generate 3 logo variations using Pollinations.ai
-  const generateLogos = useCallback(() => {
+  // Generate logo variations using multi-provider AI service
+  // Uses FLUX.1 (Black Forest Labs), SDXL, and other open source models
+  const generateLogos = useCallback(async () => {
     if (!companyName || !companyType) return
 
     setIsGeneratingLogos(true)
@@ -190,80 +142,178 @@ export default function CompanyWizard() {
     setLogoUrl(null)
     setError(null)
 
-    // Generate the 3 logo variations with different styles
-    const variations = generateLogoVariations(companyName, companyType)
-    setLogoVariations(variations)
+    try {
+      // Use the logoGenerator service for high-quality AI generation
+      // Supports: Pollinations.ai (Flux), Hugging Face (FLUX.1-schnell), Together.ai (SDXL)
+      const variations = await logoGenerator.generateLogoVariations(
+        companyName,
+        companyType,
+        LOGO_STYLES.slice(0, 6), // Use first 6 styles for variety
+        { width: 512, height: 512 }
+      )
 
-    // Mark as not generating immediately since URLs are ready
-    // The actual loading happens when images render
-    setTimeout(() => {
+      // Convert to local format
+      const localVariations: LocalLogoVariation[] = variations.map(v => ({
+        id: v.id,
+        style: v.style,
+        prompt: v.prompt,
+        url: v.url,
+        provider: v.provider
+      }))
+
+      setLogoVariations(localVariations)
+    } catch (err) {
+      console.error('Logo generation error:', err)
+      setError('Failed to generate logos. Using fallback designs.')
+
+      // Generate fallback variations
+      const fallbackVariations: LocalLogoVariation[] = LOGO_STYLES.slice(0, 3).map(style => ({
+        id: style.id,
+        style: style.name,
+        prompt: style.promptModifier,
+        url: '', // Will be replaced by fallback
+        provider: 'fallback'
+      }))
+      setLogoVariations(fallbackVariations)
+    } finally {
       setIsGeneratingLogos(false)
-    }, 500)
+    }
 
-    // Set timeout to use fallback if images don't load in 15 seconds
+    // Set timeout to use fallback if images don't load in 20 seconds
     setTimeout(() => {
       setLogoVariations(prev => prev.map(v => {
-        // If not loaded yet, use fallback
         if (!logosLoaded[v.id] && !logoErrors[v.id]) {
-          return { ...v, url: generateFallbackLogo(v.id, companyName) }
+          // Use logoGenerator's built-in fallback
+          return { ...v, url: generateLocalFallbackLogo(v.id, companyName), provider: 'fallback-svg' }
         }
         return v
       }))
       setLogosLoaded(prev => {
         const updated = { ...prev }
-        variations.forEach(v => { updated[v.id] = true })
+        logoVariations.forEach(v => { updated[v.id] = true })
         return updated
       })
-    }, 15000)
-  }, [companyName, companyType, logosLoaded, logoErrors])
+    }, 20000)
+  }, [companyName, companyType, logosLoaded, logoErrors, logoVariations])
+
+  // Local fallback SVG generator with luxurious brand styling
+  const generateLocalFallbackLogo = (styleId: string, name: string): string => {
+    const initial = name.charAt(0).toUpperCase()
+
+    const styleConfigs: Record<string, { bg: string; fg: string; pattern: string }> = {
+      minimalist: {
+        bg: '#1a1a1a',
+        fg: '#d9a07a',
+        pattern: `<rect x="156" y="340" width="200" height="6" rx="3" fill="#d9a07a" opacity="0.4"/>`
+      },
+      gradient: {
+        bg: 'url(#luxGrad)',
+        fg: '#1a1410',
+        pattern: ''
+      },
+      abstract: {
+        bg: '#0a0808',
+        fg: '#ecd4c0',
+        pattern: `<circle cx="380" cy="130" r="50" fill="#d9a07a" opacity="0.5"/><circle cx="130" cy="380" r="35" fill="#d9a07a" opacity="0.3"/>`
+      },
+      emblem: {
+        bg: '#0f0d0b',
+        fg: '#d9a07a',
+        pattern: `<circle cx="256" cy="256" r="200" fill="none" stroke="#d9a07a" stroke-width="3" opacity="0.6"/>`
+      },
+      lettermark: {
+        bg: '#151210',
+        fg: '#d9a07a',
+        pattern: `<rect x="180" y="380" width="152" height="4" rx="2" fill="#d9a07a" opacity="0.5"/>`
+      },
+      mascot: {
+        bg: '#1a1715',
+        fg: '#d9a07a',
+        pattern: `<ellipse cx="200" cy="200" rx="30" ry="35" fill="#d9a07a" opacity="0.3"/><ellipse cx="312" cy="200" rx="30" ry="35" fill="#d9a07a" opacity="0.3"/>`
+      }
+    }
+
+    const config = styleConfigs[styleId] || styleConfigs.minimalist
+
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+      <defs>
+        <linearGradient id="luxGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#ecd4c0"/>
+          <stop offset="50%" style="stop-color:#d9a07a"/>
+          <stop offset="100%" style="stop-color:#b8845c"/>
+        </linearGradient>
+        <filter id="glow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>
+      <rect width="512" height="512" fill="${config.bg}"/>
+      ${config.pattern}
+      <text x="256" y="290" font-family="Georgia,serif" font-size="180" font-weight="bold" fill="${config.fg}" text-anchor="middle" filter="url(#glow)">${initial}</text>
+    </svg>`
+
+    return `data:image/svg+xml;base64,${btoa(svg)}`
+  }
 
   // Handle logo image load
   const handleLogoLoad = (logoId: string) => {
     setLogosLoaded(prev => ({ ...prev, [logoId]: true }))
   }
 
-  // Handle logo image error - use fallback
+  // Handle logo image error - use luxurious fallback
   const handleLogoError = (logoId: string) => {
-    // Find the variation and replace URL with fallback
-    const variation = logoVariations.find(v => v.id === logoId)
-    if (variation) {
-      const fallbackUrl = generateFallbackLogo(logoId, companyName)
-      setLogoVariations(prev => prev.map(v =>
-        v.id === logoId ? { ...v, url: fallbackUrl } : v
-      ))
-      // Update selected logo URL if this was selected
-      if (selectedLogoId === logoId) {
-        setLogoUrl(fallbackUrl)
-      }
+    const fallbackUrl = generateLocalFallbackLogo(logoId, companyName)
+    setLogoVariations(prev => prev.map(v =>
+      v.id === logoId ? { ...v, url: fallbackUrl, provider: 'fallback-svg' } : v
+    ))
+    if (selectedLogoId === logoId) {
+      setLogoUrl(fallbackUrl)
     }
     setLogoErrors(prev => ({ ...prev, [logoId]: true }))
-    setLogosLoaded(prev => ({ ...prev, [logoId]: true })) // Mark as loaded to stop spinner
+    setLogosLoaded(prev => ({ ...prev, [logoId]: true }))
   }
 
   // Select a logo
-  const selectLogo = (variation: LogoVariation) => {
+  const selectLogo = (variation: LocalLogoVariation) => {
     setSelectedLogoId(variation.id)
     setLogoUrl(variation.url)
   }
 
-  // Regenerate a single logo variation
-  const regenerateLogo = (index: number) => {
+  // Regenerate a single logo variation using multi-provider service
+  // Tries: FLUX.1 (Pollinations) -> Turbo -> Hugging Face -> Together -> Fallback SVG
+  const regenerateLogo = async (index: number) => {
     if (!companyName || !companyType) return
 
-    const newVariations = [...logoVariations]
-    const currentVariation = newVariations[index]
+    const currentVariation = logoVariations[index]
 
-    // Create new URL with different seed
-    const newUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(currentVariation.prompt)}?width=512&height=512&nologo=true&seed=${Date.now()}`
-    newVariations[index] = { ...currentVariation, url: newUrl }
-
-    setLogoVariations(newVariations)
+    // Set loading state for this logo
     setLogosLoaded(prev => ({ ...prev, [currentVariation.id]: false }))
     setLogoErrors(prev => ({ ...prev, [currentVariation.id]: false }))
 
-    // If this was the selected logo, update the URL
-    if (selectedLogoId === currentVariation.id) {
-      setLogoUrl(newUrl)
+    try {
+      // Use the logoGenerator service for multi-provider regeneration
+      const regenerated = await logoGenerator.regenerateLogo(
+        currentVariation,
+        companyName,
+        companyType
+      )
+
+      // Update the variations with the new logo
+      setLogoVariations(prev => prev.map((v, i) =>
+        i === index ? { ...regenerated, provider: regenerated.provider } : v
+      ))
+
+      // If this was the selected logo, update the URL
+      if (selectedLogoId === currentVariation.id) {
+        setLogoUrl(regenerated.url)
+      }
+    } catch (error) {
+      console.error('Logo regeneration failed:', error)
+      // Use fallback SVG on error
+      const fallbackUrl = generateLocalFallbackLogo(currentVariation.id, companyName)
+      setLogoVariations(prev => prev.map((v, i) =>
+        i === index ? { ...v, url: fallbackUrl, provider: 'fallback-svg' } : v
+      ))
+      setLogoErrors(prev => ({ ...prev, [currentVariation.id]: true }))
+    } finally {
+      setLogosLoaded(prev => ({ ...prev, [currentVariation.id]: true }))
     }
   }
 
@@ -324,7 +374,7 @@ export default function CompanyWizard() {
           name: companyName,
           type: companyType,
           description: companyIdea,
-          logo: logoUrl || `https://image.pollinations.ai/prompt/${encodeURIComponent(`Logo for ${companyName}`)}&width=512&height=512&nologo=true`,
+          logo: logoUrl || generateLocalFallbackLogo('minimalist', companyName),
           createdAt: new Date().toISOString(),
           status: 'active',
         })
