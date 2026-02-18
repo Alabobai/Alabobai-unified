@@ -1364,6 +1364,7 @@ Remember to cite sources using bracket notation [1], [2], etc. throughout your a
 
   /**
    * Generate a report entirely client-side without AI
+   * Creates a meaningful "Here is what I found" summary with extracted findings
    */
   private generateClientSideReport(
     topic: string,
@@ -1371,51 +1372,86 @@ Remember to cite sources using bracket notation [1], [2], etc. throughout your a
     citations: Citation[],
     startTime: number
   ): ResearchReport {
-    // Build summary from source summaries
-    const summaryParts: string[] = []
-    summaryParts.push(`This research report explores "${topic}" by analyzing ${sources.length} authoritative sources.`)
+    // Extract the most relevant information from all sources
+    const allExtractedFacts = this.extractKeyFacts(topic, sources)
 
-    // Get the first substantial content as overview
-    const primarySource = sources.find(s => s.content.length > 200 && !s.error)
-    if (primarySource) {
-      const firstParagraph = primarySource.content.split(/[.!?]/).slice(0, 3).join('. ')
-      if (firstParagraph.length > 100) {
-        summaryParts.push(firstParagraph + '.')
+    // Build the summary with "Here is what I found" format
+    const summaryParts: string[] = []
+    summaryParts.push(`## Here is what I found about "${topic}"\n`)
+
+    // Add the main answer/overview
+    if (allExtractedFacts.length > 0) {
+      summaryParts.push(`Based on ${sources.length} sources, here are the key findings:\n`)
+
+      // Add top 3-5 most relevant facts as the main answer
+      const topFacts = allExtractedFacts.slice(0, Math.min(5, allExtractedFacts.length))
+      for (const fact of topFacts) {
+        summaryParts.push(`• ${fact.text}`)
+      }
+    } else {
+      // Fallback: extract from primary source
+      const primarySource = sources.find(s => s.content.length > 200 && !s.error)
+      if (primarySource) {
+        const extractedContent = this.extractiveSummary(primarySource.content, topic)
+        summaryParts.push(extractedContent)
       }
     }
 
-    summaryParts.push(`The information has been compiled from ${sources.filter(s => s.sourceType === 'wikipedia').length || 0} Wikipedia articles and ${sources.filter(s => s.sourceType !== 'wikipedia').length || sources.length} other web sources.`)
+    // Add source count info
+    const wikiCount = sources.filter(s => s.sourceType === 'wikipedia').length
+    const webCount = sources.filter(s => s.sourceType !== 'wikipedia').length
+    const sourceInfo = []
+    if (wikiCount > 0) sourceInfo.push(`${wikiCount} Wikipedia article${wikiCount > 1 ? 's' : ''}`)
+    if (webCount > 0) sourceInfo.push(`${webCount} web source${webCount > 1 ? 's' : ''}`)
 
-    const summary = summaryParts.join('\n\n')
+    if (sourceInfo.length > 0) {
+      summaryParts.push(`\n*Information compiled from ${sourceInfo.join(' and ')}.*`)
+    }
 
-    // Extract key findings from summaries
+    const summary = summaryParts.join('\n')
+
+    // Extract key findings with citations
     const keyFindings: string[] = []
+    const usedFindings = new Set<string>()
+
     for (let i = 0; i < sources.length && keyFindings.length < 6; i++) {
       const source = sources[i]
       const content = source.summary || source.content
 
-      // Extract key sentences as findings
-      const sentences = content.split(/[.!?]/).filter(s => s.trim().length > 30 && s.trim().length < 200)
+      // Extract the most informative sentences
+      const sentences = this.extractInformativeSentences(content, topic)
 
-      for (const sentence of sentences.slice(0, 2)) {
-        const finding = sentence.trim()
-        if (finding && !keyFindings.some(f => f.toLowerCase() === finding.toLowerCase())) {
-          keyFindings.push(`${finding} [${i + 1}]`)
+      for (const sentence of sentences) {
+        const normalized = sentence.toLowerCase().trim()
+        if (!usedFindings.has(normalized) && sentence.length > 30 && sentence.length < 250) {
+          usedFindings.add(normalized)
+          keyFindings.push(`${sentence} [${i + 1}]`)
           if (keyFindings.length >= 6) break
         }
       }
     }
 
-    // Build detailed analysis
+    // Build detailed analysis with structured sections
     const analysisSection: string[] = []
-    analysisSection.push(`## Overview\n\n${topic} is a subject covered by multiple sources in this research compilation.`)
+    analysisSection.push(`## Detailed Analysis\n`)
+    analysisSection.push(`This research compilation explores **${topic}** through information gathered from multiple authoritative sources.\n`)
 
-    for (let i = 0; i < sources.length; i++) {
-      const source = sources[i]
-      const content = source.summary || this.extractiveSummary(source.content, topic)
+    // Group sources by type for better organization
+    const groupedSources = this.groupSourcesByType(sources)
 
-      if (content.length > 50) {
-        analysisSection.push(`\n### From ${source.title} [${i + 1}]\n\n${content}`)
+    for (const [sourceType, typeSources] of Object.entries(groupedSources)) {
+      if (typeSources.length > 0) {
+        const typeLabel = this.getSourceTypeLabel(sourceType)
+        analysisSection.push(`\n### ${typeLabel}\n`)
+
+        for (const { source, index } of typeSources) {
+          const content = source.summary || this.extractiveSummary(source.content, topic)
+
+          if (content.length > 50) {
+            analysisSection.push(`**${source.title}** [${index}]\n`)
+            analysisSection.push(`${content}\n`)
+          }
+        }
       }
     }
 
@@ -1425,13 +1461,139 @@ Remember to cite sources using bracket notation [1], [2], etc. throughout your a
       id: crypto.randomUUID(),
       topic,
       summary,
-      keyFindings: keyFindings.length > 0 ? keyFindings : sources.slice(0, 5).map((s, i) => `${s.title} [${i + 1}]`),
+      keyFindings: keyFindings.length > 0 ? keyFindings : sources.slice(0, 5).map((s, i) => `${s.title} provides information about ${topic} [${i + 1}]`),
       detailedAnalysis,
       sources,
       citations,
       generatedAt: new Date(),
       researchDuration: Date.now() - startTime
     }
+  }
+
+  /**
+   * Extract key facts from sources, ranked by relevance
+   */
+  private extractKeyFacts(topic: string, sources: ResearchSource[]): { text: string; score: number; sourceIndex: number }[] {
+    const topicWords = topic.toLowerCase().split(/\s+/).filter(w => w.length > 3)
+    const facts: { text: string; score: number; sourceIndex: number }[] = []
+    const seenFacts = new Set<string>()
+
+    for (let i = 0; i < sources.length; i++) {
+      const source = sources[i]
+      const content = source.summary || source.content
+
+      // Split into sentences
+      const sentences = content
+        .replace(/([.!?])\s+/g, '$1|SPLIT|')
+        .split('|SPLIT|')
+        .map(s => s.trim())
+        .filter(s => s.length > 40 && s.length < 300)
+
+      for (const sentence of sentences) {
+        const lowerSentence = sentence.toLowerCase()
+        const normalizedKey = lowerSentence.replace(/[^a-z0-9]/g, '').slice(0, 50)
+
+        // Skip duplicates
+        if (seenFacts.has(normalizedKey)) continue
+
+        let score = 0
+
+        // Score based on topic relevance
+        for (const word of topicWords) {
+          if (lowerSentence.includes(word)) score += 3
+        }
+
+        // Boost sentences with factual indicators
+        if (/\b(is|are|was|were|has|have|founded|created|developed|launched|established)\b/i.test(sentence)) score += 2
+        if (/\d{4}/.test(sentence)) score += 2 // Contains a year
+        if (/\$[\d,]+|\d+%|\d+ (million|billion|trillion)/.test(sentence)) score += 3 // Contains numbers/money
+        if (/^[A-Z][a-z]+/.test(sentence)) score += 1 // Proper sentence start
+
+        // Penalize certain patterns
+        if (/click here|read more|sign up|subscribe/i.test(sentence)) score -= 5
+        if (/^(however|but|also|and|or)\b/i.test(sentence)) score -= 1
+
+        if (score > 2) {
+          seenFacts.add(normalizedKey)
+          facts.push({ text: sentence, score, sourceIndex: i })
+        }
+      }
+    }
+
+    // Sort by score descending
+    return facts.sort((a, b) => b.score - a.score)
+  }
+
+  /**
+   * Extract the most informative sentences from content
+   */
+  private extractInformativeSentences(content: string, topic: string): string[] {
+    const topicWords = topic.toLowerCase().split(/\s+/).filter(w => w.length > 3)
+
+    const sentences = content
+      .replace(/([.!?])\s+/g, '$1|SPLIT|')
+      .split('|SPLIT|')
+      .map(s => s.trim())
+      .filter(s => s.length > 40 && s.length < 250)
+
+    // Score and sort sentences
+    const scored = sentences.map(sentence => {
+      const lowerSentence = sentence.toLowerCase()
+      let score = 0
+
+      for (const word of topicWords) {
+        if (lowerSentence.includes(word)) score += 2
+      }
+
+      // Boost factual content
+      if (/\d/.test(sentence)) score += 1
+      if (/\b(is|are|was|were|means|refers to|defined as)\b/i.test(sentence)) score += 1
+
+      return { sentence, score }
+    })
+
+    return scored
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5)
+      .map(s => s.sentence)
+  }
+
+  /**
+   * Group sources by their type for organized display
+   */
+  private groupSourcesByType(sources: ResearchSource[]): Record<string, { source: ResearchSource; index: number }[]> {
+    const groups: Record<string, { source: ResearchSource; index: number }[]> = {}
+
+    for (let i = 0; i < sources.length; i++) {
+      const source = sources[i]
+      const type = source.sourceType || 'web'
+
+      if (!groups[type]) groups[type] = []
+      groups[type].push({ source, index: i + 1 })
+    }
+
+    return groups
+  }
+
+  /**
+   * Get a human-readable label for source type
+   */
+  private getSourceTypeLabel(type: string): string {
+    const labels: Record<string, string> = {
+      'wikipedia': 'From Wikipedia',
+      'academic': 'Academic Sources',
+      'news': 'News Articles',
+      'github': 'GitHub Repositories',
+      'stackoverflow': 'Stack Overflow',
+      'arxiv': 'Research Papers (arXiv)',
+      'hackernews': 'Hacker News Discussions',
+      'web': 'Web Sources',
+      'duckduckgo': 'Web Search Results',
+      'wikidata': 'Wikidata',
+      'openlibrary': 'Open Library',
+      'semanticscholar': 'Semantic Scholar'
+    }
+    return labels[type] || 'Other Sources'
   }
 
   /**
