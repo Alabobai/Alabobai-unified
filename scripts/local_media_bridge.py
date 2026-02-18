@@ -140,15 +140,17 @@ async def _chat_with_ollama(messages: list[dict], model: str, temperature: float
     now = time.time()
     if now < OLLAMA_CIRCUIT_OPEN_UNTIL:
       retry_in = int(OLLAMA_CIRCUIT_OPEN_UNTIL - now)
+      print(f"[Ollama] Circuit breaker open, retry in {retry_in}s")
       return None, JSONResponse(
           status_code=503,
           content={'error': 'Local inference unavailable', 'details': f'circuit_open_retry_in_{retry_in}s'},
       )
 
-    # Keep chat responsive in local dev: fail fast instead of hanging.
-    timeout = httpx.Timeout(12.0, connect=3.0)
+    # Allow sufficient time for complex prompts like research synthesis (LLMs can take 2-3 min for long outputs)
+    timeout = httpx.Timeout(180.0, connect=10.0)
     async with httpx.AsyncClient(timeout=timeout) as client:
         requested_model = model or 'llama3:latest'
+        print(f"[Ollama] Sending request to model: {requested_model}, message length: {len(str(messages))}")
 
         async def do_chat(model_name: str):
             return await client.post(
@@ -163,7 +165,9 @@ async def _chat_with_ollama(messages: list[dict], model: str, temperature: float
 
         try:
             response = await do_chat(requested_model)
+            print(f"[Ollama] Response status: {response.status_code}")
         except Exception as exc:
+            print(f"[Ollama] Exception: {type(exc).__name__}: {exc}")
             OLLAMA_FAILURE_COUNT += 1
             if OLLAMA_FAILURE_COUNT >= CIRCUIT_FAILURE_THRESHOLD:
                 OLLAMA_CIRCUIT_OPEN_UNTIL = time.time() + CIRCUIT_COOLDOWN_SECONDS
