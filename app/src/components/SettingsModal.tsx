@@ -21,11 +21,13 @@ import {
   Bug,
   FileText,
   Database,
-  Package
+  Package,
+  Mic
 } from 'lucide-react'
 
-// Lazy load PluginMarketplace
+// Lazy load components
 const PluginMarketplace = lazy(() => import('./PluginMarketplace'))
+const AudioSettings = lazy(() => import('./AudioSettings'))
 import { aiService } from '@/services/ai'
 import { useAppStore } from '@/stores/appStore'
 import { useOnboardingStore } from '@/stores/onboardingStore'
@@ -453,6 +455,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const sections = [
     { id: 'ai', label: 'AI Provider', icon: Cpu },
     { id: 'apikeys', label: 'API Keys', icon: Key },
+    { id: 'audio', label: 'Audio (NVIDIA)', icon: Mic },
     { id: 'appearance', label: 'Appearance', icon: Palette },
     { id: 'plugins', label: 'Plugins', icon: Package },
     { id: 'privacy', label: 'Privacy', icon: Shield },
@@ -741,6 +744,17 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             {/* API Keys Section */}
             {activeSection === 'apikeys' && (
               <ApiKeySettings />
+            )}
+
+            {/* Audio Section - NVIDIA Audio */}
+            {activeSection === 'audio' && (
+              <Suspense fallback={
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-8 h-8 animate-spin text-rose-gold-400" />
+                </div>
+              }>
+                <AudioSettings />
+              </Suspense>
             )}
 
             {/* Appearance Section */}
@@ -1055,8 +1069,12 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 {/* Version Info */}
                 <div className="p-6 rounded-xl bg-gradient-to-br from-rose-gold-400/10 to-rose-gold-600/10 border border-rose-gold-400/20">
                   <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 rounded-2xl bg-rose-gold-400/20 flex items-center justify-center">
-                      <span className="text-3xl">A</span>
+                    <div className="w-16 h-16 rounded-2xl bg-rose-gold-400/20 flex items-center justify-center p-2">
+                      <img
+                        src={BRAND.assets.logo}
+                        alt={BRAND.name}
+                        className="w-full h-full object-contain logo-render"
+                      />
                     </div>
                     <div>
                       <h2 className="text-xl font-bold text-white">{BRAND.name}</h2>
