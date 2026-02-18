@@ -296,7 +296,7 @@ export default function CodeSandboxView() {
             <div className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-white mb-2">Default Timeout</label>
-                <select className="w-full px-3 py-2 rounded-lg bg-dark-400/50 border border-rose-gold-400/20 text-white text-sm focus:outline-none focus:border-rose-gold-400/50">
+                <select className="morphic-select text-sm">
                   <option value="30000">30 seconds</option>
                   <option value="60000" selected>1 minute</option>
                   <option value="120000">2 minutes</option>
@@ -305,7 +305,7 @@ export default function CodeSandboxView() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-white mb-2">Memory Limit</label>
-                <select className="w-full px-3 py-2 rounded-lg bg-dark-400/50 border border-rose-gold-400/20 text-white text-sm focus:outline-none focus:border-rose-gold-400/50">
+                <select className="morphic-select text-sm">
                   <option value="256">256 MB</option>
                   <option value="512" selected>512 MB</option>
                   <option value="1024">1 GB</option>

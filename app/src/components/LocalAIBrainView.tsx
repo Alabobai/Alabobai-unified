@@ -14,9 +14,10 @@ import {
   Thermometer, Copy, Check, X, Save,
   File, Globe, Clipboard, Archive, Sparkles,
   Plus, Key, Shield, ShieldCheck, ShieldAlert, Zap,
-  Gauge, Lock, Unlock
+  Gauge, Lock, Unlock, Mic, MicOff
 } from 'lucide-react'
 import { useMemoryChat } from '../hooks/useMemoryChat'
+import { useNvidiaAudio } from '../hooks/useNvidiaAudio'
 import { BRAND } from '@/config/brand'
 
 // ============== Types ==============
@@ -782,6 +783,60 @@ function ChatTab({
   const [customApiKey, setCustomApiKey] = useState('')
   const [customApiProvider, setCustomApiProvider] = useState<'openai' | 'anthropic' | 'groq' | 'custom'>('groq')
 
+  // NVIDIA Audio - Enhanced voice input with Sherpa-ONNX / NeMo
+  const {
+    isInitialized: audioInitialized,
+    isListening,
+    isProcessing: audioProcessing,
+    transcript: voiceTranscript,
+    partialTranscript,
+    audioLevel,
+    providers: audioProviders,
+    startListening,
+    stopListening,
+    clearTranscript
+  } = useNvidiaAudio({
+    autoInitialize: true,
+    onTranscript: (result) => {
+      // Set the final transcript to input
+      if (result.text) {
+        setInput(prev => prev + (prev ? ' ' : '') + result.text)
+      }
+    },
+    onPartialTranscript: (text) => {
+      // Show partial results in real-time
+      if (text) {
+        setInput(text)
+      }
+    },
+    onError: (error) => {
+      console.error('Voice input error:', error)
+    }
+  })
+
+  // Check if any speech provider is available
+  const speechSupported = audioInitialized && (
+    audioProviders.sherpaOnnx || audioProviders.nemoApi || audioProviders.webSpeechApi
+  )
+
+  // Get the active provider name for display
+  const getActiveProvider = () => {
+    if (audioProviders.nemoApi) return 'NeMo'
+    if (audioProviders.sherpaOnnx) return 'Sherpa-ONNX'
+    if (audioProviders.webSpeechApi) return 'Web Speech'
+    return 'None'
+  }
+
+  // Toggle voice input
+  const toggleListening = useCallback(async () => {
+    if (isListening) {
+      await stopListening()
+    } else {
+      clearTranscript()
+      await startListening()
+    }
+  }, [isListening, startListening, stopListening, clearTranscript])
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
@@ -1064,11 +1119,11 @@ function ChatTab({
                   <div className="p-3 border-b border-white/10">
                     <p className="text-xs text-white/40 mb-2">Permission Presets</p>
                     <div className="grid grid-cols-3 gap-2">
-                      {(['safe', 'balanced', 'full'] as PermissionPreset[]).map(preset => (
+                      {(['safe', 'balanced', 'full'] as const).map(preset => (
                         <button
                           key={preset}
                           onClick={() => {
-                            const presetSettings = {
+                            const presetSettings: Record<typeof preset, Omit<PermissionSettings, 'preset'>> = {
                               safe: { allowFileAccess: false, allowWebBrowsing: false, allowCodeExecution: false, allowSystemCommands: false },
                               balanced: { allowFileAccess: true, allowWebBrowsing: true, allowCodeExecution: false, allowSystemCommands: false },
                               full: { allowFileAccess: true, allowWebBrowsing: true, allowCodeExecution: true, allowSystemCommands: true }
@@ -1163,23 +1218,83 @@ function ChatTab({
                     </span>
                   )}
                 </div>
-                <button
-                  type="submit"
-                  disabled={!input.trim() || isStreaming}
-                  className="bg-gradient-to-r from-rose-gold-400 to-rose-gold-600 hover:from-rose-gold-300 hover:to-rose-gold-500 text-dark-500 font-medium py-1.5 px-4 rounded-lg text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-glow-sm transition-all"
-                >
-                  {isStreaming ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Thinking...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="w-4 h-4" />
-                      Send
-                    </>
+                <div className="flex items-center gap-2">
+                  {/* Voice Input Button - NVIDIA Audio */}
+                  {speechSupported && (
+                    <div className="relative flex items-center gap-1">
+                      {/* Audio Level Indicator */}
+                      {isListening && (
+                        <div className="flex items-center gap-0.5 mr-1">
+                          {[0, 1, 2, 3].map((i) => (
+                            <div
+                              key={i}
+                              className={`w-1 rounded-full transition-all duration-75 ${
+                                audioLevel > i * 0.25
+                                  ? 'bg-green-400'
+                                  : 'bg-white/20'
+                              }`}
+                              style={{ height: `${8 + i * 4}px` }}
+                            />
+                          ))}
+                        </div>
+                      )}
+                      <button
+                        type="button"
+                        onClick={toggleListening}
+                        disabled={audioProcessing}
+                        className={`p-2 rounded-lg transition-all relative ${
+                          isListening
+                            ? 'bg-red-500/20 text-red-400 border border-red-400/30'
+                            : audioProcessing
+                            ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-400/30'
+                            : 'bg-white/5 text-white/60 hover:text-white hover:bg-white/10 border border-white/10'
+                        }`}
+                        title={
+                          isListening
+                            ? 'Stop listening'
+                            : audioProcessing
+                            ? 'Processing...'
+                            : `Voice input (${getActiveProvider()})`
+                        }
+                      >
+                        {audioProcessing ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : isListening ? (
+                          <MicOff className="w-4 h-4" />
+                        ) : (
+                          <Mic className="w-4 h-4" />
+                        )}
+                        {/* Pulse animation when listening */}
+                        {isListening && (
+                          <span className="absolute inset-0 rounded-lg bg-red-400/20 animate-ping" />
+                        )}
+                      </button>
+                      {/* Provider badge */}
+                      {(audioProviders.nemoApi || audioProviders.sherpaOnnx) && (
+                        <span className="absolute -top-1 -right-1 px-1 py-0.5 text-[8px] font-bold rounded bg-green-500/80 text-white">
+                          {audioProviders.nemoApi ? 'GPU' : 'AI'}
+                        </span>
+                      )}
+                    </div>
                   )}
-                </button>
+                  <button
+                    type="submit"
+                    disabled={!input.trim() || isStreaming}
+                    className="bg-gradient-to-r from-rose-gold-400 to-rose-gold-600 hover:from-rose-gold-300 hover:to-rose-gold-500 text-dark-500 font-medium py-1.5 px-4 rounded-lg text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-glow-sm transition-all"
+                  >
+                    {isStreaming ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Thinking...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-4 h-4" />
+                        Send
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           </form>
@@ -1288,7 +1403,7 @@ function SettingsTab({
             <select
               value={modelSettings.model}
               onChange={(e) => onUpdateModelSettings({ model: e.target.value })}
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-rose-gold-400/50 appearance-none cursor-pointer"
+              className="morphic-select text-sm"
             >
               <option value="">Select a model</option>
               {models.map((model) => (
@@ -1343,7 +1458,7 @@ function SettingsTab({
             <select
               value={modelSettings.embeddingModel}
               onChange={(e) => onUpdateModelSettings({ embeddingModel: e.target.value })}
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-rose-gold-400/50 appearance-none cursor-pointer"
+              className="morphic-select text-sm"
             >
               <option value="">Select embedding model</option>
               {models.filter(m => m.name.includes('embed') || m.name.includes('nomic')).map((model) => (
@@ -1391,7 +1506,7 @@ function SettingsTab({
             <select
               value={modelSettings.geminiModel || 'gemini-2.0-flash'}
               onChange={(e) => onUpdateModelSettings({ geminiModel: e.target.value as ModelSettings['geminiModel'] })}
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-rose-gold-400/50 appearance-none cursor-pointer"
+              className="morphic-select text-sm"
             >
               <option value="gemini-2.0-flash">Gemini 2.0 Flash (Fastest)</option>
               <option value="gemini-1.5-pro">Gemini 1.5 Pro (1M context)</option>
