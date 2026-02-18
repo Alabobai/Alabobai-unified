@@ -8,3 +8,4 @@ export { useReliability, type UseReliabilityState, type UseReliabilityActions, t
 export { useMemoryChat, type MemoryChatContext, type UseMemoryChatOptions } from './useMemoryChat'
 export { useMemory, useMemorySearch, useChatMemory } from './useMemory'
 export { useBrowserAutomation, type UseBrowserAutomationOptions, type BrowserAutomationState, type BrowserAutomationActions } from './useBrowserAutomation'
+export { useNvidiaAudio, type UseNvidiaAudioOptions, type UseNvidiaAudioReturn } from './useNvidiaAudio'

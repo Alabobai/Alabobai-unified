@@ -128,13 +128,47 @@ function decryptData(data: string): string {
   }
 }
 
+// Brand Logo Components
+const SlackLogo = () => (
+  <svg viewBox="0 0 24 24" className="w-6 h-6" fill="currentColor">
+    <path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/>
+  </svg>
+)
+
+const DiscordLogo = () => (
+  <svg viewBox="0 0 24 24" className="w-6 h-6" fill="currentColor">
+    <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
+  </svg>
+)
+
+const NotionLogo = () => (
+  <svg viewBox="0 0 24 24" className="w-6 h-6" fill="currentColor">
+    <path d="M4.459 4.208c.746.606 1.026.56 2.428.466l13.215-.793c.28 0 .047-.28-.046-.326L17.86 1.968c-.42-.326-.98-.7-2.055-.607L3.01 2.295c-.466.046-.56.28-.374.466zm.793 3.08v13.904c0 .747.373 1.027 1.214.98l14.523-.84c.841-.046.935-.56.935-1.167V6.354c0-.606-.233-.933-.748-.887l-15.177.887c-.56.047-.747.327-.747.933zm14.337.745c.093.42 0 .84-.42.888l-.7.14v10.264c-.608.327-1.168.514-1.635.514-.748 0-.935-.234-1.495-.933l-4.577-7.186v6.952l1.448.327s0 .84-1.168.84l-3.22.186c-.094-.186 0-.653.327-.746l.84-.233V9.854L7.822 9.76c-.094-.42.14-1.026.793-1.073l3.456-.233 4.764 7.279v-6.44l-1.215-.14c-.093-.514.28-.887.747-.933zM1.936 1.035l13.31-.98c1.634-.14 2.055-.047 3.082.7l4.249 2.986c.7.513.934.653.934 1.213v16.378c0 1.026-.373 1.634-1.68 1.726l-15.458.934c-.98.047-1.448-.093-1.962-.747l-3.129-4.06c-.56-.747-.793-1.306-.793-1.96V2.667c0-.839.374-1.54 1.447-1.632z"/>
+  </svg>
+)
+
+const LinearLogo = () => (
+  <svg viewBox="0 0 24 24" className="w-6 h-6" fill="currentColor">
+    <path d="M2.056 10.29c-.056.862-.056 1.888-.013 3.13a.51.51 0 0 0 .154.337l8.048 8.047c.1.1.233.151.37.151a.497.497 0 0 0 .337-.151l2.848-2.848a.492.492 0 0 0 0-.694L4.553 9.015a.513.513 0 0 0-.337-.151c-1.117.024-1.909.05-2.16.426zm1.206-2.595c-.18.207-.394.588-.544 1.1l8.1 8.1 2.145-2.145-8.1-8.1c-.512.15-.894.363-1.1.545a2.2 2.2 0 0 0-.5.5zm-.75 9.91a.557.557 0 0 0 .163.4l3.28 3.28c.1.106.237.163.38.163a.508.508 0 0 0 .38-.163l.344-.344c.075-.1.119-.219.119-.344 0-.131-.044-.25-.119-.356l-3.28-3.28a.507.507 0 0 0-.356-.118.46.46 0 0 0-.344.118l-.344.344c-.106.1-.163.22-.163.362-.019 0-.04.069-.06.163zm7.175 4.938a.503.503 0 0 0 .369-.156l2.148-2.147a.493.493 0 0 0 0-.694L2.57 9.913a.513.513 0 0 0-.337-.15c-.112 0-.225.05-.338.15L.15 11.66a.492.492 0 0 0 0 .694l9.175 9.175c.1.1.231.15.362.15zm.337-6.25a.51.51 0 0 0 .706 0l2.147-2.147a.492.492 0 0 0 0-.694l-2.147-2.148a.492.492 0 0 0-.694 0l-2.147 2.148a.492.492 0 0 0 0 .694l2.135 2.147z"/>
+  </svg>
+)
+
+const GoogleLogo = () => (
+  <svg viewBox="0 0 24 24" className="w-6 h-6">
+    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+  </svg>
+)
+
 const AVAILABLE_INTEGRATIONS: Integration[] = [
   {
     id: 'github',
     name: 'GitHub',
     description: 'Connect your GitHub repositories for code management and CI/CD',
     icon: <Github className="w-6 h-6" />,
-    color: 'from-dark-100 to-dark-400',
+    color: 'from-[#24292e] to-[#1a1e22]',
     category: 'version-control',
     status: 'disconnected',
     connectionType: 'oauth',
@@ -151,8 +185,8 @@ const AVAILABLE_INTEGRATIONS: Integration[] = [
     id: 'slack',
     name: 'Slack',
     description: 'Send notifications and updates to your Slack channels',
-    icon: <MessageSquare className="w-6 h-6" />,
-    color: 'from-rose-gold-400 to-rose-gold-600',
+    icon: <SlackLogo />,
+    color: 'from-[#4A154B] to-[#36104a]',
     category: 'communication',
     status: 'disconnected',
     connectionType: 'webhook',
@@ -169,8 +203,8 @@ const AVAILABLE_INTEGRATIONS: Integration[] = [
     id: 'discord',
     name: 'Discord',
     description: 'Post updates and notifications to Discord servers',
-    icon: <MessageSquare className="w-6 h-6" />,
-    color: 'from-rose-gold-500 to-rose-gold-700',
+    icon: <DiscordLogo />,
+    color: 'from-[#5865F2] to-[#4752c4]',
     category: 'communication',
     status: 'disconnected',
     connectionType: 'webhook',
@@ -187,8 +221,8 @@ const AVAILABLE_INTEGRATIONS: Integration[] = [
     id: 'notion',
     name: 'Notion',
     description: 'Sync tasks and documents with your Notion workspace',
-    icon: <FileText className="w-6 h-6" />,
-    color: 'from-dark-200 to-dark-500',
+    icon: <NotionLogo />,
+    color: 'from-[#000000] to-[#191919]',
     category: 'productivity',
     status: 'disconnected',
     connectionType: 'api-key',
@@ -206,8 +240,8 @@ const AVAILABLE_INTEGRATIONS: Integration[] = [
     id: 'linear',
     name: 'Linear',
     description: 'Track issues and manage projects with Linear integration',
-    icon: <Zap className="w-6 h-6" />,
-    color: 'from-rose-gold-400 to-rose-gold-600',
+    icon: <LinearLogo />,
+    color: 'from-[#5E6AD2] to-[#4752a8]',
     category: 'productivity',
     status: 'disconnected',
     connectionType: 'api-key',
@@ -224,8 +258,8 @@ const AVAILABLE_INTEGRATIONS: Integration[] = [
     id: 'google',
     name: 'Google',
     description: 'Access Google Workspace: Drive, Calendar, Sheets, and more',
-    icon: <Globe className="w-6 h-6" />,
-    color: 'from-rose-gold-300 to-rose-gold-500',
+    icon: <GoogleLogo />,
+    color: 'from-[#ffffff] to-[#f1f1f1]',
     category: 'authentication',
     status: 'disconnected',
     connectionType: 'oauth',
@@ -1241,7 +1275,7 @@ export default function IntegrationHubView() {
             {/* View Header */}
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-rose-gold-400 to-rose-gold-600 flex items-center justify-center">
-                <Plug className="w-6 h-6 text-white" />
+                <Plug className="w-6 h-6 text-dark-500" />
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-white">Integration Hub</h1>
@@ -1435,7 +1469,9 @@ export default function IntegrationHubView() {
 
             {apiKeys.length === 0 ? (
               <div className="text-center py-12">
-                <Key className="w-12 h-12 text-white/20 mx-auto mb-4" />
+                <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-rose-gold-400/20 to-rose-gold-600/20 border border-rose-gold-400/30 flex items-center justify-center shadow-[0_0_20px_rgba(217,160,122,0.15)]">
+                  <Key className="w-8 h-8 text-rose-gold-400/60" />
+                </div>
                 <h3 className="text-white/60 font-medium mb-2">No API keys stored</h3>
                 <p className="text-white/40 text-sm mb-4">
                   Add API keys to connect integrations and enable external services

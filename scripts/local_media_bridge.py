@@ -421,40 +421,110 @@ async def proxy(payload: dict):
 
 @app.post('/api/search')
 async def search(payload: dict):
+    """Multi-source web search - DuckDuckGo HTML + Wikipedia for comprehensive results"""
     query = (payload or {}).get('query', '').strip()
-    limit = int((payload or {}).get('limit', 5) or 5)
+    limit = int((payload or {}).get('limit', 10) or 10)
     if not query:
         return JSONResponse(status_code=400, content={'error': 'Query is required'})
 
     results = []
-    try:
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            wiki = await client.get(
-                'https://en.wikipedia.org/w/api.php',
-                params={
-                    'action': 'opensearch',
-                    'search': query,
-                    'limit': max(1, min(limit, 10)),
-                    'namespace': 0,
-                    'format': 'json',
-                },
-                headers={'User-Agent': 'AlabobaiLocalBridge/1.0'},
-            )
-            if wiki.is_success:
-                data = wiki.json()
-                titles = data[1] if len(data) > 1 else []
-                snippets = data[2] if len(data) > 2 else []
-                urls = data[3] if len(data) > 3 else []
-                for i in range(min(len(titles), len(urls), limit)):
-                    results.append({
-                        'title': titles[i],
-                        'url': urls[i],
-                        'snippet': snippets[i] if i < len(snippets) else '',
-                    })
-    except Exception:
-        pass
+    errors = []
 
-    return {'query': query, 'results': results, 'count': len(results)}
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        # 1. DuckDuckGo HTML search (real web results)
+        try:
+            ddg_response = await client.post(
+                'https://html.duckduckgo.com/html/',
+                data={'q': query},
+                headers={
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+            )
+            if ddg_response.is_success:
+                html = ddg_response.text
+                # Parse result links
+                import re as regex
+                link_pattern = regex.compile(
+                    r'<a[^>]*rel="nofollow"[^>]*class="result__a"[^>]*href="([^"]+)"[^>]*>([^<]+)</a>',
+                    regex.IGNORECASE
+                )
+                snippet_pattern = regex.compile(
+                    r'<a[^>]*class="result__snippet"[^>]*>([\s\S]*?)</a>',
+                    regex.IGNORECASE
+                )
+
+                links = link_pattern.findall(html)
+                snippets_raw = snippet_pattern.findall(html)
+
+                for i, (url, title) in enumerate(links):
+                    if 'duckduckgo.com' in url:
+                        continue
+                    # Clean up HTML entities
+                    title = title.replace('&amp;', '&').replace('&lt;', '<').replace('&gt;', '>').replace('&#x27;', "'").strip()
+                    snippet = ''
+                    if i < len(snippets_raw):
+                        snippet = regex.sub(r'<[^>]+>', '', snippets_raw[i]).replace('&amp;', '&').replace('&#x27;', "'").strip()
+                    results.append({
+                        'title': title,
+                        'url': url,
+                        'snippet': snippet[:300] if snippet else '',
+                        'source': 'duckduckgo'
+                    })
+                    if len(results) >= limit:
+                        break
+        except Exception as e:
+            errors.append(f'DuckDuckGo: {str(e)}')
+
+        # 2. Wikipedia search (supplemental, reliable)
+        if len(results) < limit:
+            try:
+                wiki = await client.get(
+                    'https://en.wikipedia.org/w/api.php',
+                    params={
+                        'action': 'query',
+                        'list': 'search',
+                        'srsearch': query,
+                        'srlimit': min(5, limit - len(results)),
+                        'format': 'json',
+                        'srprop': 'snippet',
+                    },
+                    headers={'User-Agent': 'AlabobaiLocalBridge/1.0'},
+                )
+                if wiki.is_success:
+                    data = wiki.json()
+                    search_results = data.get('query', {}).get('search', [])
+                    for item in search_results:
+                        title = item.get('title', '')
+                        snippet = regex.sub(r'<[^>]+>', '', item.get('snippet', ''))
+                        results.append({
+                            'title': title,
+                            'url': f"https://en.wikipedia.org/wiki/{title.replace(' ', '_')}",
+                            'snippet': snippet,
+                            'source': 'wikipedia'
+                        })
+            except Exception as e:
+                errors.append(f'Wikipedia: {str(e)}')
+
+    # Deduplicate by URL
+    seen_urls = set()
+    unique_results = []
+    for r in results:
+        url_key = r['url'].lower().rstrip('/')
+        if url_key not in seen_urls:
+            seen_urls.add(url_key)
+            unique_results.append(r)
+
+    response = {
+        'query': query,
+        'results': unique_results[:limit],
+        'count': len(unique_results[:limit]),
+        'sources_searched': 2
+    }
+    if errors:
+        response['errors'] = errors
+
+    return response
 
 @app.post('/api/fetch-page')
 async def fetch_page(payload: dict):

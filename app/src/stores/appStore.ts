@@ -55,6 +55,37 @@ export interface HistoryEntry {
 
 type AppView = 'home' | 'chat' | 'company-wizard' | 'company-dashboard' | 'autonomous-agents' | 'command-center' | 'local-ai-brain' | 'self-annealing' | 'deep-research' | 'privacy-fortress' | 'financial-guardian' | 'creative-studio' | 'data-analyst' | 'voice-interface' | 'trust-architect' | 'integration-hub' | 'memory-dashboard' | 'code-sandbox'
 
+const VIEW_TO_PATH: Record<AppView, string> = {
+  home: '/',
+  chat: '/chat',
+  'company-wizard': '/company-wizard',
+  'company-dashboard': '/company-dashboard',
+  'autonomous-agents': '/autonomous-agents',
+  'command-center': '/command-center',
+  'local-ai-brain': '/local-ai-brain',
+  'self-annealing': '/self-annealing',
+  'deep-research': '/deep-research',
+  'privacy-fortress': '/privacy-fortress',
+  'financial-guardian': '/financial-guardian',
+  'creative-studio': '/creative-studio',
+  'data-analyst': '/data-analyst',
+  'voice-interface': '/voice-interface',
+  'trust-architect': '/trust-architect',
+  'integration-hub': '/integration-hub',
+  'memory-dashboard': '/memory-dashboard',
+  'code-sandbox': '/code-sandbox',
+}
+
+const PATH_TO_VIEW = Object.entries(VIEW_TO_PATH).reduce<Record<string, AppView>>((acc, [view, path]) => {
+  acc[path] = view as AppView
+  return acc
+}, {})
+
+function getInitialView(): AppView {
+  if (typeof window === 'undefined') return 'home'
+  return PATH_TO_VIEW[window.location.pathname] ?? 'home'
+}
+
 interface AppState {
   // UI State
   sidebarOpen: boolean
@@ -126,7 +157,7 @@ export const useAppStore = create<AppState>()(
     workspaceOpen: true,
     settingsOpen: false,
     activeTab: 'browser',
-    currentView: 'home',
+    currentView: getInitialView(),
 
     chats: [],
     activeChat: null,
@@ -157,6 +188,13 @@ export const useAppStore = create<AppState>()(
       // Keep workspace split only for core chat view.
       if (view !== 'chat') {
         state.workspaceOpen = false
+      }
+
+      if (typeof window !== 'undefined') {
+        const nextPath = VIEW_TO_PATH[view]
+        if (nextPath && window.location.pathname !== nextPath) {
+          window.history.pushState({}, '', nextPath)
+        }
       }
     }),
 

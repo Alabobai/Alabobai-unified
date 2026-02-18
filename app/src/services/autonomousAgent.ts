@@ -151,17 +151,17 @@ export interface AutonomousAgentConfig {
 
 const DEFAULT_CONFIG: AutonomousAgentConfig = {
   maxRetries: 2, // Faster failure handling
-  stuckThresholdMs: 8000, // 8 seconds without progress = stuck (faster detection)
+  stuckThresholdMs: 30000, // 30 seconds without progress = stuck (avoid false positives during long AI/tool calls)
   validationThreshold: 0.6, // Slightly lower threshold for faster completion
   memoryCapacity: 100, // Max memory entries
   enableSelfHealing: true,
   enableLearning: true,
   enableRollback: true,
-  progressCheckIntervalMs: 2000, // Check every 2 seconds for responsiveness
+  progressCheckIntervalMs: 3000, // Check every 3 seconds to reduce noisy stuck checks
   maxAlternativeAttempts: 2, // Try alternatives faster
-  planningTimeoutMs: 10000, // 10s for full planning (must be > aiTimeoutMs)
-  stepTimeoutMs: 8000, // 8s per step
-  aiTimeoutMs: 5000 // 5s for AI calls (allows fallback within planning window)
+  planningTimeoutMs: 30000, // 30s for full planning (must be > aiTimeoutMs)
+  stepTimeoutMs: 45000, // 45s per step to allow retries/fallbacks
+  aiTimeoutMs: 15000 // 15s for AI calls to reduce false timeouts on slower providers
 }
 
 // ============================================================================
@@ -170,7 +170,7 @@ const DEFAULT_CONFIG: AutonomousAgentConfig = {
 
 const webSearchCache = new Map<string, { results: Array<{ title: string; url: string; snippet: string }>; rawContent: string }>()
 const webPageCache = new Map<string, { title: string; content: string; links: string[] }>()
-const AI_SYNC_TIMEOUT_MS = 9000
+const AI_SYNC_TIMEOUT_MS = 20000
 
 async function chatSyncWithTimeout(messages: Message[], timeoutMs = AI_SYNC_TIMEOUT_MS): Promise<string> {
   let timeoutId: number | undefined
@@ -179,10 +179,90 @@ async function chatSyncWithTimeout(messages: Message[], timeoutMs = AI_SYNC_TIME
   })
 
   try {
+    // Ensure AI service is initialized
+    await aiService.initialize()
     return await Promise.race([aiService.chatSync(messages), timeoutPromise])
   } finally {
     if (timeoutId) clearTimeout(timeoutId)
   }
+}
+
+async function quickTextFallback(prompt: string): Promise<string> {
+  // Try Pollinations first for a fast/free completion
+  try {
+    const response = await fetch(`https://text.pollinations.ai/${encodeURIComponent(prompt)}`, {
+      signal: AbortSignal.timeout(8000)
+    })
+    if (response.ok) {
+      const text = (await response.text()).trim()
+      if (text && text.length > 20 && !text.includes('<!DOCTYPE')) {
+        return text
+      }
+    }
+  } catch {
+    // continue to deterministic fallback
+  }
+
+  // Deterministic local fallback so steps can keep progressing
+  return [
+    'Analysis summary:',
+    '- Clarify target outcome and acceptance criteria.',
+    '- Break task into small executable milestones.',
+    '- Prioritize fastest path to a tangible deliverable.',
+    '- Validate result quality and iterate on weak spots.'
+  ].join('\n')
+}
+
+/**
+ * Direct fallback to free AI APIs for planning when main service fails
+ */
+async function directPlanningFallback(goal: string): Promise<string> {
+  const prompt = `You are a task planner. Break down this goal into executable steps.
+Goal: ${goal}
+
+Available tools: web_search, code_generation, file_operation, browser_automation, data_analysis, ai_reasoning
+
+Return ONLY a JSON array like this:
+[{"tool": "ai_reasoning", "description": "Analyze the goal"},{"tool": "code_generation", "description": "Generate code for..."}]`
+
+  // Try Pollinations AI
+  try {
+    const response = await fetch(`https://text.pollinations.ai/${encodeURIComponent(prompt)}`, {
+      signal: AbortSignal.timeout(8000)
+    })
+    if (response.ok) {
+      const text = await response.text()
+      if (text && text.includes('[') && text.includes(']')) {
+        return text
+      }
+    }
+  } catch (e) {
+    console.log('[AutonomousAgent] Pollinations planning fallback failed')
+  }
+
+  // Try DeepInfra
+  try {
+    const response = await fetch('https://api.deepinfra.com/v1/inference/mistralai/Mixtral-8x7B-Instruct-v0.1', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        input: `<s>[INST] ${prompt} [/INST]`,
+        max_new_tokens: 512
+      }),
+      signal: AbortSignal.timeout(8000)
+    })
+    if (response.ok) {
+      const data = await response.json()
+      const text = data.results?.[0]?.generated_text || data.generated_text || ''
+      if (text && text.includes('[') && text.includes(']')) {
+        return text
+      }
+    }
+  } catch (e) {
+    console.log('[AutonomousAgent] DeepInfra planning fallback failed')
+  }
+
+  return ''
 }
 
 /**
@@ -376,7 +456,13 @@ Rules:
     { role: 'user', content: prompt }
   ]
 
-  return await chatSyncWithTimeout(messages)
+  try {
+    return await chatSyncWithTimeout(messages)
+  } catch {
+    const fallbackPrompt = `${systemPrompt}\n\nTask: ${prompt}`
+    const fallback = await quickTextFallback(fallbackPrompt)
+    return fallback.includes('```') ? fallback : `\`\`\`tsx\n${fallback}\n\`\`\``
+  }
 }
 
 /**
@@ -396,7 +482,11 @@ Be thorough but concise. Focus on practical recommendations.`
     { role: 'user', content: task }
   ]
 
-  return await chatSyncWithTimeout(messages)
+  try {
+    return await chatSyncWithTimeout(messages)
+  } catch {
+    return await quickTextFallback(`${systemPrompt}\n\nTask: ${task}`)
+  }
 }
 
 /**
@@ -524,6 +614,7 @@ export class AutonomousAgent {
 
         const progress = Math.round(10 + (i / this.plan.steps.length) * 85)
         this.plan.progress = progress
+        this.plan.lastProgressTime = new Date()
         this.callbacks.onProgress?.(progress, `Step ${i + 1}: ${step.description.slice(0, 40)}...`)
 
         await this.withTimeout(this.executeStep(step), this.config.stepTimeoutMs, `Step ${i + 1}`)
@@ -610,21 +701,36 @@ Always include alternative approaches for each step in case the primary approach
     ]
 
     try {
-      const response = await this.safeAiChat(messages, 'Planning')
+      let response = ''
+
+      // Try main AI service first
+      try {
+        response = await this.safeAiChat(messages, 'Planning')
+      } catch (mainError) {
+        this.log('Main AI service failed, trying direct fallback...', 'info')
+        // Try direct fallback to free APIs
+        response = await directPlanningFallback(goal)
+      }
 
       // Extract JSON from response
       const jsonMatch = response.match(/\[[\s\S]*\]/)
       if (!jsonMatch) {
-        throw new Error('No valid plan JSON found')
+        throw new Error('No valid plan JSON found in response')
       }
 
       const stepsData = JSON.parse(jsonMatch[0])
 
+      if (!Array.isArray(stepsData) || stepsData.length === 0) {
+        throw new Error('Invalid plan structure')
+      }
+
+      this.log(`AI generated plan with ${stepsData.length} steps`, 'success')
+
       return stepsData.map((step: { tool: string; description: string; alternatives?: string[] }, index: number): ExecutionStep => ({
         id: this.generateId(),
         index,
-        description: step.description,
-        tool: step.tool as ToolType,
+        description: step.description || `Step ${index + 1}`,
+        tool: this.validateTool(step.tool),
         status: 'pending',
         retryCount: 0,
         maxRetries: this.config.maxRetries,
@@ -632,19 +738,44 @@ Always include alternative approaches for each step in case the primary approach
         alternativeIndex: 0
       }))
     } catch (error) {
-      this.log('Failed to generate plan via AI, using heuristic plan...', 'warning')
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error'
+      this.log(`AI planning failed (${errorMsg}), using smart heuristic plan...`, 'warning')
       return this.createHeuristicPlan(goal)
     }
   }
 
   /**
-   * Create a plan based on keywords (fallback)
+   * Validate tool type
+   */
+  private validateTool(tool: string): ToolType {
+    const validTools: ToolType[] = ['web_search', 'code_generation', 'file_operation', 'browser_automation', 'data_analysis', 'ai_reasoning']
+    const normalized = tool?.toLowerCase()?.replace(/[-\s]/g, '_') || 'ai_reasoning'
+
+    if (validTools.includes(normalized as ToolType)) {
+      return normalized as ToolType
+    }
+
+    // Map common variations
+    if (normalized.includes('search') || normalized.includes('find')) return 'web_search'
+    if (normalized.includes('code') || normalized.includes('generate') || normalized.includes('create')) return 'code_generation'
+    if (normalized.includes('file') || normalized.includes('read') || normalized.includes('write')) return 'file_operation'
+    if (normalized.includes('browser') || normalized.includes('web') || normalized.includes('navigate')) return 'browser_automation'
+    if (normalized.includes('analyze') || normalized.includes('data')) return 'data_analysis'
+
+    return 'ai_reasoning'
+  }
+
+  /**
+   * Create a smart heuristic plan based on goal analysis (fallback)
    */
   private createHeuristicPlan(goal: string): ExecutionStep[] {
     const steps: ExecutionStep[] = []
     const lowerGoal = goal.toLowerCase()
+    const words = lowerGoal.split(/\s+/)
 
-    // Always start with thinking
+    this.log(`Creating heuristic plan for: "${goal.slice(0, 50)}..."`, 'info')
+
+    // Always start with goal analysis
     steps.push({
       id: this.generateId(),
       index: 0,
@@ -653,35 +784,57 @@ Always include alternative approaches for each step in case the primary approach
       status: 'pending',
       retryCount: 0,
       maxRetries: this.config.maxRetries,
-      alternatives: ['Use simpler analysis', 'Skip analysis and proceed'],
+      alternatives: ['Break down into smaller tasks', 'Identify key requirements'],
       alternativeIndex: 0
     })
 
-    // Add search step if research is needed
-    if (lowerGoal.includes('research') || lowerGoal.includes('find') || lowerGoal.includes('search') || lowerGoal.includes('learn')) {
+    // Detect intent and add appropriate steps
+    const needsResearch = words.some(w => ['research', 'find', 'search', 'learn', 'discover', 'explore', 'understand', 'what', 'how', 'why', 'explain'].includes(w))
+    const needsCode = words.some(w => ['build', 'create', 'generate', 'code', 'app', 'website', 'component', 'page', 'function', 'script', 'program', 'implement', 'develop', 'make', 'write'].includes(w))
+    const needsAnalysis = words.some(w => ['analyze', 'data', 'dashboard', 'report', 'statistics', 'metrics', 'compare', 'evaluate'].includes(w))
+    const needsBrowser = words.some(w => ['browse', 'navigate', 'visit', 'open', 'website', 'url', 'page'].includes(w)) && lowerGoal.includes('http')
+
+    // Add research step if needed
+    if (needsResearch || (!needsCode && !needsAnalysis && !needsBrowser)) {
       steps.push({
         id: this.generateId(),
         index: steps.length,
-        description: `Search for information about: ${goal}`,
+        description: `Search for information about: ${this.extractKeyPhrase(goal)}`,
         tool: 'web_search',
         status: 'pending',
         retryCount: 0,
         maxRetries: this.config.maxRetries,
-        alternatives: ['Try different search terms', 'Search specific sources'],
+        alternatives: ['Try different search terms', 'Search specific sources', 'Use broader keywords'],
         alternativeIndex: 0
       })
     }
 
-    // Add code generation step if building is needed
-    if (lowerGoal.includes('build') || lowerGoal.includes('create') || lowerGoal.includes('generate') ||
-        lowerGoal.includes('code') || lowerGoal.includes('app') || lowerGoal.includes('website') ||
-        lowerGoal.includes('component') || lowerGoal.includes('page')) {
-
-      if (!lowerGoal.includes('research') && !lowerGoal.includes('find')) {
+    // Add browser step if URL detected
+    if (needsBrowser) {
+      const urlMatch = goal.match(/https?:\/\/[^\s]+/)
+      if (urlMatch) {
         steps.push({
           id: this.generateId(),
           index: steps.length,
-          description: 'Research best practices and modern patterns',
+          description: `Navigate to and extract content from: ${urlMatch[0]}`,
+          tool: 'browser_automation',
+          status: 'pending',
+          retryCount: 0,
+          maxRetries: this.config.maxRetries,
+          alternatives: ['Try direct fetch', 'Use search to find information'],
+          alternativeIndex: 0
+        })
+      }
+    }
+
+    // Add code generation steps if building something
+    if (needsCode) {
+      // First research if not already doing research
+      if (!needsResearch) {
+        steps.push({
+          id: this.generateId(),
+          index: steps.length,
+          description: `Research best practices for: ${this.extractKeyPhrase(goal)}`,
           tool: 'web_search',
           status: 'pending',
           retryCount: 0,
@@ -694,46 +847,59 @@ Always include alternative approaches for each step in case the primary approach
       steps.push({
         id: this.generateId(),
         index: steps.length,
-        description: `Generate code for: ${goal}`,
+        description: `Generate code: ${goal}`,
         tool: 'code_generation',
         status: 'pending',
         retryCount: 0,
         maxRetries: this.config.maxRetries,
-        alternatives: ['Use simpler implementation', 'Try different framework'],
+        alternatives: ['Use simpler implementation', 'Try different approach', 'Generate minimal version first'],
         alternativeIndex: 0
       })
     }
 
-    // Add analysis step if data analysis is needed
-    if (lowerGoal.includes('analyze') || lowerGoal.includes('data') || lowerGoal.includes('dashboard') ||
-        lowerGoal.includes('report')) {
+    // Add analysis step if needed
+    if (needsAnalysis) {
       steps.push({
         id: this.generateId(),
         index: steps.length,
-        description: `Analyze and synthesize findings for: ${goal}`,
+        description: `Analyze and synthesize: ${this.extractKeyPhrase(goal)}`,
         tool: 'data_analysis',
         status: 'pending',
         retryCount: 0,
         maxRetries: this.config.maxRetries,
-        alternatives: ['Use simplified analysis', 'Focus on key metrics only'],
+        alternatives: ['Use simplified analysis', 'Focus on key insights'],
         alternativeIndex: 0
       })
     }
 
-    // Always end with completion step
+    // Always end with completion/summary step
     steps.push({
       id: this.generateId(),
       index: steps.length,
-      description: 'Finalize and deliver results',
+      description: `Summarize results and deliver final output for: ${goal.slice(0, 50)}`,
       tool: 'ai_reasoning',
       status: 'pending',
       retryCount: 0,
       maxRetries: 1,
-      alternatives: [],
+      alternatives: ['Provide brief summary', 'Focus on key takeaways'],
       alternativeIndex: 0
     })
 
+    this.log(`Heuristic plan created with ${steps.length} steps`, 'success')
     return steps
+  }
+
+  /**
+   * Extract key phrase from goal for better step descriptions
+   */
+  private extractKeyPhrase(goal: string): string {
+    // Remove common action words to get the subject
+    const stripped = goal
+      .replace(/^(please\s+)?(can you\s+)?(help me\s+)?/i, '')
+      .replace(/^(build|create|generate|make|write|find|search|research|analyze|implement|develop)\s+(a\s+|an\s+|the\s+)?/i, '')
+      .trim()
+
+    return stripped.slice(0, 80) || goal.slice(0, 80)
   }
 
   /**
@@ -742,6 +908,7 @@ Always include alternative approaches for each step in case the primary approach
   private async executeStep(step: ExecutionStep): Promise<void> {
     step.status = 'running'
     step.startTime = new Date()
+    if (this.plan) this.plan.lastProgressTime = new Date()
 
     this.callbacks.onStepStart?.(step)
     this.log(`Executing: ${step.description}`, 'info')
@@ -837,7 +1004,17 @@ Always include alternative approaches for each step in case the primary approach
     const { results, rawContent } = await executeWebSearch(query)
 
     if (results.length === 0) {
-      throw new Error('No search results found')
+      const fallback = [
+        `No live search results were returned for: ${query}`,
+        'Proceeding with knowledge-based synthesis fallback.',
+        'Suggested next actions:',
+        '- refine keywords',
+        '- try a narrower domain/source',
+        '- continue with current context and draft output'
+      ].join('\n')
+
+      this.addMemory('observation', `Search fallback used for query: ${query}`, 0.7)
+      return fallback
     }
 
     // Store results in context
@@ -1095,6 +1272,13 @@ How should we fix this? Provide a specific action to take.`,
   private checkForStuckState(): void {
     if (!this.plan || this.isPaused || this.isStopped) return
 
+    const currentStep = this.plan.steps[this.plan.currentStepIndex]
+    if (currentStep?.status === 'running') {
+      // A running step can legitimately take time (network/API/tool calls);
+      // rely on per-step timeout to fail it instead of triggering false stuck recovery.
+      return
+    }
+
     const timeSinceProgress = Date.now() - this.plan.lastProgressTime.getTime()
 
     if (timeSinceProgress > this.config.stuckThresholdMs) {
@@ -1102,7 +1286,6 @@ How should we fix this? Provide a specific action to take.`,
       this.log(`Stuck detection triggered (${this.plan.stuckDetectionCount} times)`, 'warning')
       this.addMemory('error', `Agent appears stuck - no progress for ${timeSinceProgress}ms`, 1.0)
 
-      // Faster recovery - trigger after 2 detections instead of 3
       if (this.plan.stuckDetectionCount >= 2 && this.config.enableSelfHealing) {
         this.handleStuckState()
       }

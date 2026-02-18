@@ -1,17 +1,24 @@
 /**
  * Deep Research Service
- * Performs real web research using multiple strategies:
+ * Performs REAL web research using multiple search engines and sources:
  *
  * Primary Strategy (when backend available):
- * 1. Search using DuckDuckGo (via /api/search)
- * 2. Fetch and extract content from web pages
- * 3. Use AI to analyze and synthesize information
+ * 1. Multi-engine search (Brave, Google, Bing, DuckDuckGo, SearXNG)
+ * 2. News search (Google News RSS)
+ * 3. Wikipedia as supplemental source
+ * 4. Fetch and extract content from web pages
+ * 5. Use AI to analyze and synthesize information
  *
- * Fallback Strategy (client-side, no backend needed):
- * 1. Search using Wikipedia API (CORS-friendly)
- * 2. Search using DuckDuckGo Instant Answer API
- * 3. Use client-side text extraction and summarization
- * 4. Generate reports from gathered information
+ * Fallback Strategy (client-side, CORS-friendly APIs):
+ * 1. DuckDuckGo Instant Answer API
+ * 2. Wikipedia API
+ * 3. Wikidata API
+ * 4. arXiv API (academic papers)
+ * 5. Semantic Scholar API (academic papers)
+ * 6. Open Library API (books)
+ * 7. Reddit search (via pushshift or public RSS)
+ * 8. Hacker News API
+ * 9. GitHub code search (if relevant)
  */
 
 export type ResearchPhase =
@@ -40,7 +47,7 @@ export interface ResearchSource {
   relevanceScore?: number
   fetchedAt: Date
   error?: string
-  sourceType?: 'wikipedia' | 'web' | 'news' | 'instant'
+  sourceType?: 'wikipedia' | 'web' | 'news' | 'instant' | 'academic' | 'social' | 'code'
 }
 
 export interface ResearchProgress {
@@ -123,7 +130,7 @@ export class DeepResearchEngine {
     this.abortController = new AbortController()
     const startTime = Date.now()
 
-    const maxSources = options?.maxSources || 5
+    const maxSources = options?.maxSources || 10 // Increased for more comprehensive research
     const sources: ResearchSource[] = []
 
     try {
@@ -306,33 +313,73 @@ export class DeepResearchEngine {
   }
 
   /**
-   * Generate multiple search queries from a topic
+   * Generate multiple search queries from a topic for comprehensive web coverage
    */
   private async generateSearchQueries(topic: string): Promise<string[]> {
     // Base query
     const queries = [topic]
 
-    // Add variations to get diverse results
+    // Add variations to get diverse web results
     const currentYear = new Date().getFullYear()
-    const variations = [
-      `${topic} overview`,
-      `${topic} latest ${currentYear}`,
-      `${topic} explained`,
-    ]
 
-    queries.push(...variations.slice(0, 2))
-    return queries
+    // Detect query intent
+    const isQuestion = /^(what|how|why|when|where|who|which|can|does|is|are)\b/i.test(topic)
+    const isDefinition = /^(define|definition|meaning|what is)\b/i.test(topic)
+    const isPerson = /^[A-Z][a-z]+ [A-Z][a-z]+$/.test(topic) // Likely a name
+
+    if (isQuestion) {
+      // For questions, search the question itself and related terms
+      queries.push(
+        topic.replace(/\?/g, ''),
+        `${topic} answer`,
+        `${topic} explained`
+      )
+    } else if (isPerson) {
+      // For people, search for their work and biography
+      queries.push(
+        `${topic} biography`,
+        `${topic} works`,
+        `${topic} achievements`
+      )
+    } else if (isDefinition) {
+      // For definitions, keep it simple
+      queries.push(
+        topic.replace(/^(define|definition|meaning|what is)\s*/i, ''),
+        `${topic} explanation`
+      )
+    } else {
+      // General topics - diverse search strategies
+      const variations = [
+        `${topic} overview`,
+        `${topic} ${currentYear}`,
+        `${topic} research`,
+        `${topic} analysis`,
+        `what is ${topic}`,
+        `${topic} news`,
+      ]
+
+      // Add 3-4 variations for comprehensive coverage
+      queries.push(...variations.slice(0, 4))
+    }
+
+    // Remove duplicates
+    return [...new Set(queries)]
   }
 
   /**
-   * Search using the /api/search endpoint (backend)
+   * Search using the /api/search endpoint (backend with multi-engine support)
+   * Falls back to client-side if backend returns no results
    */
-  private async searchBackend(query: string, limit = 5): Promise<SearchResult[]> {
+  private async searchBackend(query: string, limit = 10): Promise<SearchResult[]> {
     try {
       const response = await fetch('/api/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query, limit }),
+        body: JSON.stringify({
+          query,
+          limit,
+          sources: ['all'] // Use all available search engines
+        }),
         signal: this.abortController?.signal
       })
 
@@ -341,46 +388,115 @@ export class DeepResearchEngine {
       }
 
       const data = await response.json()
-      return (data.results || []).map((r: SearchResult) => ({ ...r, source: 'backend' }))
+
+      // Log search info for debugging
+      console.log(`[DeepResearch] Backend search returned ${data.count || 0} results from ${data.sources_searched || 1} sources`)
+      if (data.errors?.length) {
+        console.warn('[DeepResearch] Some search sources had errors:', data.errors)
+      }
+
+      const backendResults = (data.results || []).map((r: SearchResult) => ({
+        ...r,
+        source: r.source || 'backend'
+      }))
+
+      // If backend returned no results, fall back to client-side search
+      if (backendResults.length === 0) {
+        console.log('[DeepResearch] Backend returned no results, falling back to client-side search')
+        return this.searchClientSide(query, limit)
+      }
+
+      return backendResults
     } catch (error) {
       console.error('Backend search error:', error)
-      // Fallback to client-side search
+      // Fallback to comprehensive client-side search
       return this.searchClientSide(query, limit)
     }
   }
 
   /**
    * Search using client-side CORS-friendly APIs
+   * Uses MANY sources for comprehensive web coverage
    */
-  private async searchClientSide(query: string, limit = 5): Promise<SearchResult[]> {
+  private async searchClientSide(query: string, limit = 10): Promise<SearchResult[]> {
     const results: SearchResult[] = []
+    const failedSources: string[] = []
 
-    // Try multiple sources in parallel
-    const searchPromises = [
-      this.searchWikipedia(query, limit),
-      this.searchDuckDuckGoInstant(query),
+    console.log('[DeepResearch] Starting client-side search for:', query)
+
+    // Search ALL sources in parallel for maximum coverage
+    const searchPromises: { name: string; promise: Promise<SearchResult[]> }[] = [
+      // Core web sources (always search)
+      { name: 'DuckDuckGo', promise: this.searchDuckDuckGoInstant(query) },
+      { name: 'Wikipedia', promise: this.searchWikipedia(query, 5) },
+      { name: 'Wikidata', promise: this.searchWikidata(query, 3) },
+
+      // News & social sources
+      { name: 'HackerNews', promise: this.searchHackerNews(query, 5) },
+
+      // Academic sources
+      { name: 'arXiv', promise: this.searchArxiv(query, 3) },
+      { name: 'SemanticScholar', promise: this.searchSemanticScholar(query, 3) },
+      { name: 'OpenLibrary', promise: this.searchOpenLibrary(query, 2) },
+
+      // Tech sources
+      { name: 'GitHub', promise: this.searchGitHub(query, 3) },
+      { name: 'StackOverflow', promise: this.searchStackOverflow(query, 2) },
     ]
 
-    const searchResults = await Promise.allSettled(searchPromises)
+    // Execute all searches with timeout
+    const timeoutPromise = <T>(promise: Promise<T>, ms: number): Promise<T> =>
+      Promise.race([
+        promise,
+        new Promise<T>((_, reject) =>
+          setTimeout(() => reject(new Error('Timeout')), ms)
+        ),
+      ])
 
-    for (const result of searchResults) {
-      if (result.status === 'fulfilled') {
+    const searchResults = await Promise.allSettled(
+      searchPromises.map(({ name, promise }) =>
+        timeoutPromise(promise, 8000).catch(err => {
+          failedSources.push(`${name}: ${err.message}`)
+          return [] as SearchResult[]
+        })
+      )
+    )
+
+    // Collect results
+    for (let i = 0; i < searchResults.length; i++) {
+      const result = searchResults[i]
+      const sourceName = searchPromises[i].name
+
+      if (result.status === 'fulfilled' && result.value.length > 0) {
+        console.log(`[DeepResearch] ${sourceName}: ${result.value.length} results`)
         results.push(...result.value)
+      } else if (result.status === 'rejected') {
+        failedSources.push(`${sourceName}: ${result.reason}`)
       }
     }
 
-    return results.slice(0, limit)
+    if (failedSources.length > 0) {
+      console.warn('[DeepResearch] Some sources failed:', failedSources)
+    }
+
+    console.log(`[DeepResearch] Total results before dedup: ${results.length}`)
+
+    // Deduplicate and return
+    const uniqueResults = this.deduplicateResults(results)
+    console.log(`[DeepResearch] Unique results: ${uniqueResults.length}`)
+
+    return uniqueResults.slice(0, limit)
   }
 
   /**
-   * Search Wikipedia API (CORS-friendly)
+   * Search Wikipedia API (CORS-friendly) - Using query API for better results
    */
   private async searchWikipedia(query: string, limit = 5): Promise<SearchResult[]> {
     try {
-      // Use Wikipedia's OpenSearch API
+      // Use Wikipedia's query API for better search results with snippets
       const searchUrl = `https://en.wikipedia.org/w/api.php?` +
-        `action=opensearch&search=${encodeURIComponent(query)}` +
-        `&limit=${limit}&namespace=0&format=json&origin=*`
+        `action=query&list=search&srsearch=${encodeURIComponent(query)}` +
+        `&srlimit=${limit}&format=json&origin=*&srprop=snippet|titlesnippet`
 
       const response = await fetch(searchUrl, {
         signal: this.abortController?.signal
@@ -390,13 +506,13 @@ export class DeepResearchEngine {
         throw new Error(`Wikipedia search failed: ${response.status}`)
       }
 
-      const data = await response.json() as [string, string[], string[], string[]]
-      const [, titles, snippets, urls] = data
+      const data = await response.json()
+      const searchResults = data.query?.search || []
 
-      return titles.map((title, i) => ({
-        title,
-        url: urls[i],
-        snippet: snippets[i] || '',
+      return searchResults.map((result: { title: string; snippet: string }) => ({
+        title: result.title,
+        url: `https://en.wikipedia.org/wiki/${encodeURIComponent(result.title.replace(/ /g, '_'))}`,
+        snippet: result.snippet.replace(/<[^>]+>/g, ''), // Remove HTML tags
         source: 'wikipedia'
       }))
     } catch (error) {
@@ -469,7 +585,7 @@ export class DeepResearchEngine {
 
       // Add Related Topics
       if (data.RelatedTopics) {
-        for (const topic of data.RelatedTopics.slice(0, 3)) {
+        for (const topic of data.RelatedTopics.slice(0, 5)) {
           if (topic.FirstURL && topic.Text) {
             results.push({
               title: topic.Text.split(' - ')[0] || topic.Text.slice(0, 50),
@@ -477,6 +593,30 @@ export class DeepResearchEngine {
               snippet: topic.Text,
               source: 'duckduckgo'
             })
+          }
+          // Handle nested topics (categories)
+          if (topic.Topics) {
+            for (const subtopic of topic.Topics.slice(0, 2)) {
+              if (subtopic.FirstURL && subtopic.Text) {
+                results.push({
+                  title: subtopic.Text.split(' - ')[0] || subtopic.Text.slice(0, 50),
+                  url: subtopic.FirstURL,
+                  snippet: subtopic.Text,
+                  source: 'duckduckgo'
+                })
+              }
+            }
+          }
+        }
+      }
+
+      // Add Infobox data if available
+      if (data.Infobox?.content) {
+        const infoContent = data.Infobox.content.slice(0, 3)
+        for (const info of infoContent) {
+          if (info.wiki_order !== undefined && data.AbstractURL) {
+            // This is additional context, not a separate result
+            continue
           }
         }
       }
@@ -486,6 +626,242 @@ export class DeepResearchEngine {
       console.error('DuckDuckGo search error:', error)
       return []
     }
+  }
+
+  /**
+   * Search Wikidata (structured knowledge base, CORS-friendly)
+   */
+  private async searchWikidata(query: string, limit = 3): Promise<SearchResult[]> {
+    try {
+      const searchUrl = `https://www.wikidata.org/w/api.php?action=wbsearchentities&search=${encodeURIComponent(query)}&language=en&format=json&origin=*&limit=${limit}`
+
+      const response = await fetch(searchUrl, {
+        signal: this.abortController?.signal
+      })
+
+      if (!response.ok) {
+        throw new Error(`Wikidata search failed: ${response.status}`)
+      }
+
+      const data = await response.json()
+      return (data.search || []).map((item: { id: string; label: string; description?: string; concepturi?: string }) => ({
+        title: item.label,
+        url: item.concepturi || `https://www.wikidata.org/wiki/${item.id}`,
+        snippet: item.description || '',
+        source: 'wikidata'
+      }))
+    } catch (error) {
+      console.error('Wikidata search error:', error)
+      return []
+    }
+  }
+
+  /**
+   * Search arXiv (academic papers, CORS-friendly)
+   */
+  private async searchArxiv(query: string, limit = 3): Promise<SearchResult[]> {
+    try {
+      const searchUrl = `https://export.arxiv.org/api/query?search_query=all:${encodeURIComponent(query)}&start=0&max_results=${limit}`
+
+      const response = await fetch(searchUrl, {
+        signal: this.abortController?.signal
+      })
+
+      if (!response.ok) {
+        throw new Error(`arXiv search failed: ${response.status}`)
+      }
+
+      const xml = await response.text()
+      const results: SearchResult[] = []
+
+      // Parse XML entries
+      const entryRegex = /<entry>([\s\S]*?)<\/entry>/gi
+      let match
+
+      while ((match = entryRegex.exec(xml)) !== null && results.length < limit) {
+        const entry = match[1]
+
+        const titleMatch = entry.match(/<title>([\s\S]*?)<\/title>/i)
+        const summaryMatch = entry.match(/<summary>([\s\S]*?)<\/summary>/i)
+        const linkMatch = entry.match(/<id>([\s\S]*?)<\/id>/i)
+
+        if (titleMatch && linkMatch) {
+          results.push({
+            title: titleMatch[1].replace(/\s+/g, ' ').trim(),
+            url: linkMatch[1].trim().replace('http://', 'https://'),
+            snippet: summaryMatch ? summaryMatch[1].replace(/\s+/g, ' ').trim().slice(0, 300) : '',
+            source: 'arxiv'
+          })
+        }
+      }
+
+      return results
+    } catch (error) {
+      console.error('arXiv search error:', error)
+      return []
+    }
+  }
+
+  /**
+   * Search Semantic Scholar (academic papers, CORS-friendly)
+   */
+  private async searchSemanticScholar(query: string, limit = 3): Promise<SearchResult[]> {
+    try {
+      const searchUrl = `https://api.semanticscholar.org/graph/v1/paper/search?query=${encodeURIComponent(query)}&limit=${limit}&fields=title,abstract,url,year,authors`
+
+      const response = await fetch(searchUrl, {
+        signal: this.abortController?.signal,
+        headers: {
+          'Accept': 'application/json'
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error(`Semantic Scholar search failed: ${response.status}`)
+      }
+
+      const data = await response.json()
+      return (data.data || []).map((paper: { title: string; abstract?: string; url?: string; paperId: string; year?: number; authors?: { name: string }[] }) => ({
+        title: `${paper.title}${paper.year ? ` (${paper.year})` : ''}`,
+        url: paper.url || `https://www.semanticscholar.org/paper/${paper.paperId}`,
+        snippet: paper.abstract ? paper.abstract.slice(0, 300) : (paper.authors ? `By ${paper.authors.slice(0, 3).map(a => a.name).join(', ')}` : ''),
+        source: 'semantic-scholar'
+      }))
+    } catch (error) {
+      console.error('Semantic Scholar search error:', error)
+      return []
+    }
+  }
+
+  /**
+   * Search Open Library (books, CORS-friendly)
+   */
+  private async searchOpenLibrary(query: string, limit = 2): Promise<SearchResult[]> {
+    try {
+      const searchUrl = `https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=${limit}`
+
+      const response = await fetch(searchUrl, {
+        signal: this.abortController?.signal
+      })
+
+      if (!response.ok) {
+        throw new Error(`Open Library search failed: ${response.status}`)
+      }
+
+      const data = await response.json()
+      return (data.docs || []).slice(0, limit).map((book: { title: string; author_name?: string[]; key: string; first_publish_year?: number; subject?: string[] }) => ({
+        title: `${book.title}${book.first_publish_year ? ` (${book.first_publish_year})` : ''}`,
+        url: `https://openlibrary.org${book.key}`,
+        snippet: book.author_name ? `By ${book.author_name.slice(0, 2).join(', ')}${book.subject ? `. Topics: ${book.subject.slice(0, 3).join(', ')}` : ''}` : '',
+        source: 'openlibrary'
+      }))
+    } catch (error) {
+      console.error('Open Library search error:', error)
+      return []
+    }
+  }
+
+  /**
+   * Search GitHub (code repositories, CORS-friendly via API)
+   */
+  private async searchGitHub(query: string, limit = 3): Promise<SearchResult[]> {
+    try {
+      const searchUrl = `https://api.github.com/search/repositories?q=${encodeURIComponent(query)}&sort=stars&order=desc&per_page=${limit}`
+
+      const response = await fetch(searchUrl, {
+        signal: this.abortController?.signal,
+        headers: {
+          'Accept': 'application/vnd.github.v3+json'
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error(`GitHub search failed: ${response.status}`)
+      }
+
+      const data = await response.json()
+      return (data.items || []).map((repo: { full_name: string; html_url: string; description?: string; stargazers_count: number; language?: string }) => ({
+        title: repo.full_name,
+        url: repo.html_url,
+        snippet: `${repo.description || 'No description'}${repo.language ? ` [${repo.language}]` : ''} ⭐ ${repo.stargazers_count.toLocaleString()}`,
+        source: 'github'
+      }))
+    } catch (error) {
+      console.error('GitHub search error:', error)
+      return []
+    }
+  }
+
+  /**
+   * Search Stack Overflow via StackExchange API (CORS-friendly)
+   */
+  private async searchStackOverflow(query: string, limit = 2): Promise<SearchResult[]> {
+    try {
+      const searchUrl = `https://api.stackexchange.com/2.3/search/advanced?order=desc&sort=relevance&q=${encodeURIComponent(query)}&site=stackoverflow&filter=!nNPvSNPI7A&pagesize=${limit}`
+
+      const response = await fetch(searchUrl, {
+        signal: this.abortController?.signal
+      })
+
+      if (!response.ok) {
+        throw new Error(`Stack Overflow search failed: ${response.status}`)
+      }
+
+      const data = await response.json()
+      return (data.items || []).map((item: { title: string; link: string; score: number; answer_count: number; is_answered: boolean }) => ({
+        title: this.decodeHTMLEntities(item.title),
+        url: item.link,
+        snippet: `Score: ${item.score} | ${item.answer_count} answers${item.is_answered ? ' ✓' : ''}`,
+        source: 'stackoverflow'
+      }))
+    } catch (error) {
+      console.error('Stack Overflow search error:', error)
+      return []
+    }
+  }
+
+  /**
+   * Search Hacker News via Algolia API (CORS-friendly)
+   */
+  private async searchHackerNews(query: string, limit = 3): Promise<SearchResult[]> {
+    try {
+      const searchUrl = `https://hn.algolia.com/api/v1/search?query=${encodeURIComponent(query)}&tags=story&hitsPerPage=${limit}`
+
+      const response = await fetch(searchUrl, {
+        signal: this.abortController?.signal
+      })
+
+      if (!response.ok) {
+        throw new Error(`Hacker News search failed: ${response.status}`)
+      }
+
+      const data = await response.json()
+      return (data.hits || []).map((hit: { title: string; url?: string; objectID: string; points: number; num_comments: number }) => ({
+        title: hit.title,
+        url: hit.url || `https://news.ycombinator.com/item?id=${hit.objectID}`,
+        snippet: `${hit.points} points | ${hit.num_comments} comments`,
+        source: 'hackernews'
+      }))
+    } catch (error) {
+      console.error('Hacker News search error:', error)
+      return []
+    }
+  }
+
+  /**
+   * Decode HTML entities helper
+   */
+  private decodeHTMLEntities(text: string): string {
+    return text
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(parseInt(code, 10)))
+      .replace(/&[a-z]+;/gi, ' ')
+      .trim()
   }
 
   /**
@@ -505,21 +881,39 @@ export class DeepResearchEngine {
    * Fetch a web page and extract its main content
    */
   private async fetchAndExtract(result: SearchResult): Promise<ResearchSource> {
+    // Determine source type from the source or URL
+    const sourceType = this.determineSourceType(result)
+
     const source: ResearchSource = {
       id: crypto.randomUUID(),
       url: result.url,
       title: result.title,
       content: '',
       fetchedAt: new Date(),
-      sourceType: result.source === 'wikipedia' ? 'wikipedia' : 'web'
+      sourceType
     }
 
-    // For Wikipedia sources, fetch content directly via Wikipedia API
+    // Handle different source types with specialized fetching
     if (result.url.includes('wikipedia.org')) {
       return this.fetchWikipediaContent(result, source)
     }
 
-    // For non-Wikipedia sources, try backend proxy first
+    if (result.url.includes('arxiv.org')) {
+      return this.fetchArxivContent(result, source)
+    }
+
+    if (result.url.includes('semanticscholar.org')) {
+      // Semantic Scholar snippets are usually good enough
+      source.content = result.snippet || ''
+      source.relevanceScore = source.content.length > 100 ? 0.8 : 0.5
+      return source
+    }
+
+    if (result.url.includes('github.com')) {
+      return this.fetchGitHubContent(result, source)
+    }
+
+    // For general web sources, try backend proxy first
     if (this.useBackend) {
       try {
         const proxyUrl = `/api/fetch-page?url=${encodeURIComponent(result.url)}`
@@ -542,14 +936,124 @@ export class DeepResearchEngine {
       }
     }
 
-    // Fallback: use snippet as content
+    // Fallback: use snippet as content (many APIs provide good snippets)
     source.content = result.snippet || ''
-    source.relevanceScore = source.content.length > 0 ? 0.4 : 0.1
 
-    // If this is from DuckDuckGo with a good snippet, boost relevance
-    if (result.source === 'duckduckgo' && source.content.length > 100) {
-      source.relevanceScore = 0.7
-      source.sourceType = 'instant'
+    // Score based on snippet quality and source
+    if (source.content.length > 200) {
+      source.relevanceScore = 0.75
+    } else if (source.content.length > 100) {
+      source.relevanceScore = 0.6
+    } else if (source.content.length > 50) {
+      source.relevanceScore = 0.4
+    } else {
+      source.relevanceScore = 0.2
+    }
+
+    // Boost relevance for high-quality sources
+    if (['arxiv', 'semantic-scholar', 'hackernews', 'github'].includes(result.source || '')) {
+      source.relevanceScore = Math.min(1.0, source.relevanceScore + 0.15)
+    }
+
+    return source
+  }
+
+  /**
+   * Determine the source type from the result
+   */
+  private determineSourceType(result: SearchResult): ResearchSource['sourceType'] {
+    const url = result.url.toLowerCase()
+    const src = result.source?.toLowerCase() || ''
+
+    if (url.includes('wikipedia.org') || src === 'wikipedia') return 'wikipedia'
+    if (url.includes('arxiv.org') || src === 'arxiv' || url.includes('semanticscholar') || src === 'semantic-scholar') return 'academic'
+    if (url.includes('news.') || src === 'news' || src === 'hackernews') return 'news'
+    if (url.includes('github.com') || url.includes('stackoverflow.com') || src === 'github' || src === 'stackoverflow') return 'code'
+    if (url.includes('reddit.com') || src === 'reddit') return 'social'
+    if (src === 'duckduckgo' && result.snippet && result.snippet.length > 200) return 'instant'
+
+    return 'web'
+  }
+
+  /**
+   * Fetch arXiv paper content via API
+   */
+  private async fetchArxivContent(result: SearchResult, source: ResearchSource): Promise<ResearchSource> {
+    try {
+      // Extract arXiv ID from URL
+      const idMatch = result.url.match(/arxiv\.org\/abs\/(\d+\.\d+)/i)
+      if (!idMatch) {
+        source.content = result.snippet || ''
+        source.relevanceScore = 0.5
+        return source
+      }
+
+      const arxivId = idMatch[1]
+      const apiUrl = `https://export.arxiv.org/api/query?id_list=${arxivId}`
+
+      const response = await fetch(apiUrl, {
+        signal: this.abortController?.signal
+      })
+
+      if (response.ok) {
+        const xml = await response.text()
+        const summaryMatch = xml.match(/<summary>([\s\S]*?)<\/summary>/i)
+
+        if (summaryMatch) {
+          source.content = summaryMatch[1].replace(/\s+/g, ' ').trim()
+          source.relevanceScore = 0.9 // Academic papers are high quality
+          source.sourceType = 'academic'
+        }
+      }
+    } catch (error) {
+      console.warn(`arXiv fetch failed for ${result.url}:`, error)
+    }
+
+    if (!source.content) {
+      source.content = result.snippet || ''
+      source.relevanceScore = 0.5
+    }
+
+    return source
+  }
+
+  /**
+   * Fetch GitHub repository README content
+   */
+  private async fetchGitHubContent(result: SearchResult, source: ResearchSource): Promise<ResearchSource> {
+    try {
+      // Extract owner/repo from URL
+      const repoMatch = result.url.match(/github\.com\/([^\/]+)\/([^\/]+)/i)
+      if (!repoMatch) {
+        source.content = result.snippet || ''
+        source.relevanceScore = 0.5
+        return source
+      }
+
+      const [, owner, repo] = repoMatch
+      const apiUrl = `https://api.github.com/repos/${owner}/${repo}/readme`
+
+      const response = await fetch(apiUrl, {
+        signal: this.abortController?.signal,
+        headers: {
+          'Accept': 'application/vnd.github.v3.raw'
+        }
+      })
+
+      if (response.ok) {
+        const readme = await response.text()
+        // Take first 5000 chars of README
+        source.content = readme.slice(0, 5000)
+        source.relevanceScore = 0.8
+        source.sourceType = 'code'
+      }
+    } catch (error) {
+      console.warn(`GitHub fetch failed for ${result.url}:`, error)
+    }
+
+    if (!source.content) {
+      source.content = result.snippet || ''
+      source.relevanceScore = 0.5
     }
 
     return source

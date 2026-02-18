@@ -698,25 +698,31 @@ function CodeTab() {
   const [MonacoEditor, setMonacoEditor] = useState<any>(null)
   const [editableCode, setEditableCode] = useState<string>('')
   const [hasChanges, setHasChanges] = useState(false)
+  const lastSyncedSourceRef = useRef<string | null>(null)
 
   const currentFile = activeFile ? findFile(files, activeFile) : null
+  const sourceContent = currentFile?.content ?? generatedCode ?? ''
 
   // Lazy load Monaco
   useEffect(() => {
     import('./MonacoEditor').then(mod => setMonacoEditor(() => mod.default))
   }, [])
 
-  // Sync editable code with generated code
+  // Sync editable code when source changes, but avoid clobbering in-progress edits
   useEffect(() => {
-    const content = currentFile?.content || generatedCode || ''
-    setEditableCode(content)
-    setHasChanges(false)
-  }, [currentFile?.content, generatedCode])
+    if (sourceContent === lastSyncedSourceRef.current) return
+
+    if (!hasChanges) {
+      setEditableCode(sourceContent)
+      setHasChanges(false)
+      lastSyncedSourceRef.current = sourceContent
+    }
+  }, [sourceContent, hasChanges])
 
   const handleCodeChange = useCallback((value: string) => {
     setEditableCode(value)
-    setHasChanges(value !== (currentFile?.content || generatedCode || ''))
-  }, [currentFile?.content, generatedCode])
+    setHasChanges(value !== sourceContent)
+  }, [sourceContent])
 
   const handleApplyChanges = () => {
     if (editableCode) {
@@ -726,7 +732,7 @@ function CodeTab() {
     }
   }
 
-  const content = editableCode || currentFile?.content || generatedCode || ''
+  const content = editableCode
 
   // Detect language
   const detectLanguage = (code: string): string => {

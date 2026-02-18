@@ -197,13 +197,19 @@ export default function AutonomousAgentView({ onClose: _onClose }: AutonomousAge
     })
 
     // Execute
-    const result = await autonomousAgent.execute(goal)
-    setPlan(result)
+    try {
+      const result = await autonomousAgent.execute(goal)
+      setPlan(result)
 
-    if (result.status === 'complete') {
-      addLog('Execution completed successfully!', 'success', 'status')
-    } else if (result.status === 'failed') {
-      addLog('Execution failed or was stopped', 'error', 'status')
+      if (result.status === 'complete') {
+        addLog('Execution completed successfully!', 'success', 'status')
+      } else if (result.status === 'failed') {
+        addLog('Execution failed or was stopped', 'error', 'status')
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown autonomous execution error'
+      setStatus('failed')
+      addLog(`Execution crashed: ${message}`, 'error', 'status')
     }
   }, [goal, addLog])
 

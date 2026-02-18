@@ -80,6 +80,11 @@ interface ExecuteTaskResponse {
     notes?: string[]
     failures?: string[]
   }
+  fallback?: {
+    reason?: 'no-match' | 'blocked'
+    message?: string
+    nextAction?: string
+  }
 }
 
 async function runCapabilityTask(task: string, dryRun = false): Promise<ExecuteTaskResponse> {
@@ -110,6 +115,8 @@ function formatCapabilityTaskResult(payload: ExecuteTaskResponse): string {
     `Plan steps: ${(payload.plan || []).length}`,
     `Execution steps: ${(payload.execution?.steps || []).length}`,
     payload.diagnostics?.degraded ? `Diagnostics: ${(payload.diagnostics?.failures || []).join('; ') || 'degraded'}` : '',
+    payload.fallback?.message ? `Fallback: ${payload.fallback.message}` : '',
+    payload.fallback?.nextAction ? `Next: ${payload.fallback.nextAction}` : '',
     '',
     'Raw execution snapshot:',
     '```json',
@@ -125,7 +132,7 @@ function isCapabilityResultUsable(payload: ExecuteTaskResponse): boolean {
   const executionSteps = payload.execution?.steps || []
   const hasFailedSteps = executionSteps.some((step) => step.status === 'failed' || step.status === 'error')
 
-  if (status === 'failed' || status === 'degraded' || status === 'no-match') {
+  if (status === 'failed' || status === 'degraded' || status === 'no-match' || status === 'blocked') {
     return false
   }
 
@@ -380,7 +387,8 @@ export default function ChatPanel() {
           return
         }
 
-        toast.info('Fallback to AI Chat', 'Task engine could not complete this request. Using AI assistant mode.')
+        const reason = resultPayload.fallback?.message || `Task engine returned status: ${resultPayload.status || 'unknown'}.`
+        toast.info('Fallback to AI Chat', `${reason} Using AI assistant mode.`)
       } catch {
         toast.warning('Task Engine Unavailable', 'Falling back to AI assistant mode.')
       }
@@ -751,6 +759,12 @@ export default function ChatPanel() {
                 {executeTaskResult.diagnostics?.degraded && (
                   <div className="rounded-lg border border-rose-gold-400/20 bg-rose-gold-500/10 px-2 py-1.5 text-rose-gold-400">
                     Diagnostics: {(executeTaskResult.diagnostics.failures || []).join('; ') || 'degraded mode'}
+                  </div>
+                )}
+                {executeTaskResult.fallback?.message && (
+                  <div className="rounded-lg border border-amber-300/30 bg-amber-200/10 px-2 py-1.5 text-amber-200">
+                    {executeTaskResult.fallback.message}
+                    {executeTaskResult.fallback.nextAction ? ` ${executeTaskResult.fallback.nextAction}` : ''}
                   </div>
                 )}
               </div>

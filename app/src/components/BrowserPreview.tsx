@@ -200,8 +200,10 @@ export default function BrowserPreview({
       setSessionId(newSession.id)
       setSession(newSession)
       onSessionCreated?.(newSession)
+      return newSession
     } catch (error) {
       setLoadError((error as Error).message)
+      return null
     } finally {
       setIsLoadingInternal(false)
     }
@@ -211,8 +213,10 @@ export default function BrowserPreview({
     if (!url.trim()) return
 
     // Create session if needed
-    if (!sessionId) {
-      await createSession()
+    let activeSessionId = sessionId
+    if (!activeSessionId) {
+      const newSession = await createSession()
+      activeSessionId = newSession?.id ?? null
     }
 
     setLoadError(null)
@@ -237,8 +241,8 @@ export default function BrowserPreview({
     })
 
     try {
-      if (sessionId) {
-        const result = await browserControl.navigate(sessionId, targetUrl)
+      if (activeSessionId) {
+        const result = await browserControl.navigate(activeSessionId, targetUrl)
 
         if (result.success) {
           setInternalState({
@@ -248,7 +252,7 @@ export default function BrowserPreview({
           })
 
           // Take screenshot
-          const ssResult = await browserControl.screenshot(sessionId)
+          const ssResult = await browserControl.screenshot(activeSessionId)
           setScreenshot(`data:image/png;base64,${ssResult.base64}`)
           setScreenshotDimensions({ width: ssResult.width, height: ssResult.height })
         } else {
