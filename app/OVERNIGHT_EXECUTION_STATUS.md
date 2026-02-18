@@ -442,3 +442,52 @@
 - Commit skipped (nothing to fix/patch from this loop).
 - If you want this log checkpoint committed:
   - `git add OVERNIGHT_EXECUTION_STATUS.md && git commit -m "chore(reliability): append 11:56 PST sweep evidence"`
+
+## 2026-02-18 06:04 PST — Overnight reliability sweep (live repo, functionality-first)
+
+### Executive outcome
+- **PASS after one compile-blocking patch.**
+- Found and fixed a real TypeScript regression in `CompanyWizard` logo variation typing that blocked production build.
+- Core reliability suites passed after patch; no additional functional failures reproduced.
+
+### Pass/Fail matrix (blunt)
+
+| Check | Result | Proof snippet |
+|---|---:|---|
+| `npm run lint` | ✅ PASS | clean exit (no eslint violations) |
+| `npm run build` (pre-fix) | ❌ FAIL | `TS2345 ... LocalLogoVariation[] is not assignable to LogoVariation[]; property 'status' is missing` |
+| Patch `src/components/CompanyWizard.tsx` | ✅ FIXED | added `status` to local variation model and mapped fallback/status fields |
+| `npm run build` (post-fix) | ✅ PASS | `✓ built in 5.99s` |
+| `npm run reliability:test:api` | ✅ PASS | `"suite":"api-contract-smoke","pass":4,"fail":0` |
+| `npm run reliability:autonomy-observability` | ✅ PASS | `runCount: 94`, `staleCandidateCount: 0`, `retryEventsInRecentWindow: 2` |
+| `npm run reliability:test:ui` | ✅ PASS* | `3 passed, 1 skipped` |
+| `npm run reliability:test` (full Playwright reliability pack) | ✅ PASS* | `10 passed, 1 skipped` |
+| `npm run reliability:flaky-scan` | ✅ PASS | `repeatEach: 5, expected: 15, unexpected: 0, flaky: 0` |
+| `node ./scripts/acceptance-e2e.mjs` | ✅ PASS | `{ "go": true, "passCount": 6, "failCount": 0 }` |
+
+\* skipped test is the preview URL health check when `PREVIEW_URL` is not provided.
+
+### Failure patched immediately
+- **File:** `src/components/CompanyWizard.tsx`
+- **Issue:** Local logo variation objects omitted required `status` used by `LogoVariation` state type.
+- **Impact:** `npm run build` hard-failed, blocking release artifact generation.
+- **Patch:**
+  - Extended `LocalLogoVariation` with required `provider` + `status` fields.
+  - Mapped `status` from generated variations.
+  - Added `status: 'loading'` to fallback variations.
+- **Verification:** Re-ran `build` and full reliability suite; all green except expected preview-url env-gated skip.
+
+### Adversarial/edge retest done
+- Ran full Playwright reliability set after targeted suite.
+- Ran flaky repeat scan (`repeatEach=5`) to detect intermittent regressions.
+- Ran acceptance e2e harness to cross-check company + autonomous + execution flow envelope behavior.
+
+### Remaining risks
+1. **Preview URL health check remains env-gated** (`PREVIEW_URL` absent => skipped), so deployed preview endpoint is not automatically covered in default run.
+2. **Sandbox backend path is noisy/unavailable in this environment** (`/api/sandbox/*` proxy `ECONNREFUSED` in webserver logs). UI fallback path survives, but backend-exec path still needs explicit infra-on verification.
+3. **Repo contains unrelated pre-existing modified files** outside this patch scope; a clean scoped commit requires selective staging.
+
+### Git / commit status
+- Sweep is stable for this scope.
+- Did **not** auto-commit yet because working tree includes unrelated pre-existing modifications; safest next command for scoped commit is:
+  - `git add src/components/CompanyWizard.tsx OVERNIGHT_EXECUTION_STATUS.md && git commit -m "fix: restore company wizard logo variation typing for reliable builds"`

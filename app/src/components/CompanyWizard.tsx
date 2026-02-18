@@ -60,7 +60,8 @@ interface LocalLogoVariation {
   style: string
   prompt: string
   url: string
-  provider?: string
+  provider: string
+  status: 'loading' | 'loaded' | 'error'
 }
 
 export default function CompanyWizard() {
@@ -158,7 +159,8 @@ export default function CompanyWizard() {
         style: v.style,
         prompt: v.prompt,
         url: v.url,
-        provider: v.provider
+        provider: v.provider,
+        status: v.status
       }))
 
       setLogoVariations(localVariations)
@@ -172,7 +174,8 @@ export default function CompanyWizard() {
         style: style.name,
         prompt: style.promptModifier,
         url: '', // Will be replaced by fallback
-        provider: 'fallback'
+        provider: 'fallback',
+        status: 'loading'
       }))
       setLogoVariations(fallbackVariations)
     } finally {
