@@ -491,3 +491,140 @@
 - Sweep is stable for this scope.
 - Did **not** auto-commit yet because working tree includes unrelated pre-existing modifications; safest next command for scoped commit is:
   - `git add src/components/CompanyWizard.tsx OVERNIGHT_EXECUTION_STATUS.md && git commit -m "fix: restore company wizard logo variation typing for reliable builds"`
+
+## 2026-02-18 07:09 PST — Cron reliability sweep (live repo, functionality/reliability only)
+
+### Executive outcome
+- **PASS with two blunt caveats.** Core lint/build + targeted reliability/API/UI/preview/deeplink checks all passed in this run.
+- **No product-code patch was required** in this loop (no reproducible functional regression in app code after reruns).
+- Reliability harness still has one hanging path (`reliability:flaky-scan`) and one weak smoke signal (`capability-engine-smoke` returned null status fields), so not all tooling is equally trustworthy.
+
+### Pass/Fail matrix (blunt)
+
+| Check | Result | Proof snippet |
+|---|---:|---|
+| `npm run lint` | ✅ PASS | `EXIT:0` |
+| `npm run build` | ✅ PASS | `vite build ... ✓ built in 5.57s` |
+| `npm run reliability:test:api` | ✅ PASS | `"suite":"api-contract-smoke","pass":4,"fail":0` |
+| `npm run reliability:autonomy-observability` | ✅ PASS | `runCount: 95`, `staleCandidateCount: 0`, `retryEventsInRecentWindow: 2` |
+| `node scripts/major-sections-smoke.mjs` | ✅ PASS | `passCount: 12, failCount: 0` |
+| `node scripts/acceptance-e2e.mjs` | ✅ PASS | `{ "go": true, "passCount": 6, "failCount": 0 }` |
+| `npx tsx scripts/smoke-autonomy-runtime.ts` | ✅ PASS | CREATE/PAUSE/RESUME/RETRY/STATUS all returned expected success envelopes |
+| `bash scripts/capability-engine-smoke.sh` | ⚠️ INCONCLUSIVE | script completed but emitted `status:null`/`intent:null` across scenarios (signal quality issue) |
+| Preview route probes (`vite preview` + `curl`) | ✅ PASS | `/`, `/company-dashboard`, `/code-sandbox`, `/autonomous-agents` all `HTTP:200` + `<!DOCTYPE html>` |
+| `SKIP_WEBSERVER=1 BASE_URL=... npx playwright test tests/reliability/ui-and-preview.spec.ts` | ✅ PASS | `3 passed (4.3s)` incl `preview URL health check` |
+| `SKIP_WEBSERVER=1 BASE_URL=... npx playwright test tests/reliability/flow-replay.spec.ts` | ✅ PASS | `1 passed (3.1s)` |
+| `SKIP_WEBSERVER=1 BASE_URL=... npx playwright test tests/reliability/contracts-and-smoke.spec.ts` | ✅ PASS | `4 passed (1.9s)` |
+| `FLAKE_REPEAT_EACH=3 npm run reliability:flaky-scan` | ❌ FAIL (hanged) | process stalled without JSON summary; had to kill session |
+| Ad-hoc code sandbox execute smoke (`/code-sandbox` Run click) | ✅ PASS* | `{ "suite":"code-sandbox-exec-smoke", "hasSignal": true }` (*command ended by SIGTERM during preview-process teardown, but smoke payload was emitted first) |
+
+### Failures handled this loop
+1. **False failure from wrong Playwright base URL in first attempt (operator error, not product regression):** reran with `BASE_URL`/`PREVIEW_URL` pinned to managed preview port and checks passed.
+2. **Flaky-scan hang reproduced:** did not patch blindly in this loop; recorded as reliability-harness debt because app-level checks were already green and hang root cause needs isolated script/process debugging.
+
+### Remaining risks (no sugarcoating)
+1. **`reliability:flaky-scan` can hang** (reproduced now). That weakens adversarial retest confidence unless run with stricter timeout/kill wrappers.
+2. **`capability-engine-smoke.sh` currently gives low-value output** (`status:null` envelopes) while still exiting success; could hide API behavior drift.
+3. **Working tree is dirty with unrelated files outside this run scope** (e.g., `src/stores/presenceStore.ts`, root scripts/.env, generated artifacts), making immediate safe commit/push scoping risky without selective staging.
+
+### Git / commit status
+- No commit created this loop (no app-code patch from this run).
+- Exact current blockers to clean commit/push: pre-existing unrelated modified/untracked files in parent and app working tree.
+- If you want to checkpoint only this report entry:
+  - `git add OVERNIGHT_EXECUTION_STATUS.md && git commit -m "chore(reliability): append 07:09 PST sweep evidence"`
+
+## 2026-02-18 08:14 PST — Cron sweep: functionality/reliability loop + patch + verification
+
+### Executive outcome
+- **PASS (core reliability checks green).**
+- One failure occurred in a **new code-sandbox execution smoke test** due Playwright strict-locator ambiguity; patched immediately and re-ran full suite.
+- Preview URL nav check was explicitly forced and passed.
+- Adversarial edge scan found a process-level issue: flaky-scan runner can hang without emitting terminal JSON in this environment.
+
+### Pass/Fail matrix (this turn)
+
+| Check | Result | Proof snippet |
+|---|---:|---|
+| `npm run lint` | ✅ | `eslint ... --max-warnings 0` completed clean |
+| `npm run build` | ✅ | `✓ built in 5.75s` |
+| `npm run reliability:test:api` | ✅ | `"suite":"api-contract-smoke","pass":4,"fail":0` |
+| `npm run reliability:test:ui` | ✅ | `3 passed, 1 skipped` (preview test skipped without PREVIEW_URL) |
+| `npx playwright test api-and-agent + contracts-and-smoke` | ✅ | `7 passed (3.1s)` |
+| `node scripts/acceptance-e2e.mjs` | ✅ | `{ "go": true, "passCount": 6, "failCount": 0 }` |
+| `PREVIEW_URL=http://127.0.0.1:4173 ... -g "preview URL health check"` | ✅ | `1 passed` |
+| `tests/reliability/code-sandbox-exec.spec.ts` (first run) | ❌ | strict mode violation on `getByText(/sandbox-ok|Running in browser sandbox/i)` |
+| `tests/reliability/code-sandbox-exec.spec.ts` (after patch) | ✅ | `1 passed (20.8s)` |
+| `PREVIEW_URL=... npx playwright test tests/reliability/*.spec.ts` | ✅ | `12 passed (26.4s)` |
+| `npm run reliability:autonomy-observability` | ✅ | `runCount: 105`, `staleCandidateCount: 0` |
+| `npm run reliability:flaky-scan` / `FLAKE_REPEAT_EACH=2 node scripts/flaky-scan.mjs` | ⚠️ | runner hung (no terminal JSON emitted; sessions had to be killed) |
+
+### Failure patched immediately
+- **File:** `tests/reliability/code-sandbox-exec.spec.ts`
+- **Issue:** strict locator matched multiple nodes (`textarea`, status line, output line), causing false failure.
+- **Patch:** narrowed assertion target from `page.getByText(...)` to filtered `div` locator for output/status panel.
+- **Verification:**
+  - isolated rerun passed (`1 passed`),
+  - then full reliability suite rerun passed (`12 passed`).
+
+### Additional proof snippets (raw)
+- API smoke: `"runStatus":"degraded","steps":0` for contract case, and all checks `ok:true`.
+- Full suite: includes autonomous flow, company flow API path, code sandbox execution, and preview URL health.
+- Sandbox route under preview still logs proxy errors when backend sandbox API is absent:
+  - `http proxy error: /api/sandbox/health` + `AggregateError [ECONNREFUSED]`
+  - UI fallback still allowed successful browser execution path.
+
+### Remaining risks (blunt)
+1. **Flaky-scan harness reliability risk:** `scripts/flaky-scan.mjs` can hang in this host context (likely child Playwright JSON/reporter lifecycle interaction). Needs hard timeout/kill guard in script.
+2. **Sandbox backend availability risk:** `/api/sandbox/*` proxy endpoints are not always reachable during preview smoke; UI browser fallback masks this, but backend execution path remains environment-sensitive.
+3. **No push attempted this loop:** working tree contains unrelated pre-existing modifications; avoided accidental mixed commit.
+
+### Git/commit status for this loop
+- Stability reached for functionality checks.
+- New reliability test added + patched: `tests/reliability/code-sandbox-exec.spec.ts`.
+- **Commit not performed** to avoid bundling unrelated dirty files in repo root and sibling paths.
+- Suggested next clean command set:
+  1. `git add tests/reliability/code-sandbox-exec.spec.ts OVERNIGHT_EXECUTION_STATUS.md`
+  2. `git commit -m "test(reliability): add code sandbox execution smoke + fix locator ambiguity"`
+  3. `git push origin <branch>`
+
+## 2026-02-18 09:20 PST — Overnight reliability sweep (live repo) + hotfix
+
+### Executive outcome
+- **PASS after patch.** Found a real reliability bug (Memory Dashboard intermittently crashing), patched immediately, and re-verified with repeated Playwright loops.
+- Scope stayed on functionality/reliability only (no cosmetic-only churn).
+
+### Blunt pass/fail matrix (this run)
+
+| Check | Result | Proof snippet |
+|---|---:|---|
+| `npm run lint` | ✅ PASS | clean eslint exit (`--max-warnings 0`) |
+| `npm run build` | ✅ PASS | `✓ built in 5.13s` pre-patch; `✓ built in 4.17s` post-patch |
+| `npm run reliability:test:api` | ✅ PASS | `"suite":"api-contract-smoke","pass":4,"fail":0` |
+| `npx playwright test api-and-agent + flow-replay + code-sandbox-exec + ui-and-preview` (pre-patch) | ⚠️ FLAKY (auto-retried) | `flow-replay ... encountered an error` first attempt failed, retry passed |
+| `npx playwright test tests/reliability/flow-replay.spec.ts --retries=0 --repeat-each=5` | ✅ PASS | `5 passed (30.0s)` |
+| `npm run reliability:autonomy-observability` | ✅ PASS | `runCount: 106`, `staleCandidateCount: 0`, `retryEventsInRecentWindow: 1` |
+| `npx playwright test tests/reliability/ui-and-preview.spec.ts --retries=0 --repeat-each=3` (pre-patch) | ❌ FAIL | `Memory Dashboard encountered an error` + `No QueryClient set, use QueryClientProvider` |
+| Post-patch: same ui-and-preview repeat run | ✅ PASS | `6 passed, 3 skipped` (preview URL check skip expected without `PREVIEW_URL`) |
+| Post-patch: full targeted Playwright pack | ✅ PASS | `7 passed, 1 skipped (18.9s)` |
+
+### Failure found + immediate patch
+- **Failure:** Memory Dashboard intermittently crashed with runtime error: `No QueryClient set, use QueryClientProvider`, tripping reliability tests and rendering fallback error UI.
+- **Patch:** `src/main.tsx`
+  - imported `QueryClient` and `QueryClientProvider` from `@tanstack/react-query`
+  - created app-level `queryClient`
+  - wrapped `<App />` with `<QueryClientProvider client={queryClient}>`
+- **Verification reruns:** lint/build + repeated UI reliability checks + full targeted Playwright set all green after patch.
+
+### Adversarial retest done
+- Forced repeat loops on flaky surfaces (`flow-replay` and `ui-and-preview`) with `--retries=0 --repeat-each=N`.
+- Re-ran combined reliability pack after patch to ensure no regression outside the originally failing view.
+
+### Remaining risks (not hidden)
+1. **Preview URL health check remains env-gated** and will skip unless `PREVIEW_URL` is set (coverage blind spot for deployed preview endpoint).
+2. **Vite proxy logs repeated `ECONNREFUSED` for `/api/sandbox/*`** in this environment; UI fallback path is passing, but real sandbox backend availability is not proven by this sweep.
+3. NPM user-config deprecation warnings are noisy and may hide real warnings in long runs.
+
+### Git status / commit
+- Stability gate met after patch + reruns.
+- Code change is minimal and isolated to app bootstrap provider wiring.
+- Commit created locally for the fix (see git log).
