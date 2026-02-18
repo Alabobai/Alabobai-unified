@@ -326,18 +326,18 @@ interface BrandedLogoSpinnerProps {
   pulseRing?: boolean
 }
 
-const logoSizes = {
-  sm: 'w-6 h-6',
-  md: 'w-10 h-10',
-  lg: 'w-14 h-14',
-  xl: 'w-20 h-20'
+const logoSizePx = {
+  sm: 32,
+  md: 48,
+  lg: 64,
+  xl: 80
 }
 
-const containerSizes = {
-  sm: 'w-10 h-10',
-  md: 'w-16 h-16',
-  lg: 'w-20 h-20',
-  xl: 'w-28 h-28'
+const containerSizePx = {
+  sm: 48,
+  md: 72,
+  lg: 96,
+  xl: 120
 }
 
 export function BrandedLogoSpinner({
@@ -346,40 +346,73 @@ export function BrandedLogoSpinner({
   showGlow = true,
   pulseRing = true
 }: BrandedLogoSpinnerProps) {
+  const logoSize = logoSizePx[size]
+  const containerSize = containerSizePx[size]
+
   return (
     <div
-      className={`relative ${containerSizes[size]} flex items-center justify-center ${className}`}
+      className={`relative flex items-center justify-center ${className}`}
+      style={{ width: containerSize, height: containerSize }}
       role="status"
       aria-label="Loading"
     >
       {/* Outer rotating ring */}
       {pulseRing && (
         <div
-          className="absolute inset-0 rounded-full border-2 border-rose-gold-400/30 animate-spin"
+          className="absolute inset-0 rounded-full border-2 border-rose-gold-400/50 animate-spin"
           style={{ animationDuration: '3s' }}
         />
       )}
 
-      {/* Glow effect */}
-      {showGlow && (
+      {/* Secondary inner ring */}
+      {pulseRing && (
         <div
-          className="absolute inset-2 rounded-full animate-pulse opacity-60"
+          className="absolute rounded-full border border-rose-gold-400/30"
           style={{
-            boxShadow: '0 0 30px rgba(217, 160, 122, 0.5), 0 0 60px rgba(217, 160, 122, 0.3), inset 0 0 20px rgba(217, 160, 122, 0.1)'
+            inset: 6,
+            animationDuration: '2s',
+            animation: 'spin 2s linear infinite reverse'
           }}
         />
       )}
 
-      {/* Logo image with rotation */}
-      <img
-        src={BRAND.assets.mark || BRAND.assets.logo}
-        alt={BRAND.name}
-        className={`${logoSizes[size]} object-contain animate-spin logo-render`}
+      {/* Glow background circle */}
+      {showGlow && (
+        <div
+          className="absolute rounded-full animate-pulse"
+          style={{
+            width: logoSize + 16,
+            height: logoSize + 16,
+            background: 'radial-gradient(circle, rgba(217, 160, 122, 0.3) 0%, rgba(217, 160, 122, 0.1) 50%, transparent 70%)',
+            boxShadow: '0 0 40px rgba(217, 160, 122, 0.6), 0 0 80px rgba(217, 160, 122, 0.3)'
+          }}
+        />
+      )}
+
+      {/* Logo container with background */}
+      <div
+        className="relative rounded-full flex items-center justify-center overflow-visible"
         style={{
-          animationDuration: '2s',
-          filter: 'drop-shadow(0 0 8px rgba(217, 160, 122, 0.6))'
+          width: logoSize + 8,
+          height: logoSize + 8,
+          background: 'radial-gradient(circle, rgba(26, 20, 16, 0.9) 0%, rgba(10, 8, 5, 0.95) 100%)',
+          border: '2px solid rgba(217, 160, 122, 0.4)',
+          boxShadow: 'inset 0 0 20px rgba(217, 160, 122, 0.2), 0 0 20px rgba(217, 160, 122, 0.3)'
         }}
-      />
+      >
+        {/* Logo image with pulse animation (not spin - logo stays upright) */}
+        <img
+          src={BRAND.assets.logo}
+          alt={BRAND.name}
+          style={{
+            width: logoSize,
+            height: logoSize,
+            objectFit: 'contain',
+            filter: 'drop-shadow(0 0 12px rgba(217, 160, 122, 0.8))',
+            animation: 'pulse 2s ease-in-out infinite'
+          }}
+        />
+      </div>
     </div>
   )
 }
