@@ -1337,7 +1337,13 @@ Remember to cite sources using bracket notation [1], [2], etc. throughout your a
           const data = await response.json()
           const reportContent = data.content || ''
 
-          if (reportContent.length > 100) {
+          // Check that we got actual AI-generated content, not a fallback message
+          const isValidAIResponse = reportContent.length > 100 &&
+            !reportContent.includes('Local model is currently unavailable') &&
+            !reportContent.includes('Ollama is offline') &&
+            (reportContent.includes('##') || reportContent.includes('SUMMARY') || reportContent.includes('FINDING'))
+
+          if (isValidAIResponse) {
             const parsed = this.parseReportContent(reportContent)
 
             return {
@@ -1352,13 +1358,16 @@ Remember to cite sources using bracket notation [1], [2], etc. throughout your a
               researchDuration: Date.now() - startTime
             }
           }
+
+          console.log('[DeepResearch] AI response was fallback message, using client-side generation')
         }
       } catch (error) {
         console.warn('AI synthesis failed:', error)
       }
     }
 
-    // Fallback: Generate report from source summaries
+    // Fallback: Generate report from source summaries (client-side extraction)
+    console.log('[DeepResearch] Using client-side report generation')
     return this.generateClientSideReport(topic, sources, citations, startTime)
   }
 
