@@ -57,30 +57,59 @@ interface LogoVariation {
 }
 
 function generateLogoVariations(companyName: string, companyType: string): LogoVariation[] {
+  const seed = Math.floor(Math.random() * 1000000)
+
   const basePrompts = [
     {
       id: 'minimal',
       style: 'Minimalist',
-      promptTemplate: `Professional minimalist logo for ${companyName}, a ${companyType} company, clean vector design, simple geometric shapes, modern branding, white background, no text, single color accent`
+      promptTemplate: `minimalist logo ${companyName} ${companyType} clean simple geometric modern white background`
     },
     {
       id: 'gradient',
       style: 'Modern Gradient',
-      promptTemplate: `Modern gradient logo for ${companyName}, a ${companyType} company, vibrant colors, contemporary design, sleek professional look, white background, no text, tech startup style`
+      promptTemplate: `modern gradient logo ${companyName} ${companyType} vibrant sleek professional tech startup white background`
     },
     {
       id: 'abstract',
       style: 'Abstract',
-      promptTemplate: `Abstract artistic logo for ${companyName}, a ${companyType} company, creative unique design, bold shapes, professional branding, white background, no text, innovative concept`
+      promptTemplate: `abstract artistic logo ${companyName} ${companyType} creative bold shapes innovative white background`
     }
   ]
 
-  return basePrompts.map(item => ({
+  return basePrompts.map((item, index) => ({
     id: item.id,
     style: item.style,
     prompt: item.promptTemplate,
-    url: `https://image.pollinations.ai/prompt/${encodeURIComponent(item.promptTemplate)}?width=512&height=512&nologo=true&seed=${Date.now()}`
+    url: `https://image.pollinations.ai/prompt/${encodeURIComponent(item.promptTemplate)}?width=512&height=512&seed=${seed + index}&model=flux`
   }))
+}
+
+// Fallback SVG logos when API fails
+function generateFallbackLogo(style: string, companyName: string): string {
+  const initial = companyName.charAt(0).toUpperCase()
+  const colors = {
+    minimal: { bg: '#1a1a1a', fg: '#d9a07a' },
+    gradient: { bg: 'linear-gradient(135deg, #d9a07a, #b8845c)', fg: '#1a1a1a' },
+    abstract: { bg: '#0a0808', fg: '#ecd4c0' }
+  }
+  const color = colors[style as keyof typeof colors] || colors.minimal
+
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+      <defs>
+        <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#d9a07a;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#b8845c;stop-opacity:1" />
+        </linearGradient>
+      </defs>
+      <rect width="512" height="512" fill="${style === 'gradient' ? 'url(#grad)' : color.bg}"/>
+      <text x="256" y="300" font-family="Arial, sans-serif" font-size="200" font-weight="bold" fill="${style === 'gradient' ? '#1a1a1a' : color.fg}" text-anchor="middle">${initial}</text>
+      ${style === 'abstract' ? '<circle cx="400" cy="120" r="60" fill="#d9a07a" opacity="0.6"/><circle cx="120" cy="400" r="40" fill="#d9a07a" opacity="0.4"/>' : ''}
+      ${style === 'minimal' ? '<rect x="156" y="350" width="200" height="8" rx="4" fill="#d9a07a" opacity="0.5"/>' : ''}
+    </svg>
+  `
+  return `data:image/svg+xml;base64,${btoa(svg)}`
 }
 
 export default function CompanyWizard() {
@@ -170,15 +199,43 @@ export default function CompanyWizard() {
     setTimeout(() => {
       setIsGeneratingLogos(false)
     }, 500)
-  }, [companyName, companyType])
+
+    // Set timeout to use fallback if images don't load in 15 seconds
+    setTimeout(() => {
+      setLogoVariations(prev => prev.map(v => {
+        // If not loaded yet, use fallback
+        if (!logosLoaded[v.id] && !logoErrors[v.id]) {
+          return { ...v, url: generateFallbackLogo(v.id, companyName) }
+        }
+        return v
+      }))
+      setLogosLoaded(prev => {
+        const updated = { ...prev }
+        variations.forEach(v => { updated[v.id] = true })
+        return updated
+      })
+    }, 15000)
+  }, [companyName, companyType, logosLoaded, logoErrors])
 
   // Handle logo image load
   const handleLogoLoad = (logoId: string) => {
     setLogosLoaded(prev => ({ ...prev, [logoId]: true }))
   }
 
-  // Handle logo image error
+  // Handle logo image error - use fallback
   const handleLogoError = (logoId: string) => {
+    // Find the variation and replace URL with fallback
+    const variation = logoVariations.find(v => v.id === logoId)
+    if (variation) {
+      const fallbackUrl = generateFallbackLogo(logoId, companyName)
+      setLogoVariations(prev => prev.map(v =>
+        v.id === logoId ? { ...v, url: fallbackUrl } : v
+      ))
+      // Update selected logo URL if this was selected
+      if (selectedLogoId === logoId) {
+        setLogoUrl(fallbackUrl)
+      }
+    }
     setLogoErrors(prev => ({ ...prev, [logoId]: true }))
     setLogosLoaded(prev => ({ ...prev, [logoId]: true })) // Mark as loaded to stop spinner
   }
@@ -542,38 +599,22 @@ export default function CompanyWizard() {
                       )}
 
                       {/* Logo Image Container */}
-                      <div className="aspect-square bg-white/5 flex items-center justify-center">
-                        {!logosLoaded[variation.id] && !logoErrors[variation.id] && (
-                          <div className="absolute inset-0 flex items-center justify-center bg-white/5">
+                      <div className="aspect-square bg-white/5 flex items-center justify-center relative">
+                        {!logosLoaded[variation.id] && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-white/5 z-10">
                             <Loader2 className="w-8 h-8 text-rose-gold-400 animate-spin" />
                           </div>
                         )}
 
-                        {logoErrors[variation.id] ? (
-                          <div className="flex flex-col items-center justify-center text-white/40 p-4">
-                            <AlertCircle className="w-8 h-8 mb-2" />
-                            <p className="text-sm text-center">Failed to load</p>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                regenerateLogo(index)
-                              }}
-                              className="mt-2 text-xs text-rose-gold-400 hover:text-rose-gold-300"
-                            >
-                              Try again
-                            </button>
-                          </div>
-                        ) : (
-                          <img
-                            src={variation.url}
-                            alt={`${variation.style} logo for ${companyName}`}
-                            className={`w-full h-full object-cover transition-opacity ${
-                              logosLoaded[variation.id] ? 'opacity-100' : 'opacity-0'
-                            }`}
-                            onLoad={() => handleLogoLoad(variation.id)}
-                            onError={() => handleLogoError(variation.id)}
-                          />
-                        )}
+                        <img
+                          src={variation.url}
+                          alt={`${variation.style} logo for ${companyName}`}
+                          className={`w-full h-full object-cover transition-opacity ${
+                            logosLoaded[variation.id] ? 'opacity-100' : 'opacity-0'
+                          }`}
+                          onLoad={() => handleLogoLoad(variation.id)}
+                          onError={() => handleLogoError(variation.id)}
+                        />
                       </div>
                     </div>
                   ))}
