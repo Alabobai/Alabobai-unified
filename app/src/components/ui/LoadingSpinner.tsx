@@ -1,9 +1,11 @@
 /**
  * Loading Spinner Components
  * Multiple variants for different use cases with rose-gold styling
+ * Includes branded Alabobai logo spinner for research and loading states
  */
 
 import { ReactNode } from 'react'
+import { BRAND } from '@/config/brand'
 
 // Base props
 interface LoadingProps {
@@ -314,6 +316,99 @@ export function ContentLoader({
   }
 
   return <>{children}</>
+}
+
+// Branded Alabobai logo spinner for research and loading states
+interface BrandedLogoSpinnerProps {
+  size?: 'sm' | 'md' | 'lg' | 'xl'
+  className?: string
+  showGlow?: boolean
+  pulseRing?: boolean
+}
+
+const logoSizes = {
+  sm: 'w-6 h-6',
+  md: 'w-10 h-10',
+  lg: 'w-14 h-14',
+  xl: 'w-20 h-20'
+}
+
+const containerSizes = {
+  sm: 'w-10 h-10',
+  md: 'w-16 h-16',
+  lg: 'w-20 h-20',
+  xl: 'w-28 h-28'
+}
+
+export function BrandedLogoSpinner({
+  size = 'md',
+  className = '',
+  showGlow = true,
+  pulseRing = true
+}: BrandedLogoSpinnerProps) {
+  return (
+    <div
+      className={`relative ${containerSizes[size]} flex items-center justify-center ${className}`}
+      role="status"
+      aria-label="Loading"
+    >
+      {/* Outer rotating ring */}
+      {pulseRing && (
+        <div
+          className="absolute inset-0 rounded-full border-2 border-rose-gold-400/30 animate-spin"
+          style={{ animationDuration: '3s' }}
+        />
+      )}
+
+      {/* Glow effect */}
+      {showGlow && (
+        <div
+          className="absolute inset-2 rounded-full animate-pulse opacity-60"
+          style={{
+            boxShadow: '0 0 30px rgba(217, 160, 122, 0.5), 0 0 60px rgba(217, 160, 122, 0.3), inset 0 0 20px rgba(217, 160, 122, 0.1)'
+          }}
+        />
+      )}
+
+      {/* Logo image with rotation */}
+      <img
+        src={BRAND.assets.mark || BRAND.assets.logo}
+        alt={BRAND.name}
+        className={`${logoSizes[size]} object-contain animate-spin logo-render`}
+        style={{
+          animationDuration: '2s',
+          filter: 'drop-shadow(0 0 8px rgba(217, 160, 122, 0.6))'
+        }}
+      />
+    </div>
+  )
+}
+
+// Research-specific loading with branded logo
+interface ResearchLoadingProps {
+  message?: string
+  progress?: number
+  className?: string
+}
+
+export function ResearchLoading({
+  message = 'Researching...',
+  progress,
+  className = ''
+}: ResearchLoadingProps) {
+  return (
+    <div className={`flex flex-col items-center justify-center gap-4 ${className}`}>
+      <BrandedLogoSpinner size="lg" />
+      <div className="text-center">
+        <p className="text-white/70 text-sm">{message}</p>
+        {progress !== undefined && (
+          <div className="mt-2 w-48">
+            <ProgressBar progress={progress} size="sm" showLabel />
+          </div>
+        )}
+      </div>
+    </div>
+  )
 }
 
 export default Spinner

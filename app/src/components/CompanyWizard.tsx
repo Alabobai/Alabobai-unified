@@ -738,9 +738,9 @@ export default function CompanyWizard() {
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-rose-gold-400 to-rose-gold-600 flex items-center justify-center">
                     {isBuilding ? (
-                      <Loader2 className="w-10 h-10 text-white animate-spin" />
+                      <Loader2 className="w-10 h-10 text-dark-500 animate-spin" />
                     ) : (
-                      <Sparkles className="w-10 h-10 text-white" />
+                      <Sparkles className="w-10 h-10 text-dark-500" />
                     )}
                   </div>
                 )}

@@ -18,7 +18,7 @@ import {
   formatDuration
 } from '@/services/deepResearch'
 import { toast } from '@/stores/toastStore'
-import { ProgressBar, GlowSpinner } from './ui/LoadingSpinner'
+import { ProgressBar, BrandedLogoSpinner } from './ui/LoadingSpinner'
 import { SkeletonSource, SkeletonResearchReport } from './ui/Skeleton'
 import { BRAND } from '@/config/brand'
 
@@ -362,8 +362,8 @@ export default function DeepResearchView({ onClose: _onClose }: DeepResearchView
             <div className="flex-1 flex flex-col p-8">
               {/* Research Progress Header */}
               <div className="text-center mb-8">
-                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-rose-gold-300/20 to-rose-gold-600/20 border border-rose-gold-400/30 flex items-center justify-center mx-auto mb-4">
-                  <GlowSpinner size="lg" />
+                <div className="w-24 h-24 flex items-center justify-center mx-auto mb-4">
+                  <BrandedLogoSpinner size="lg" />
                 </div>
                 <h2 className="text-xl font-bold text-white mb-2">
                   Researching: {topic}
