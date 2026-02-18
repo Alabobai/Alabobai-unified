@@ -628,3 +628,179 @@
 - Stability gate met after patch + reruns.
 - Code change is minimal and isolated to app bootstrap provider wiring.
 - Commit created locally for the fix (see git log).
+
+## 2026-02-18 10:23 PST — Cron reliability sweep (live repo, functionality/reliability only)
+
+### Executive outcome
+- **PASS on core functional reliability gates** (lint/build/API contracts/autonomous flow/company flow/code sandbox/browser navigation).
+- **No code patches required this cycle** (no failing assertions reproduced).
+- **Known reliability risk remains**: Vite proxy throws `ECONNREFUSED` for `/api/sandbox/*` when local sandbox backend is absent; UI tests still pass due graceful degradation.
+
+### Blunt pass/fail matrix
+
+| Area | Check | Result | Proof snippet |
+|---|---|---:|---|
+| Static quality | `npm run lint` | ✅ PASS | `eslint ... --max-warnings 0` exited 0 |
+| Build reliability | `npm run build` | ✅ PASS | `✓ built in 4.07s` |
+| API + company flow contracts | `npm run reliability:test:api` | ✅ PASS | `"pass": 4, "fail": 0`, `company contract ... hasPlan: true` |
+| Autonomous-agent flow | `playwright tests/reliability/api-and-agent.spec.ts` | ✅ PASS | `autonomous workflow verification ... execute-task returns intent + execution steps` |
+| Code sandbox execution | `tests/reliability/code-sandbox-exec.spec.ts` | ✅ PASS | `code sandbox executes a trivial snippet (3.1s)` |
+| Browser app route flow | `tests/reliability/flow-replay.spec.ts` + `ui-and-preview.spec.ts` | ✅ PASS* | `major sections are reachable` + `home shell loads without fatal runtime errors` |
+| Preview URL direct health | `ui-and-preview.spec.ts::preview URL health check` | ⚠️ SKIP | skipped by suite condition (env-gated) |
+| Adversarial retest loop | `npm run reliability:test:loop` | ✅ PASS (executed round) | round output: `11 passed, 1 skipped`; no flaky/failing assertions in executed round |
+
+\* PASS with caveat: preview URL check was skipped; navigation reliability otherwise green.
+
+### Proof excerpts
+- API contract smoke:
+  - `"suite": "api-contract-smoke"`
+  - `"checks": [{"name":"search contract","ok":true}, {"name":"company contract","ok":true}, {"name":"execute-task contract","ok":true}]`
+- Playwright targeted reliability run:
+  - `7 passed, 1 skipped (19.1s)`
+  - Includes: autonomous-agent, company/API, code sandbox execution, route replay, browser shell reachability.
+- Retest/adversarial loop (executed round evidence):
+  - `Running 12 tests`
+  - `11 passed, 1 skipped (18.8s)`
+  - No failing assertions before loop termination.
+
+### Remaining risks (unresolved this cycle)
+1. **Sandbox backend dependency gap**: repeated Vite proxy logs:
+   - `http proxy error: /api/sandbox/health`
+   - `AggregateError [ECONNREFUSED]`
+   Functional impact currently low (tests pass), but this is still a reliability hazard for local/offline sandboxes.
+2. **Preview URL test coverage is conditionally skipped** unless preview env vars are set; this leaves one browser-preview reliability branch under-covered in default runs.
+3. **NPM config noise** (`disable-opencollective`, `disable-update-notifier`) appears in every run; not functional breakage, but masks actionable errors in logs.
+
+### Patch actions this cycle
+- **None needed** (no reproducible functional failure to fix in this run).
+
+### Git / commit status
+- No stability patch was required, so **no commit created** in this cycle.
+- If you still want a checkpoint commit for the updated overnight log only:
+  - `git add OVERNIGHT_EXECUTION_STATUS.md && git commit -m "chore: append 2026-02-18 reliability sweep evidence"`
+  - `git push`
+
+## 2026-02-18 11:26 PST — Cron reliability sweep (functionality/reliability only, aggressive retest)
+
+### Executive outcome
+- **PASS** on required functionality gates (lint/build/smoke/autonomous-agent flow/company flow/code-sandbox execution/browser preview navigation).
+- **No patch required** this run (no failing checks reproduced).
+- Executed extra adversarial retest (`flaky-scan` repeat-each=5) and explicit preview URL health assertion with `PREVIEW_URL` set.
+
+### Pass/fail matrix (blunt)
+
+| Check | Result | Proof |
+|---|---:|---|
+| `npm run lint` | ✅ PASS | `LINT_OK` |
+| `npm run build` | ✅ PASS | `✓ built in 4.29s` |
+| `npm run reliability:test:api` | ✅ PASS | `"suite":"api-contract-smoke","pass":4,"fail":0` |
+| Targeted reliability pack (`api-and-agent`,`code-sandbox-exec`,`flow-replay`,`ui-and-preview`,`contracts-and-smoke`) | ✅ PASS | `11 passed, 1 skipped (20.1s)` |
+| Autonomous-agent observability sweep | ✅ PASS | `staleCandidateCount: 0`, `retryEventsInRecentWindow: 1` |
+| Adversarial flake retest (`npm run reliability:flaky-scan`) | ✅ PASS | `repeatEach: 5`, `unexpected: 0`, `flaky: 0` |
+| Browser preview URL direct check (`PREVIEW_URL=http://127.0.0.1:4173 ... -g "preview URL health check"`) | ✅ PASS | `1 passed (12.6s)` |
+
+### Proof snippets
+- Playwright targeted pack included requested functional coverage:
+  - autonomous flow: `execute-task returns intent + execution steps`
+  - company flow path: `/api/company can generate-plan`
+  - code sandbox: `code sandbox executes a trivial snippet (2.9s)`
+  - browser app nav: `major sections are reachable`
+- Preview health probe executed explicitly (not skipped this run):
+  - `preview URL health check ... ✓ passed`
+
+### Remaining risks (unresolved)
+1. **Sandbox backend availability risk remains** in this environment:
+   - repeated proxy logs: `http proxy error: /api/sandbox/health` + `AggregateError [ECONNREFUSED]`.
+   - UI path degrades gracefully and tests still pass, but backend sandbox service itself is not consistently reachable.
+2. **Noise risk in CI/local logs**: repeated npm config warnings (`disable-opencollective`, `disable-update-notifier`) can obscure signal during incidents.
+3. **Repo cleanliness risk for commits**: working tree includes unrelated dirty files outside this sweep scope.
+
+### Patch/commit status
+- Patches this run: **none needed**.
+- Commit: **not created** (no code fix; dirty tree includes unrelated tracked/untracked changes).
+- If you still want a log-only checkpoint commit:
+  1. `git add OVERNIGHT_EXECUTION_STATUS.md`
+  2. `git commit -m "chore: append 2026-02-18 11:26 PST reliability sweep evidence"`
+  3. `git push origin main`
+
+## 2026-02-18 12:29 PST — Cron sweep: live reliability/functionality verification
+
+### Executive outcome
+- **PASS (stable on targeted reliability scope).**
+- No new functional failures reproduced in this run.
+- No source patch required this cycle; only reporting artifact updated.
+
+### Pass/Fail matrix (blunt)
+
+| Check | Result | Proof snippet |
+|---|---:|---|
+| `npm run lint` | ✅ PASS | `eslint ... --max-warnings 0` completed with no errors |
+| `npm run build` | ✅ PASS | `✓ built in 4.24s` |
+| `npm run reliability:test` | ✅ PASS* | `11 passed, 1 skipped (preview URL health check)` |
+| Preview URL navigation (`PREVIEW_URL=http://127.0.0.1:4173`) | ✅ PASS | `1 passed (preview URL health check)` |
+| `npm run reliability:test:api` (company + agent/API contracts) | ✅ PASS | `pass: 4, fail: 0` |
+| `npm run reliability:flaky-scan` (adversarial repeat) | ✅ PASS | `{ repeatEach: 5, unexpected: 0, flaky: 0, pass: true }` |
+| `npm run reliability:autonomy-observability` | ✅ PASS | `runCount: 117, staleCandidateCount: 0` |
+
+\*Default suite skip was expected behavior when `PREVIEW_URL` env var is absent; explicitly retested with live local preview URL and passed.
+
+### Targeted scope coverage from this run
+- **Autonomous-agent flow checks:** API `execute-task` and observability checks passed; no stale-run signal.
+- **Company flow checks:** `/api/company` generation contract passed (`hasPlan: true`).
+- **Code sandbox execution checks:** Playwright `code-sandbox-exec.spec.ts` passed (`executes a trivial snippet`).
+- **Browser preview URL navigation checks:** explicitly executed and passed against running preview server.
+
+### Notable runtime signals (not test-failing, but real)
+- Vite proxy logged intermittent `ECONNREFUSED` for backend-dependent routes during UI suite (`/api/sandbox/*`, `/api/memory/*`).
+- These did **not** flip current reliability tests red (tests still green), but they indicate partial backend availability risk if those endpoints are expected live in this environment.
+
+### Remaining risks
+1. **Environment-coupled backend availability:** front-end can start and core smoke flows pass while certain proxied APIs are unreachable; this can mask functional degradation outside covered assertions.
+2. **Preview health dependency on env wiring:** default test run still skips preview check unless `PREVIEW_URL` is supplied.
+3. **Autonomy run-state skew:** observability shows high `blocked` count (`112/117`), which is not a hard failure but is an operational risk indicator.
+
+### Git / stability / next command
+- Working tree updated only for `OVERNIGHT_EXECUTION_STATUS.md`.
+- Stability gate met for this sweep (all required checks green).
+- No commit executed in this turn.
+- If you want this log checkpoint committed now, run:
+  - `git add OVERNIGHT_EXECUTION_STATUS.md && git commit -m "chore(reliability): record 2026-02-18 12:29 PST overnight sweep evidence"`
+
+## 2026-02-18 13:32 PST — Reliability Sweep (Cron 5fd00ea3)
+
+### Scope executed
+- Repo: `/Users/alaboebai/Alabobai/alabobai-unified/app`
+- Focus: functional/reliability only (no cosmetic edits)
+- Loop done this run: lint/build → targeted flow checks → preview URL check → adversarial flaky retest
+
+### Pass/Fail matrix (blunt)
+| Check | Result | Proof snippet |
+|---|---|---|
+| `npm run lint` | PASS | `eslint . --max-warnings 0` exited `0` |
+| `npm run build` | PASS | `✓ 2762 modules transformed` / `✓ built in 7.79s` |
+| API contract smoke | PASS | `"pass": 4, "fail": 0` |
+| Autonomous-agent flow (`execute-task`) | PASS (degraded mode) | `runStatus: "degraded", steps: 0` (contract valid, runtime degraded) |
+| Company flow contract (`generate-plan`) | PASS | `status: 200, hasPlan: true` |
+| Code sandbox execution | PASS | `code sandbox executes a trivial snippet` passed in `3.0s` |
+| UI flow replay (critical section switching) | PASS | `switch critical sections ... without runtime crash` passed |
+| Browser preview URL navigation health | PASS | `preview URL health check` passed with `PREVIEW_URL=http://127.0.0.1:4173` |
+| Adversarial/edge retest (`flaky-scan`, repeat-each=5) | PASS | `expected: 15, unexpected: 0, flaky: 0` |
+| Autonomy observability sanity | PASS (watch item) | `staleCandidateCount: 0`; historical `blocked: 113` |
+
+### Failures patched
+- No failing checks in this run. No code patch required.
+
+### Remaining risks / watch items
+1. UI tests repeatedly log Vite proxy backend errors for memory endpoints (`/api/memory/*` ECONNREFUSED). Frontend currently tolerates this (tests still pass), but backend availability regression risk remains.
+2. `execute-task` contract currently returns degraded execution (`runStatus: degraded`, `steps: 0`). Contract passes, but this is not full autonomous execution health.
+3. Observability snapshot shows high historical blocked run count (`113` blocked vs `3` succeeded); not a fresh failure in this run, but should remain under monitoring.
+
+### Commands executed (evidence)
+- `npm run lint`
+- `npm run build`
+- `npm run reliability:test:api`
+- `npx playwright test tests/reliability/api-and-agent.spec.ts tests/reliability/code-sandbox-exec.spec.ts tests/reliability/flow-replay.spec.ts tests/reliability/ui-and-preview.spec.ts --reporter=list`
+- `PREVIEW_URL=http://127.0.0.1:4173 npx playwright test tests/reliability/ui-and-preview.spec.ts --reporter=list`
+- `npm run reliability:autonomy-observability`
+- `npm run reliability:flaky-scan`
+
