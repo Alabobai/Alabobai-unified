@@ -234,6 +234,141 @@ async def _chat_with_ollama(messages: list[dict], model: str, temperature: float
         content = (response.json().get('message') or {}).get('content', '')
         return content, None
 
+
+# =============================================================================
+# MOONSHOT / KIMI K2.5 API INTEGRATION (Hybrid Routing)
+# =============================================================================
+
+MOONSHOT_API_URL = 'https://api.moonshot.ai/v1'
+
+# Keywords that trigger cloud API for complex tasks
+COMPLEX_TASK_KEYWORDS = [
+    'agent swarm', 'multi-agent', 'parallel agents', 'coordinate agents',
+    'complex analysis', 'deep research', 'comprehensive', 'thorough investigation',
+    'analyze image', 'analyze video', 'vision', 'look at this',
+    'step by step plan', 'detailed breakdown', 'orchestrate',
+]
+
+def _should_use_cloud(messages: list[dict], force_cloud: bool = False) -> bool:
+    """Determine if request should use Kimi K2.5 cloud API."""
+    if force_cloud:
+        return True
+
+    # Check if Moonshot API key is available
+    if not os.environ.get('MOONSHOT_API_KEY'):
+        return False
+
+    # Check for complex task keywords in recent messages
+    recent_content = ' '.join([
+        m.get('content', '') for m in messages[-3:]
+        if isinstance(m.get('content'), str)
+    ]).lower()
+
+    for keyword in COMPLEX_TASK_KEYWORDS:
+        if keyword in recent_content:
+            return True
+
+    # Check message length (very long prompts benefit from larger models)
+    total_length = sum(len(m.get('content', '')) for m in messages)
+    if total_length > 8000:
+        return True
+
+    return False
+
+
+async def _chat_with_moonshot(
+    messages: list[dict],
+    model: str = 'kimi-k2.5',
+    temperature: float = 0.7,
+    mode: str = 'thinking'  # instant, thinking, agent, agent-swarm
+) -> tuple[str | None, JSONResponse | None]:
+    """Call Moonshot/Kimi K2.5 API for complex tasks."""
+    moonshot_key = os.environ.get('MOONSHOT_API_KEY', '')
+    if not moonshot_key:
+        return None, JSONResponse(
+            status_code=503,
+            content={'error': 'MOONSHOT_API_KEY not configured'}
+        )
+
+    # Map mode to model variant
+    model_map = {
+        'instant': 'kimi-k2.5',
+        'thinking': 'kimi-k2.5-thinking',
+        'agent': 'kimi-k2.5-agent',
+        'agent-swarm': 'kimi-k2.5-agent-swarm',
+    }
+    actual_model = model_map.get(mode, model)
+
+    timeout = httpx.Timeout(300.0, connect=15.0)  # Agent swarm can take longer
+    try:
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            print(f"[Moonshot] Calling {actual_model}, mode={mode}, messages={len(messages)}")
+
+            response = await client.post(
+                f'{MOONSHOT_API_URL}/chat/completions',
+                headers={
+                    'Authorization': f'Bearer {moonshot_key}',
+                    'Content-Type': 'application/json',
+                },
+                json={
+                    'model': actual_model,
+                    'messages': messages,
+                    'temperature': temperature,
+                    'stream': False,
+                },
+            )
+
+            if response.is_success:
+                data = response.json()
+                content = data.get('choices', [{}])[0].get('message', {}).get('content', '')
+                print(f"[Moonshot] Success, response length: {len(content)}")
+                return content, None
+            else:
+                print(f"[Moonshot] Error: {response.status_code} - {response.text[:200]}")
+                return None, JSONResponse(
+                    status_code=response.status_code,
+                    content={'error': f'Moonshot API error: {response.status_code}'}
+                )
+
+    except Exception as exc:
+        print(f"[Moonshot] Exception: {type(exc).__name__}: {exc}")
+        return None, JSONResponse(
+            status_code=503,
+            content={'error': f'Moonshot API unavailable: {exc}'}
+        )
+
+
+async def _hybrid_chat(
+    messages: list[dict],
+    model: str = 'auto',
+    temperature: float = 0.7,
+    force_local: bool = False,
+    force_cloud: bool = False,
+    cloud_mode: str = 'thinking'
+) -> tuple[str, str, JSONResponse | None]:
+    """
+    Hybrid routing: Local Ollama for simple tasks, Kimi K2.5 for complex ones.
+    Returns: (content, provider, error)
+    """
+    # Determine routing
+    use_cloud = not force_local and _should_use_cloud(messages, force_cloud)
+
+    if use_cloud:
+        content, err = await _chat_with_moonshot(messages, temperature=temperature, mode=cloud_mode)
+        if content:
+            return content, 'kimi-k2.5', None
+        # Fall back to local if cloud fails
+        print("[Hybrid] Cloud failed, falling back to local")
+
+    # Use local Ollama
+    local_model = model if model != 'auto' else 'qwen2.5:14b-instruct-q4_K_M'
+    content, err = await _chat_with_ollama(messages, local_model, temperature)
+    if content:
+        return content, 'local', None
+
+    # Both failed
+    return '', 'none', err
+
 @app.get('/api/local-ai/models')
 async def local_ai_models():
     try:
@@ -595,19 +730,113 @@ async def local_ai_chat(payload: dict):
     if not normalized_messages:
       return JSONResponse(status_code=400, content={'error': 'message or messages[] is required'})
 
-    model = payload.get('model') or 'llama3:latest'
+    model = payload.get('model') or 'auto'
     temperature = payload.get('temperature', 0.7)
-    content, err = await _chat_with_ollama(normalized_messages, model, temperature)
+    force_local = payload.get('forceLocal', False)
+    force_cloud = payload.get('forceCloud', False)
+    cloud_mode = payload.get('cloudMode', 'thinking')  # instant, thinking, agent, agent-swarm
+
+    # Use hybrid routing
+    content, provider, err = await _hybrid_chat(
+        normalized_messages,
+        model=model,
+        temperature=temperature,
+        force_local=force_local,
+        force_cloud=force_cloud,
+        cloud_mode=cloud_mode
+    )
+
     if err:
-        fallback = 'Local model unavailable. Please start Ollama and pull a model.'
+        fallback = 'AI models unavailable. Please check Ollama or configure MOONSHOT_API_KEY.'
         return {
             'response': fallback,
             'content': fallback,
-            'sources': []
+            'sources': [],
+            'provider': 'none'
         }
 
     # Return both keys for compatibility across frontend call sites
-    return {'response': content, 'content': content, 'sources': []}
+    return {
+        'response': content,
+        'content': content,
+        'sources': [],
+        'provider': provider  # 'local' or 'kimi-k2.5'
+    }
+
+
+@app.post('/api/hybrid/chat')
+async def hybrid_chat_endpoint(payload: dict):
+    """
+    Explicit hybrid chat endpoint with full control over routing.
+
+    Params:
+    - messages: list of {role, content}
+    - model: 'auto' (default), or specific model name
+    - temperature: 0.0-1.0
+    - forceLocal: always use local Ollama
+    - forceCloud: always use Kimi K2.5 API
+    - cloudMode: 'instant', 'thinking', 'agent', 'agent-swarm'
+    """
+    messages = payload.get('messages', [])
+    if not messages:
+        return JSONResponse(status_code=400, content={'error': 'messages is required'})
+
+    content, provider, err = await _hybrid_chat(
+        messages,
+        model=payload.get('model', 'auto'),
+        temperature=payload.get('temperature', 0.7),
+        force_local=payload.get('forceLocal', False),
+        force_cloud=payload.get('forceCloud', False),
+        cloud_mode=payload.get('cloudMode', 'thinking')
+    )
+
+    if err:
+        return err
+
+    return {
+        'content': content,
+        'provider': provider,
+        'model': payload.get('model', 'auto'),
+        'cloudMode': payload.get('cloudMode', 'thinking') if provider == 'kimi-k2.5' else None
+    }
+
+
+@app.get('/api/hybrid/status')
+async def hybrid_status():
+    """Check status of hybrid routing providers."""
+    moonshot_configured = bool(os.environ.get('MOONSHOT_API_KEY'))
+
+    # Check Ollama
+    ollama_available = False
+    ollama_models = []
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            resp = await client.get(f'{OLLAMA_URL}/api/tags')
+            if resp.is_success:
+                ollama_available = True
+                ollama_models = [m.get('name') for m in resp.json().get('models', [])]
+    except Exception:
+        pass
+
+    return {
+        'providers': {
+            'local': {
+                'available': ollama_available,
+                'models': ollama_models,
+                'url': OLLAMA_URL,
+            },
+            'cloud': {
+                'available': moonshot_configured,
+                'provider': 'Moonshot AI',
+                'model': 'Kimi K2.5',
+                'modes': ['instant', 'thinking', 'agent', 'agent-swarm'],
+            }
+        },
+        'routing': {
+            'strategy': 'auto',
+            'complexTaskKeywords': COMPLEX_TASK_KEYWORDS[:5] + ['...'],
+        }
+    }
 
 @app.post('/api/chat')
 async def chat(payload: ChatReq):
