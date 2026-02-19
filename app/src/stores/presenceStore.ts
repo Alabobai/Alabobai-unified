@@ -1,11 +1,12 @@
 /**
  * Presence Store
- * Manages real-time collaboration state with simulated users
- * Architected for real backend integration (WebSocket, Socket.io, etc.)
+ * Manages real-time collaboration state with Socket.IO
+ * Supports both real backend connection and simulation mode
  */
 
 import { create } from 'zustand'
 import { immer } from 'zustand/middleware/immer'
+import { io, Socket } from 'socket.io-client'
 
 // ============================================================================
 // Types
@@ -131,6 +132,13 @@ const ACTIVITY_TEMPLATES = [
 ]
 
 // ============================================================================
+// Socket.IO Configuration
+// ============================================================================
+
+// @ts-ignore - Vite provides import.meta.env at runtime
+const SOCKET_URL = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SOCKET_URL) || 'http://localhost:8765'
+
+// ============================================================================
 // Store Interface
 // ============================================================================
 
@@ -153,7 +161,8 @@ interface PresenceState {
   aiIsTyping: boolean
   aiTypingMessage?: string
 
-  // Simulation state
+  // Connection state
+  connected: boolean
   simulationActive: boolean
 
   // Actions - User Management
@@ -179,9 +188,17 @@ interface PresenceState {
   // Actions - AI Typing
   setAiTyping: (isTyping: boolean, message?: string) => void
 
-  // Actions - Simulation
+  // Actions - Connection
+  connect: () => void
+  disconnect: () => void
   startSimulation: () => void
   stopSimulation: () => void
+
+  // Actions - Real-time
+  emitPresenceUpdate: (data: Partial<UserPresence>) => void
+  emitTyping: (isTyping: boolean, location?: 'chat' | 'editor' | 'search') => void
+  emitActivity: (activity: Omit<ActivityFeedItem, 'id' | 'timestamp'>) => void
+  sendNotification: (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>, targetUserId?: string) => void
 
   // Getters
   getOnlineUsers: () => UserPresence[]
@@ -194,6 +211,37 @@ interface PresenceState {
 // ============================================================================
 
 let simulationInterval: ReturnType<typeof setInterval> | null = null
+let socket: Socket | null = null
+
+// Load notifications from localStorage
+const loadPersistedNotifications = (): { notifications: Notification[], unreadCount: number } => {
+  try {
+    const stored = localStorage.getItem('alabobai_notifications')
+    if (stored) {
+      const data = JSON.parse(stored)
+      // Convert timestamp strings back to Date objects
+      const notifications = (data.notifications || []).map((n: any) => ({
+        ...n,
+        timestamp: new Date(n.timestamp)
+      }))
+      return { notifications, unreadCount: data.unreadCount || 0 }
+    }
+  } catch (e) {
+    console.warn('[Presence] Failed to load persisted notifications:', e)
+  }
+  return { notifications: [], unreadCount: 0 }
+}
+
+// Save notifications to localStorage
+const persistNotifications = (notifications: Notification[], unreadCount: number) => {
+  try {
+    localStorage.setItem('alabobai_notifications', JSON.stringify({ notifications, unreadCount }))
+  } catch (e) {
+    console.warn('[Presence] Failed to persist notifications:', e)
+  }
+}
+
+const initialNotifications = loadPersistedNotifications()
 
 export const usePresenceStore = create<PresenceState>()(
   immer((set, get) => ({
@@ -209,10 +257,11 @@ export const usePresenceStore = create<PresenceState>()(
 
     users: [],
     activityFeed: [],
-    notifications: [],
-    unreadCount: 0,
+    notifications: initialNotifications.notifications,
+    unreadCount: initialNotifications.unreadCount,
     notificationCenterOpen: false,
     aiIsTyping: false,
+    connected: false,
     simulationActive: false,
 
     // User Management
@@ -275,7 +324,7 @@ export const usePresenceStore = create<PresenceState>()(
       state.activityFeed = []
     }),
 
-    // Notifications
+    // Notifications (with persistence)
     addNotification: (notification) => set(state => {
       const newNotification: Notification = {
         ...notification,
@@ -289,6 +338,8 @@ export const usePresenceStore = create<PresenceState>()(
       if (state.notifications.length > 100) {
         state.notifications = state.notifications.slice(0, 100)
       }
+      // Persist to localStorage
+      persistNotifications(state.notifications, state.unreadCount)
     }),
 
     markNotificationRead: (id) => set(state => {
@@ -296,12 +347,14 @@ export const usePresenceStore = create<PresenceState>()(
       if (notification && !notification.read) {
         notification.read = true
         state.unreadCount = Math.max(0, state.unreadCount - 1)
+        persistNotifications(state.notifications, state.unreadCount)
       }
     }),
 
     markAllNotificationsRead: () => set(state => {
       state.notifications.forEach(n => { n.read = true })
       state.unreadCount = 0
+      persistNotifications(state.notifications, state.unreadCount)
     }),
 
     removeNotification: (id) => set(state => {
@@ -310,11 +363,13 @@ export const usePresenceStore = create<PresenceState>()(
         state.unreadCount = Math.max(0, state.unreadCount - 1)
       }
       state.notifications = state.notifications.filter(n => n.id !== id)
+      persistNotifications(state.notifications, state.unreadCount)
     }),
 
     clearAllNotifications: () => set(state => {
       state.notifications = []
       state.unreadCount = 0
+      persistNotifications([], 0)
     }),
 
     toggleNotificationCenter: () => set(state => {
@@ -471,6 +526,204 @@ export const usePresenceStore = create<PresenceState>()(
       })
     },
 
+    // Socket.IO Connection
+    connect: () => {
+      const state = get()
+      if (socket?.connected) return
+
+      // Stop simulation if running
+      if (state.simulationActive) {
+        get().stopSimulation()
+      }
+
+      socket = io(SOCKET_URL, {
+        transports: ['websocket', 'polling'],
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1000,
+      })
+
+      socket.on('connect', () => {
+        console.log('[Presence] Connected to Socket.IO server')
+        set(s => { s.connected = true })
+
+        // Join with current user info
+        const currentUser = get().currentUser
+        if (currentUser) {
+          socket?.emit('presence_join', {
+            userId: currentUser.id,
+            name: currentUser.name,
+            email: currentUser.email,
+            color: currentUser.color,
+            status: currentUser.status,
+          })
+        }
+      })
+
+      socket.on('disconnect', () => {
+        console.log('[Presence] Disconnected from Socket.IO server')
+        set(s => { s.connected = false })
+      })
+
+      socket.on('connect_error', (error) => {
+        console.warn('[Presence] Connection error:', error.message)
+        // Fall back to simulation mode if can't connect
+        if (!get().simulationActive) {
+          console.log('[Presence] Falling back to simulation mode')
+          get().startSimulation()
+        }
+      })
+
+      // Handle presence sync (initial user list)
+      socket.on('presence_sync', (users: UserPresence[]) => {
+        set(s => {
+          s.users = users.filter(u => u.id !== s.currentUser?.id).map(u => ({
+            ...u,
+            lastSeen: new Date(u.lastSeen),
+            activity: u.activity || 'idle',
+            isTyping: u.isTyping || false,
+          }))
+        })
+      })
+
+      // Handle user presence updates
+      socket.on('presence_update', (userData: any) => {
+        const currentUserId = get().currentUser?.id
+        if (userData.id === currentUserId) return
+
+        set(s => {
+          const existingIndex = s.users.findIndex(u => u.id === userData.id)
+          const userPresence: UserPresence = {
+            ...userData,
+            lastSeen: new Date(userData.lastSeen || Date.now()),
+            activity: userData.activity || 'idle',
+            isTyping: userData.isTyping || false,
+          }
+
+          if (existingIndex >= 0) {
+            s.users[existingIndex] = { ...s.users[existingIndex], ...userPresence }
+          } else {
+            s.users.push(userPresence)
+          }
+        })
+      })
+
+      // Handle user leave
+      socket.on('presence_leave', (data: { userId: string }) => {
+        set(s => {
+          s.users = s.users.filter(u => u.id !== data.userId)
+        })
+      })
+
+      // Handle notifications
+      socket.on('notification', (data: any) => {
+        get().addNotification({
+          type: data.type || 'info',
+          title: data.title || '',
+          message: data.message || '',
+          userId: data.userId,
+          userName: data.userName,
+          userColor: data.userColor,
+        })
+      })
+
+      // Handle activity feed
+      socket.on('activity', (data: any) => {
+        get().addActivity({
+          userId: data.userId,
+          userName: data.userName,
+          userColor: data.userColor,
+          type: data.type,
+          description: data.description,
+          target: data.target,
+        })
+      })
+
+      // Handle typing indicators
+      socket.on('typing_start', (data: { userId: string; userName: string; location: string }) => {
+        set(s => {
+          const user = s.users.find(u => u.id === data.userId)
+          if (user) {
+            user.isTyping = true
+            user.typingIn = data.location as 'chat' | 'editor' | 'search'
+            user.activity = 'typing'
+          }
+        })
+      })
+
+      socket.on('typing_stop', (data: { userId: string }) => {
+        set(s => {
+          const user = s.users.find(u => u.id === data.userId)
+          if (user) {
+            user.isTyping = false
+            user.typingIn = undefined
+            user.activity = 'idle'
+          }
+        })
+      })
+    },
+
+    disconnect: () => {
+      if (socket) {
+        const currentUser = get().currentUser
+        if (currentUser) {
+          socket.emit('presence_leave', { userId: currentUser.id })
+        }
+        socket.disconnect()
+        socket = null
+      }
+      set(s => {
+        s.connected = false
+        s.users = []
+      })
+    },
+
+    // Emit presence update to server
+    emitPresenceUpdate: (data) => {
+      const currentUser = get().currentUser
+      if (socket?.connected && currentUser) {
+        socket.emit('presence_update', {
+          userId: currentUser.id,
+          ...data,
+        })
+      }
+    },
+
+    // Emit typing indicator
+    emitTyping: (isTyping, location = 'chat') => {
+      const currentUser = get().currentUser
+      if (socket?.connected && currentUser) {
+        socket.emit(isTyping ? 'typing_start' : 'typing_stop', {
+          userId: currentUser.id,
+          userName: currentUser.name,
+          location,
+        })
+      }
+    },
+
+    // Emit activity
+    emitActivity: (activity) => {
+      if (socket?.connected) {
+        socket.emit('activity', activity)
+      }
+      // Also add locally
+      get().addActivity(activity)
+    },
+
+    // Send notification (via socket or local)
+    sendNotification: (notification, targetUserId) => {
+      if (socket?.connected) {
+        socket.emit('notification', {
+          ...notification,
+          targetUserId,
+        })
+      }
+      // If no target or it's us, add locally
+      const currentUserId = get().currentUser?.id
+      if (!targetUserId || targetUserId === currentUserId) {
+        get().addNotification(notification)
+      }
+    },
+
     // Getters
     getOnlineUsers: () => {
       return get().users.filter(u => u.status === 'online' || u.status === 'busy')
@@ -488,6 +741,8 @@ export const usePresenceStore = create<PresenceState>()(
 
 // Export convenience accessors for use outside React
 export const presence = {
+  connect: () => usePresenceStore.getState().connect(),
+  disconnect: () => usePresenceStore.getState().disconnect(),
   startSimulation: () => usePresenceStore.getState().startSimulation(),
   stopSimulation: () => usePresenceStore.getState().stopSimulation(),
   setAiTyping: (isTyping: boolean, message?: string) =>
@@ -496,6 +751,12 @@ export const presence = {
     usePresenceStore.getState().addActivity(activity),
   addNotification: (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) =>
     usePresenceStore.getState().addNotification(notification),
+  emitPresenceUpdate: (data: Partial<UserPresence>) =>
+    usePresenceStore.getState().emitPresenceUpdate(data),
+  emitTyping: (isTyping: boolean, location?: 'chat' | 'editor' | 'search') =>
+    usePresenceStore.getState().emitTyping(isTyping, location),
+  sendNotification: (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>, targetUserId?: string) =>
+    usePresenceStore.getState().sendNotification(notification, targetUserId),
 }
 
 export default usePresenceStore

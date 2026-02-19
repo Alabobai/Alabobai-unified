@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import httpx
 import json
@@ -15,9 +16,37 @@ import math
 import struct
 import wave
 import uuid
+import os
 from urllib.parse import urlparse
+from typing import Optional
+
+import socketio
+
+# Create Socket.IO server with CORS
+sio = socketio.AsyncServer(
+    async_mode='asgi',
+    cors_allowed_origins='*',
+    logger=True,
+    engineio_logger=False,
+)
 
 app = FastAPI(title='Alabobai Local Media Bridge', version='1.0.0')
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Wrap FastAPI with Socket.IO
+socket_app = socketio.ASGIApp(sio, other_asgi_app=app)
+
+# Connected clients tracking
+connected_clients: dict[str, dict] = {}
+presence_data: dict[str, dict] = {}
 
 IMAGE_URL = 'http://127.0.0.1:7860'
 VIDEO_URL = 'http://127.0.0.1:8000'
@@ -257,23 +286,290 @@ async def local_ai_delete_model(payload: dict):
             return JSONResponse(status_code=resp.status_code, content={'error': 'Failed to delete model'})
         return {'success': True}
 
+QDRANT_URL = 'http://127.0.0.1:6333'
+QDRANT_COLLECTION = 'alabobai_knowledge'
+EMBEDDING_DIMENSION = 1536  # OpenAI ada-002 dimension, or adjust for Ollama model
+
+
+async def _get_embedding(text: str) -> list[float] | None:
+    """Generate embeddings using Ollama or OpenAI fallback."""
+    import os
+
+    # Try Ollama first (local, free)
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.post(
+                f'{OLLAMA_URL}/api/embeddings',
+                json={'model': 'nomic-embed-text', 'prompt': text},
+            )
+            if response.is_success:
+                data = response.json()
+                embedding = data.get('embedding')
+                if embedding:
+                    return embedding
+    except Exception as e:
+        print(f"[Embeddings] Ollama error: {e}")
+
+    # Fallback to OpenAI
+    openai_key = os.environ.get('OPENAI_API_KEY', '')
+    if openai_key:
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.post(
+                    'https://api.openai.com/v1/embeddings',
+                    headers={
+                        'Authorization': f'Bearer {openai_key}',
+                        'Content-Type': 'application/json',
+                    },
+                    json={
+                        'model': 'text-embedding-ada-002',
+                        'input': text[:8000],  # Truncate to limit
+                    },
+                )
+                if response.is_success:
+                    data = response.json()
+                    return data.get('data', [{}])[0].get('embedding')
+        except Exception as e:
+            print(f"[Embeddings] OpenAI error: {e}")
+
+    return None
+
+
+async def _ensure_qdrant_collection():
+    """Ensure the Qdrant collection exists."""
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            # Check if collection exists
+            check = await client.get(f'{QDRANT_URL}/collections/{QDRANT_COLLECTION}')
+            if check.status_code == 200:
+                return True
+
+            # Create collection with appropriate vector size
+            # First try to get embedding dimension from a test
+            test_embedding = await _get_embedding('test')
+            dim = len(test_embedding) if test_embedding else EMBEDDING_DIMENSION
+
+            await client.put(
+                f'{QDRANT_URL}/collections/{QDRANT_COLLECTION}',
+                json={
+                    'vectors': {
+                        'size': dim,
+                        'distance': 'Cosine',
+                    }
+                },
+            )
+            return True
+    except Exception as e:
+        print(f"[Qdrant] Collection setup error: {e}")
+        return False
+
+
+def _chunk_text(text: str, chunk_size: int = 500, overlap: int = 50) -> list[str]:
+    """Split text into overlapping chunks."""
+    if len(text) <= chunk_size:
+        return [text]
+
+    chunks = []
+    start = 0
+    while start < len(text):
+        end = start + chunk_size
+        chunk = text[start:end]
+
+        # Try to break at sentence boundary
+        if end < len(text):
+            last_period = chunk.rfind('.')
+            last_newline = chunk.rfind('\n')
+            break_point = max(last_period, last_newline)
+            if break_point > chunk_size // 2:
+                chunk = text[start:start + break_point + 1]
+                end = start + break_point + 1
+
+        chunks.append(chunk.strip())
+        start = end - overlap
+
+    return [c for c in chunks if c]
+
+
 @app.get('/api/local-ai/knowledge/stats')
 async def local_ai_knowledge_stats():
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.get(f'{QDRANT_URL}/collections/{QDRANT_COLLECTION}')
+            if response.is_success:
+                data = response.json()
+                result = data.get('result', {})
+                points_count = result.get('points_count', 0)
+                return {
+                    'totalDocuments': points_count,
+                    'totalChunks': points_count,
+                    'collections': [
+                        {'name': QDRANT_COLLECTION, 'documentCount': points_count, 'chunkCount': points_count}
+                    ]
+                }
+    except Exception as e:
+        print(f"[Knowledge Stats] Error: {e}")
+
     return {
         'totalDocuments': 0,
         'totalChunks': 0,
         'collections': [
-            {'name': 'documents', 'documentCount': 0, 'chunkCount': 0}
+            {'name': QDRANT_COLLECTION, 'documentCount': 0, 'chunkCount': 0}
         ]
     }
 
+
 @app.post('/api/local-ai/knowledge/ingest')
-async def local_ai_knowledge_ingest(_request: Request):
-    return {'success': True, 'message': 'Ingest endpoint is available'}
+async def local_ai_knowledge_ingest(request: Request):
+    try:
+        payload = await request.json()
+    except Exception:
+        return JSONResponse(status_code=400, content={'error': 'Invalid JSON payload'})
+
+    text = (payload or {}).get('text', '').strip()
+    content = (payload or {}).get('content', '').strip()
+    url = (payload or {}).get('url', '').strip()
+    title = (payload or {}).get('title', 'Untitled')
+    source = (payload or {}).get('source', 'manual')
+    metadata = (payload or {}).get('metadata', {})
+
+    # Use content or text field
+    document_text = content or text
+
+    # If URL provided, fetch content
+    if url and not document_text:
+        if _is_public_http_url(url):
+            try:
+                async with httpx.AsyncClient(timeout=20.0, follow_redirects=True) as client:
+                    r = await client.get(url, headers={'User-Agent': 'AlabobaiKnowledgeBot/1.0'})
+                    html = r.text
+                    # Extract text from HTML
+                    document_text = re.sub(r'<script[^>]*>[\s\S]*?</script>', ' ', html, flags=re.IGNORECASE)
+                    document_text = re.sub(r'<style[^>]*>[\s\S]*?</style>', ' ', document_text, flags=re.IGNORECASE)
+                    document_text = re.sub(r'<[^>]+>', ' ', document_text)
+                    document_text = re.sub(r'\s+', ' ', document_text).strip()
+
+                    # Extract title if not provided
+                    if title == 'Untitled':
+                        title_match = re.search(r'<title[^>]*>([^<]+)</title>', html, re.IGNORECASE)
+                        if title_match:
+                            title = title_match.group(1).strip()
+            except Exception as e:
+                return JSONResponse(status_code=400, content={'error': f'Failed to fetch URL: {e}'})
+        else:
+            return JSONResponse(status_code=400, content={'error': 'Invalid or blocked URL'})
+
+    if not document_text:
+        return JSONResponse(status_code=400, content={'error': 'text, content, or url is required'})
+
+    # Ensure Qdrant collection exists
+    await _ensure_qdrant_collection()
+
+    # Chunk the document
+    chunks = _chunk_text(document_text)
+
+    # Generate embeddings and store in Qdrant
+    ingested_count = 0
+    points = []
+
+    for i, chunk in enumerate(chunks):
+        embedding = await _get_embedding(chunk)
+        if embedding:
+            point_id = str(uuid.uuid4())
+            points.append({
+                'id': point_id,
+                'vector': embedding,
+                'payload': {
+                    'text': chunk,
+                    'title': title,
+                    'source': source,
+                    'url': url,
+                    'chunk_index': i,
+                    'total_chunks': len(chunks),
+                    'ingested_at': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
+                    **metadata,
+                }
+            })
+            ingested_count += 1
+
+    if points:
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.put(
+                    f'{QDRANT_URL}/collections/{QDRANT_COLLECTION}/points?wait=true',
+                    json={'points': points},
+                )
+                if not response.is_success:
+                    print(f"[Knowledge Ingest] Qdrant error: {response.text}")
+                    return JSONResponse(status_code=500, content={'error': 'Failed to store in vector database'})
+        except Exception as e:
+            print(f"[Knowledge Ingest] Qdrant exception: {e}")
+            return JSONResponse(status_code=500, content={'error': f'Vector database error: {e}'})
+
+    return {
+        'success': True,
+        'message': f'Ingested {ingested_count} chunks from document',
+        'document': {
+            'title': title,
+            'source': source,
+            'url': url,
+            'chunks': ingested_count,
+            'totalLength': len(document_text),
+        }
+    }
+
 
 @app.post('/api/local-ai/knowledge/search')
 async def local_ai_knowledge_search(payload: dict):
-    query = (payload or {}).get('query', '')
+    query = (payload or {}).get('query', '').strip()
+    limit = int((payload or {}).get('limit', 5))
+    threshold = float((payload or {}).get('threshold', 0.7))
+
+    if not query:
+        return JSONResponse(status_code=400, content={'error': 'query is required'})
+
+    # Generate embedding for query
+    query_embedding = await _get_embedding(query)
+    if not query_embedding:
+        return {
+            'results': [],
+            'query': query,
+            'count': 0,
+            'error': 'Failed to generate embedding for query'
+        }
+
+    # Search Qdrant
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.post(
+                f'{QDRANT_URL}/collections/{QDRANT_COLLECTION}/points/search',
+                json={
+                    'vector': query_embedding,
+                    'limit': limit,
+                    'with_payload': True,
+                    'score_threshold': threshold,
+                },
+            )
+            if response.is_success:
+                data = response.json()
+                results = []
+                for hit in data.get('result', []):
+                    payload = hit.get('payload', {})
+                    results.append({
+                        'text': payload.get('text', ''),
+                        'title': payload.get('title', 'Untitled'),
+                        'source': payload.get('source', 'unknown'),
+                        'url': payload.get('url', ''),
+                        'score': hit.get('score', 0),
+                        'metadata': {k: v for k, v in payload.items() if k not in ['text', 'title', 'source', 'url']},
+                    })
+                return {
+                    'results': results,
+                    'query': query,
+                    'count': len(results),
+                }
+    except Exception as e:
+        print(f"[Knowledge Search] Error: {e}")
+
     return {
         'results': [],
         'query': query,
@@ -566,7 +862,71 @@ async def tts(payload: dict):
     if not text:
         return JSONResponse(status_code=400, content={'error': 'text is required'})
 
-    # Local synthetic tone-sequence WAV (no external API dependency).
+    voice = (payload or {}).get('voice', 'alloy')  # alloy, echo, fable, onyx, nova, shimmer
+    model = (payload or {}).get('model', 'tts-1')  # tts-1 or tts-1-hd
+    speed = float((payload or {}).get('speed', 1.0))  # 0.25 to 4.0
+
+    # Validate speed
+    speed = max(0.25, min(4.0, speed))
+
+    # Validate voice
+    valid_voices = ['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer']
+    if voice not in valid_voices:
+        voice = 'alloy'
+
+    # Check for OpenAI API key
+    import os
+    openai_key = os.environ.get('OPENAI_API_KEY', '')
+
+    if openai_key:
+        # Use OpenAI TTS API
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.post(
+                    'https://api.openai.com/v1/audio/speech',
+                    headers={
+                        'Authorization': f'Bearer {openai_key}',
+                        'Content-Type': 'application/json',
+                    },
+                    json={
+                        'model': model,
+                        'input': text[:4096],  # OpenAI TTS limit
+                        'voice': voice,
+                        'speed': speed,
+                        'response_format': 'mp3',
+                    },
+                )
+
+                if response.status_code == 200:
+                    return StreamingResponse(
+                        io.BytesIO(response.content),
+                        media_type='audio/mpeg',
+                        headers={'Content-Disposition': 'inline; filename="speech.mp3"'}
+                    )
+                else:
+                    print(f"[TTS] OpenAI error: {response.status_code} - {response.text}")
+                    # Fall through to fallback
+        except Exception as e:
+            print(f"[TTS] OpenAI exception: {e}")
+            # Fall through to fallback
+
+    # Fallback: Use free StreamElements TTS
+    try:
+        encoded_text = text[:500].replace(' ', '%20').replace('\n', '%20')
+        streamelements_url = f'https://api.streamelements.com/kappa/v2/speech?voice=Brian&text={encoded_text}'
+
+        async with httpx.AsyncClient(timeout=15.0, follow_redirects=True) as client:
+            response = await client.get(streamelements_url)
+            if response.status_code == 200:
+                return StreamingResponse(
+                    io.BytesIO(response.content),
+                    media_type='audio/mpeg',
+                    headers={'Content-Disposition': 'inline; filename="speech.mp3"'}
+                )
+    except Exception as e:
+        print(f"[TTS] StreamElements fallback error: {e}")
+
+    # Final fallback: Local synthetic tone-sequence WAV
     duration = min(6.0, max(0.8, len(text) * 0.05))
     sample_rate = 22050
     frame_count = int(sample_rate * duration)
@@ -702,3 +1062,362 @@ async def generate_video(payload: VideoReq):
         'backend': 'local-media-inference',
         'fallback': False,
     }
+
+
+# =============================================================================
+# EMAIL SERVICE
+# =============================================================================
+
+@app.post('/api/email/send')
+async def send_email(payload: dict):
+    """Send email via Resend or SMTP fallback."""
+    to = (payload or {}).get('to', '').strip()
+    subject = (payload or {}).get('subject', '').strip()
+    html = (payload or {}).get('html', '').strip()
+    text = (payload or {}).get('text', '').strip()
+    template = (payload or {}).get('template', '')
+
+    if not to:
+        return JSONResponse(status_code=400, content={'error': 'to is required'})
+    if not subject:
+        return JSONResponse(status_code=400, content={'error': 'subject is required'})
+    if not html and not text:
+        return JSONResponse(status_code=400, content={'error': 'html or text is required'})
+
+    # Handle email templates
+    if template == 'password_reset':
+        reset_url = (payload or {}).get('resetUrl', '')
+        user_name = (payload or {}).get('userName', 'User')
+        html = f'''
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }}
+                .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                .header {{ background: linear-gradient(135deg, #d9a07a 0%, #c4956d 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }}
+                .header h1 {{ color: white; margin: 0; font-size: 24px; }}
+                .content {{ background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }}
+                .button {{ display: inline-block; background: #d9a07a; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 20px 0; }}
+                .footer {{ text-align: center; margin-top: 20px; color: #888; font-size: 12px; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>Alabobai</h1>
+                </div>
+                <div class="content">
+                    <h2>Reset Your Password</h2>
+                    <p>Hi {user_name},</p>
+                    <p>We received a request to reset your password. Click the button below to create a new password:</p>
+                    <p style="text-align: center;">
+                        <a href="{reset_url}" class="button">Reset Password</a>
+                    </p>
+                    <p>This link will expire in 60 minutes.</p>
+                    <p>If you didn't request this, you can safely ignore this email.</p>
+                </div>
+                <div class="footer">
+                    <p>&copy; Alabobai. All rights reserved.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        '''
+        text = f"Hi {user_name},\n\nReset your password by visiting: {reset_url}\n\nThis link expires in 60 minutes.\n\nIf you didn't request this, ignore this email."
+
+    elif template == 'email_verification':
+        verify_url = (payload or {}).get('verifyUrl', '')
+        user_name = (payload or {}).get('userName', 'User')
+        html = f'''
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }}
+                .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                .header {{ background: linear-gradient(135deg, #d9a07a 0%, #c4956d 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }}
+                .header h1 {{ color: white; margin: 0; font-size: 24px; }}
+                .content {{ background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }}
+                .button {{ display: inline-block; background: #d9a07a; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 20px 0; }}
+                .footer {{ text-align: center; margin-top: 20px; color: #888; font-size: 12px; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>Alabobai</h1>
+                </div>
+                <div class="content">
+                    <h2>Verify Your Email</h2>
+                    <p>Hi {user_name},</p>
+                    <p>Thanks for signing up! Please verify your email address by clicking the button below:</p>
+                    <p style="text-align: center;">
+                        <a href="{verify_url}" class="button">Verify Email</a>
+                    </p>
+                    <p>This link will expire in 24 hours.</p>
+                </div>
+                <div class="footer">
+                    <p>&copy; Alabobai. All rights reserved.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        '''
+        text = f"Hi {user_name},\n\nVerify your email by visiting: {verify_url}\n\nThis link expires in 24 hours."
+
+    # Try Resend API first
+    resend_key = os.environ.get('RESEND_API_KEY', '')
+    from_email = os.environ.get('EMAIL_FROM', 'Alabobai <noreply@alabobai.com>')
+
+    if resend_key:
+        try:
+            async with httpx.AsyncClient(timeout=15.0) as client:
+                response = await client.post(
+                    'https://api.resend.com/emails',
+                    headers={
+                        'Authorization': f'Bearer {resend_key}',
+                        'Content-Type': 'application/json',
+                    },
+                    json={
+                        'from': from_email,
+                        'to': [to] if isinstance(to, str) else to,
+                        'subject': subject,
+                        'html': html,
+                        'text': text or None,
+                    },
+                )
+                if response.is_success:
+                    data = response.json()
+                    return {
+                        'success': True,
+                        'messageId': data.get('id'),
+                        'provider': 'resend',
+                    }
+                else:
+                    print(f"[Email] Resend error: {response.status_code} - {response.text}")
+        except Exception as e:
+            print(f"[Email] Resend exception: {e}")
+
+    # Fallback: log the email for development
+    print(f"[Email] Would send to: {to}")
+    print(f"[Email] Subject: {subject}")
+    print(f"[Email] Body preview: {text[:200] if text else html[:200]}...")
+
+    return {
+        'success': True,
+        'messageId': f'dev-{uuid.uuid4()}',
+        'provider': 'console',
+        'note': 'Email logged to console (no RESEND_API_KEY configured)',
+    }
+
+
+# =============================================================================
+# SOCKET.IO EVENT HANDLERS
+# =============================================================================
+
+@sio.event
+async def connect(sid, environ):
+    """Handle client connection."""
+    print(f"[Socket.IO] Client connected: {sid}")
+    connected_clients[sid] = {
+        'connected_at': time.time(),
+        'user_id': None,
+        'user_name': None,
+    }
+
+    # Send current presence to the new client
+    await sio.emit('presence_sync', list(presence_data.values()), room=sid)
+
+    # Broadcast connection event
+    await sio.emit('user_connected', {'sid': sid, 'count': len(connected_clients)})
+
+
+@sio.event
+async def disconnect(sid):
+    """Handle client disconnection."""
+    print(f"[Socket.IO] Client disconnected: {sid}")
+
+    # Get user info before removing
+    client_info = connected_clients.get(sid, {})
+    user_id = client_info.get('user_id')
+
+    # Remove from presence
+    if user_id and user_id in presence_data:
+        del presence_data[user_id]
+        await sio.emit('presence_leave', {'userId': user_id})
+
+    # Remove from connected clients
+    if sid in connected_clients:
+        del connected_clients[sid]
+
+    await sio.emit('user_disconnected', {'sid': sid, 'count': len(connected_clients)})
+
+
+@sio.event
+async def presence_join(sid, data):
+    """Handle user joining with presence data."""
+    user_id = data.get('userId')
+    user_data = {
+        'id': user_id,
+        'name': data.get('name', 'Anonymous'),
+        'email': data.get('email', ''),
+        'color': data.get('color', '#d9a07a'),
+        'status': data.get('status', 'online'),
+        'currentView': data.get('currentView'),
+        'currentFile': data.get('currentFile'),
+        'lastSeen': time.time(),
+    }
+
+    # Update tracking
+    if sid in connected_clients:
+        connected_clients[sid]['user_id'] = user_id
+        connected_clients[sid]['user_name'] = user_data['name']
+
+    # Store presence
+    presence_data[user_id] = user_data
+
+    # Broadcast to all clients
+    await sio.emit('presence_update', user_data)
+    print(f"[Socket.IO] Presence join: {user_data['name']} ({user_id})")
+
+
+@sio.event
+async def presence_update(sid, data):
+    """Handle presence updates (cursor, typing, etc.)."""
+    user_id = data.get('userId')
+    if user_id and user_id in presence_data:
+        presence_data[user_id].update({
+            'cursor': data.get('cursor'),
+            'selection': data.get('selection'),
+            'activity': data.get('activity', 'idle'),
+            'isTyping': data.get('isTyping', False),
+            'typingIn': data.get('typingIn'),
+            'currentView': data.get('currentView'),
+            'currentFile': data.get('currentFile'),
+            'lastSeen': time.time(),
+        })
+
+        # Broadcast update to all except sender
+        await sio.emit('presence_update', presence_data[user_id], skip_sid=sid)
+
+
+@sio.event
+async def presence_leave(sid, data):
+    """Handle explicit presence leave."""
+    user_id = data.get('userId')
+    if user_id and user_id in presence_data:
+        del presence_data[user_id]
+        await sio.emit('presence_leave', {'userId': user_id})
+
+
+@sio.event
+async def notification(sid, data):
+    """Handle notification broadcast."""
+    notification_data = {
+        'id': str(uuid.uuid4()),
+        'type': data.get('type', 'info'),
+        'title': data.get('title', ''),
+        'message': data.get('message', ''),
+        'timestamp': time.time(),
+        'userId': data.get('userId'),
+        'userName': data.get('userName'),
+        'userColor': data.get('userColor'),
+    }
+
+    # Broadcast to specific user or all
+    target_user = data.get('targetUserId')
+    if target_user:
+        # Find sid for target user
+        for client_sid, client_info in connected_clients.items():
+            if client_info.get('user_id') == target_user:
+                await sio.emit('notification', notification_data, room=client_sid)
+                break
+    else:
+        # Broadcast to all
+        await sio.emit('notification', notification_data)
+
+
+@sio.event
+async def activity(sid, data):
+    """Handle activity feed broadcast."""
+    activity_data = {
+        'id': str(uuid.uuid4()),
+        'userId': data.get('userId'),
+        'userName': data.get('userName'),
+        'userColor': data.get('userColor'),
+        'type': data.get('type', 'file_edit'),
+        'description': data.get('description', ''),
+        'target': data.get('target'),
+        'timestamp': time.time(),
+    }
+
+    # Broadcast to all clients
+    await sio.emit('activity', activity_data)
+
+
+@sio.event
+async def typing_start(sid, data):
+    """Handle typing indicator start."""
+    await sio.emit('typing_start', {
+        'userId': data.get('userId'),
+        'userName': data.get('userName'),
+        'location': data.get('location', 'chat'),
+    }, skip_sid=sid)
+
+
+@sio.event
+async def typing_stop(sid, data):
+    """Handle typing indicator stop."""
+    await sio.emit('typing_stop', {
+        'userId': data.get('userId'),
+    }, skip_sid=sid)
+
+
+# REST endpoint to send notifications programmatically
+@app.post('/api/notifications/send')
+async def send_notification(payload: dict):
+    """Send notification via Socket.IO."""
+    notification_data = {
+        'id': str(uuid.uuid4()),
+        'type': (payload or {}).get('type', 'info'),
+        'title': (payload or {}).get('title', ''),
+        'message': (payload or {}).get('message', ''),
+        'timestamp': time.time(),
+        'userId': (payload or {}).get('userId'),
+        'userName': (payload or {}).get('userName'),
+        'userColor': (payload or {}).get('userColor'),
+    }
+
+    target_user = (payload or {}).get('targetUserId')
+    if target_user:
+        for client_sid, client_info in connected_clients.items():
+            if client_info.get('user_id') == target_user:
+                await sio.emit('notification', notification_data, room=client_sid)
+                return {'success': True, 'sent': True, 'target': 'user'}
+        return {'success': True, 'sent': False, 'reason': 'user_not_connected'}
+    else:
+        await sio.emit('notification', notification_data)
+        return {'success': True, 'sent': True, 'target': 'broadcast', 'recipients': len(connected_clients)}
+
+
+@app.get('/api/presence')
+async def get_presence():
+    """Get current presence data."""
+    return {
+        'users': list(presence_data.values()),
+        'connectedClients': len(connected_clients),
+    }
+
+
+# =============================================================================
+# MAIN ENTRY POINT
+# =============================================================================
+
+if __name__ == '__main__':
+    import uvicorn
+    port = int(os.environ.get('BRIDGE_PORT', 8765))
+    print(f"[Alabobai] Starting Local Media Bridge on port {port}")
+    print(f"[Alabobai] Socket.IO enabled for real-time features")
+    # Use socket_app instead of app to enable Socket.IO
+    uvicorn.run(socket_app, host='0.0.0.0', port=port)

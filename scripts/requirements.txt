@@ -1,0 +1,16 @@
+# Alabobai Local Media Bridge Dependencies
+# Install with: pip install -r requirements.txt
+
+# Core FastAPI stack
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+pydantic>=2.0.0
+
+# HTTP client
+httpx>=0.25.0
+
+# Socket.IO for real-time features
+python-socketio[asgi]>=5.10.0
+
+# Optional: Resend email SDK (can also use API directly)
+# resend>=0.7.0
