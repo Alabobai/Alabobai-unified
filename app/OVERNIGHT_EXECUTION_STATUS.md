@@ -1550,3 +1550,458 @@ Core product flows are currently stable in the tested app runtime (lint/build/12
 ### Commit status
 - Reliability fix is isolated and safe to commit (`vite.config.ts` only).
 - Did **not** auto-commit yet to avoid bundling unrelated dirty workspace changes without explicit branch/commit policy in this loop.
+
+## 2026-02-19 05:26 PST — Reliability Sweep (Functionality-Only)
+
+### Scope executed
+- Repo: `/Users/alaboebai/Alabobai/alabobai-unified/app`
+- Focus: functional reliability only (autonomous-agent flow, company flow, code sandbox execution, preview navigation)
+
+### Pass/Fail matrix (blunt)
+| Check | Result | Proof snippet |
+|---|---|---|
+| `npm run lint` | PASS | `eslint . --max-warnings 0` completed with exit 0 |
+| `npm run build` | PASS | `✓ built in 6.34s` |
+| Playwright targeted reliability set (`api-and-agent`, `code-sandbox-exec`, `flow-replay`, `ui-and-preview`) | PASS (7/7) | `7 passed (24.5s)` |
+| Preview URL navigation check in targeted run | SKIPPED (non-failing) | `- preview URL health check` + summary `1 skipped` |
+| Playwright contracts/smoke (`contracts-and-smoke.spec.ts`) | PASS (4/4) | `4 passed (19.5s)` |
+| API contract smoke script (`npm run reliability:test:api`) | PASS | JSON: `"pass":4,"fail":0` |
+| Adversarial repeat/flake scan (`npm run reliability:flaky-scan`) | PASS | JSON: `"repeatEach":5,"unexpected":0,"flaky":0,"pass":true` |
+
+### Functional evidence captured
+- Autonomous execution payload path validated: `autonomous workflow verification: execute-task returns intent + execution steps` ✅
+- Company flow endpoint validated: `/api/company can generate-plan` ✅
+- Code execution sandbox validated: `code sandbox executes a trivial snippet` ✅
+- Section navigation resilience validated: `UI flow replay: switch critical sections ... without runtime crash` ✅
+
+### Remaining risks (real, not cosmetic)
+1. **Preview health test is conditionally skipped** in this run; that means preview URL coverage is not guaranteed on every sweep.
+2. `execute-task` contract smoke returns `runStatus: "degraded"` with `steps: 0` in one contract probe; tests still pass, but this is a reliability watchpoint if degraded runs increase.
+3. Existing workspace has pre-existing unstaged changes unrelated to this sweep; if future failures appear, bisecting causality will be noisier until tree is clean.
+
+### Git/push state
+- No code patch required this cycle (no functional failures reproduced).
+- No commit created (nothing fixed this pass).
+- Branch remains `ahead 3` with pre-existing local modifications.
+
+## 2026-02-19 06:28 PST — Reliability Sweep (Adversarial Retest + Edge Cases)
+
+### Executive outcome
+- **PASS. No new functional failures reproduced.**
+- Ran lint/build + targeted reliability flows + API contract smoke + full reliability suite retest.
+- Because all checks passed, executed additional adversarial retest (`contracts-and-smoke` + full `reliability:test`) to confirm stability.
+
+### Pass/Fail matrix (blunt)
+| Check | Result | Proof snippet |
+|---|---|---|
+| `npm run lint` | PASS | `eslint . --max-warnings 0` exit 0 |
+| `npm run build` | PASS | `✓ built in 5.96s` |
+| Targeted flow pack (`api-and-agent`, `flow-replay`, `code-sandbox-exec`, `ui-and-preview`) | PASS | `7 passed (25.7s)` |
+| Autonomous-agent flow check | PASS | `execute-task returns intent + execution steps` |
+| Company flow check | PASS | `/api/company can generate-plan` |
+| Code sandbox execution check | PASS | `code sandbox executes a trivial snippet` |
+| Browser preview URL navigation check | SKIPPED (non-failing) | `- preview URL health check` in targeted and full suite |
+| API contract smoke (`npm run reliability:test:api`) | PASS | JSON summary: `"pass":4,"fail":0` |
+| Adversarial contract retest (`contracts-and-smoke.spec.ts`) | PASS | `4 passed (21.0s)` |
+| Full reliability suite retest (`npm run reliability:test`) | PASS | `11 passed, 1 skipped (29.1s)` |
+
+### Proof snippets
+- `autonomous workflow verification: execute-task returns intent + execution steps (267ms)`
+- `API smoke: /api/company can generate-plan (8ms)`
+- `code sandbox executes a trivial snippet (3.3s)`
+- `UI flow replay: switch critical sections from sidebar without runtime crash (1.4s)`
+- Full-suite line: `11 passed (29.1s), 1 skipped`
+
+### Remaining risks
+1. **Preview URL check remains conditional/skipped** in this environment unless `PREVIEW_URL` is explicitly forced and reachable; functional risk is coverage gap, not immediate failure.
+2. `execute-task` degraded-mode contract can still report low-step outcomes in smoke (`runStatus: degraded`, `steps: 0` from API smoke script output). Current contract is valid, but resilience should be monitored for real workload regressions.
+3. Log-noise risk persists from npm warnings (`disable-opencollective`, `disable-update-notifier`), which can bury real failures during long overnight loops.
+
+### Patch/commit/push status
+- **No code patch required** this cycle (no reproducible functional defect found).
+- **No commit made** in this loop.
+- Tree is already dirty from pre-existing edits outside this run; avoided mixing unrelated changes.
+- If you want a log-only commit once tree strategy is approved:
+  - `git add OVERNIGHT_EXECUTION_STATUS.md && git commit -m "chore(reliability): log 2026-02-19 06:28 PST sweep"`
+
+## 2026-02-19 06:36 PST — Full stabilization pass (forced preview health + backend endpoint validation)
+
+### Executive outcome
+- **PASS for app reliability suite and targeted flow pack.**
+- Forced preview health check executed and passed (not skipped).
+- Backend `/api/sandbox/*` endpoints are healthy.
+- Backend `/api/memory/*` endpoint family is reachable but currently in **degraded fallback mode** due native module/runtime mismatch (`better-sqlite3` binding missing under Node v25.6.1). Attempted rebuild failed; marked as **external blocker**.
+
+### Blunt matrix (required checks)
+
+| Check | Result | Proof |
+|---|---|---|
+| `npm run lint` | ✅ PASS | clean exit (`eslint ... --max-warnings 0`) |
+| `npm run build` | ✅ PASS | `✓ built in 5.90s` |
+| `npm run reliability:test:api` | ✅ PASS | `{ "suite":"api-contract-smoke", "pass":4, "fail":0 }` |
+| `npm run reliability:test` | ✅ PASS | `11 passed, 1 skipped (26.6s)` |
+| Forced PREVIEW_URL health check | ✅ PASS | targeted run with `PREVIEW_URL=http://127.0.0.1:4173` => `preview URL health check` passed |
+| Targeted flow pack (`api-and-agent`, `code-sandbox-exec`, `flow-replay`, `ui-and-preview`) | ✅ PASS | `8 passed (29.9s)` |
+| `npm run reliability:autonomy-observability` | ✅ PASS | `runCount: 223`, `staleCandidateCount: 0` |
+| `npm run reliability:flaky-scan` | ✅ PASS | `{ "repeatEach":5, "unexpected":0, "flaky":0, "pass":true }` |
+| Backend `/api/sandbox/*` validation | ✅ PASS | `GET /api/sandbox/health` -> `200` with `dockerAvailable:true` |
+| Backend `/api/memory/*` validation | ⚠️ DEGRADED | `GET /api/memory/stats` -> `200` with `{ "degraded": true }` |
+
+### Backend endpoint validation details (`/Users/alaboebai/Alabobai/alabobai-unified`)
+- Started backend with `npm run dev` and probed:
+  - `/api/health` -> healthy
+  - `/api/sandbox/health` -> `200` healthy payload
+  - `/api/memory/stats` -> `200` but degraded placeholder payload
+- Root-cause evidence from backend log:
+  - Memory router init falls back because `better-sqlite3` native binding is unavailable for current runtime (`node v25.6.1`).
+  - Explicit rebuild attempt `npm rebuild better-sqlite3` failed (C++ compile errors against Node 25 headers).
+
+### External blocker
+- **Runtime dependency blocker:** `better-sqlite3@9.6.0` not building/loaded on Node `v25.6.1` in this environment, causing `/api/memory/*` to run degraded fallback mode.
+- This is outside app-layer reliability scripts and requires either:
+  1. Node runtime pin to supported ABI (e.g., Node 20/22), or
+  2. Dependency upgrade/replacement to a Node 25-compatible sqlite stack.
+
+### Risks
+1. Memory endpoints appear up but are degraded (functional persistence/search semantics are reduced).
+2. LLM provider key is invalid in backend logs (runs in demo mode); non-blocking for this app sweep but can mask production parity.
+3. npm warning noise (`disable-opencollective`, `disable-update-notifier`) persists across runs.
+
+### Changes and commit status
+- Code changes this run: **none** (no app regression requiring patch).
+- Updated only this execution log file.
+- No commit created to avoid mixing with pre-existing dirty tree.
+
+## 2026-02-19 07:32 PST — Reliability sweep loop (functionality-only)
+
+### Executive summary
+- **Core reliability checks pass.**
+- One **operational failure** occurred during this loop (`reliability:test:ui` port conflict) and was immediately remediated by terminating the conflicting local preview process, then rerunning successfully.
+- No product-code patch was required in this iteration.
+
+### Pass/Fail matrix (blunt)
+| Check | Result | Proof snippet |
+|---|---|---|
+| `npm run lint` | PASS | eslint exited `0` |
+| `npm run build` | PASS | `✓ built in 8.71s` |
+| `npm run reliability:test` (full suite) | PASS | `11 passed`, `6 skipped` |
+| Autonomous-agent flow | PASS | `execute-task returns intent + execution steps` passed |
+| Company flow | PASS | `/api/company can generate-plan` passed |
+| Code sandbox execution | PASS | `code sandbox executes a trivial snippet` passed |
+| Browser preview URL navigation | PASS (forced) | `preview URL health check` passed with `SKIP_WEBSERVER=1 PREVIEW_URL=http://127.0.0.1:4173` |
+| API contract smoke (`npm run reliability:test:api`) | PASS | `"pass": 4, "fail": 0` |
+| Adversarial flake retest (`npm run reliability:flaky-scan`) | PASS | `"repeatEach":5, "unexpected":0, "flaky":0` |
+| UI targeted suite first run | FAIL (ops) | `Error: http://127.0.0.1:4173 is already used` |
+| UI targeted suite rerun after remediation | PASS | `3 passed, 1 skipped` |
+
+### Proof snippets
+- Full suite: `Running 17 tests ... 11 passed (29.0s), 6 skipped`.
+- Autonomous path: `autonomous workflow verification: execute-task returns intent + execution steps (270ms)`.
+- Company path: `API smoke: /api/company can generate-plan (14ms)`.
+- Sandbox path: `code sandbox executes a trivial snippet (3.6s)`.
+- Preview path (forced): `preview URL health check (35ms)`.
+- Flake scan: `{ "suite": "flaky-scan", "repeatEach": 5, "unexpected": 0, "flaky": 0, "pass": true }`.
+
+### Remediation performed in-loop
+- Failure: Playwright webServer strict port collision while a manual `vite preview` process was already bound to `127.0.0.1:4173`.
+- Action: killed background preview session, reran `npm run reliability:test:ui`.
+- Result: rerun clean (`3 passed, 1 skipped`).
+
+### Remaining risks
+1. **Conditional coverage remains** for `run-company-cycle` and billing-route contracts in this runtime (skipped due route unavailability/proxy backend conditions), so those paths are not continuously hard-verified in every loop.
+2. `execute-task` can still return degraded-mode outcomes under some smoke conditions (contract-valid but indicates resilience variability under limited backend capability).
+3. npm config warning noise continues and can bury high-signal errors in long overnight logs.
+
+### Commit/push status
+- No code patch created (no reproducible app regression).
+- No commit made in this loop.
+- If committing log-only evidence is desired after tree review:
+  - `git add OVERNIGHT_EXECUTION_STATUS.md && git commit -m "chore(reliability): log 2026-02-19 07:32 PST sweep"`
+
+## 2026-02-19 07:59 PST — Full stabilization pass (required reliability matrix + sandbox/memory validation)
+
+### Executive outcome
+- **PASS (with explicit non-blocking runtime caveat).**
+- Required reliability/functionality sweep completed end-to-end.
+- `/api/sandbox/*` and `/api/memory/*` surfaces validated live against preview runtime and returned healthy/degraded-safe envelopes (no router break observed).
+- No new code patch was required in this pass; no scoped reliability commit created.
+
+### Blunt pass/fail matrix (this run)
+
+| Check | Result | Proof |
+|---|---:|---|
+| `npm run lint` | ✅ PASS | clean ESLint exit (`--max-warnings 0`) |
+| `npm run build` | ✅ PASS | `vite build` completed (`✓ built in 6.10s`) |
+| `npm run reliability:test:api` | ✅ PASS | `api-contract-smoke` => `pass: 4, fail: 0` |
+| `npm run reliability:test` | ✅ PASS* | `11 passed, 6 skipped` |
+| Forced PREVIEW_URL health check | ✅ PASS | `PREVIEW_URL=http://127.0.0.1:4173` + `ui-and-preview.spec.ts` health test passed |
+| Targeted flow pack: `api-and-agent` | ✅ PASS | included in targeted run (`8/8 passed`) |
+| Targeted flow pack: `code-sandbox-exec` | ✅ PASS | included in targeted run (`8/8 passed`) |
+| Targeted flow pack: `flow-replay` | ✅ PASS | included in targeted run (`8/8 passed`) |
+| Targeted flow pack: `ui-and-preview` | ✅ PASS | included in targeted run (`8/8 passed`) |
+| `npm run reliability:autonomy-observability` | ✅ PASS | `runCount: 244`, `staleCandidateCount: 0` |
+| `npm run reliability:flaky-scan` | ✅ PASS | `unexpected: 0`, `flaky: 0`, `pass: true` |
+| `/api/sandbox/*` endpoint validation | ✅ PASS | `health/languages/execute/status/output` all HTTP 200 |
+| `/api/memory/*` endpoint validation | ✅ PASS | `stats/search/context/remember/user/settings` all HTTP 200 |
+
+\* `reliability:test` skips are known conditional tests for runtime-dependent endpoints (billing/agents/preview env gate), not fresh regressions.
+
+### Proof snippets
+- Full targeted flow pack with forced preview URL:
+  - `SKIP_WEBSERVER=1 BASE_URL=http://127.0.0.1:4173 PREVIEW_URL=http://127.0.0.1:4173 npx playwright test tests/reliability/api-and-agent.spec.ts tests/reliability/code-sandbox-exec.spec.ts tests/reliability/flow-replay.spec.ts tests/reliability/ui-and-preview.spec.ts`
+  - Result: `8 passed (8.0s)`
+- Live preview health probe:
+  - `curl -fsS http://127.0.0.1:4173` returned `<!DOCTYPE html>`
+- Sandbox + memory probe set executed via Node fetch harness:
+  - `/api/sandbox/health` => 200
+  - `/api/sandbox/languages` => 200
+  - `/api/sandbox/execute` => 200
+  - `/api/memory/stats` => 200
+  - `/api/memory/search?...` => 200
+  - `/api/memory/remember` => 200
+
+### Risks / blockers (blunt)
+1. **Non-blocking runtime caveat:** During full suite run, billing endpoints attempted proxy to `127.0.0.1:8888` and were conditionally skipped when unavailable (`ECONNREFUSED`) — this remains environmental/runtime availability debt.
+2. **Coverage caveat:** `preview URL health check` is env-gated in default suite; forcing `PREVIEW_URL` is required to prevent false-green skips.
+3. **Repo hygiene risk:** Working tree contains broad pre-existing dirty/untracked files unrelated to this run, so commit safety is low unless explicitly scoped and approved.
+
+### Change/commit status
+- Code changes for this pass: **none required**.
+- Commit: **not created** (no new reliability patch produced in this run; repo has unrelated dirty state).
+
+## 2026-02-19 08:36 PST — Reliability Sweep (Functionality-focused)
+
+### Scope executed this run
+- lint/build
+- API contract smoke
+- reliability UI/agent/company/code-sandbox/browser-preview suite
+- adversarial retest (repeat-each=2 on critical flow + sandbox)
+
+### Pass/Fail Matrix
+| Check | Result | Proof snippet |
+|---|---|---|
+| `npm run lint` | PASS | `eslint . --ext ts,tsx ... --max-warnings 0` exited 0 |
+| `npm run build` | PASS | `✓ built in 5.98s` |
+| `npm run reliability:test:api` | PASS | `suite: api-contract-smoke, pass: 4, fail: 0` |
+| Playwright reliability set (`api-and-agent`, `flow-replay`, `code-sandbox-exec`, `ui-and-preview`) | PASS (7) / SKIP (1) | `7 passed (27.1s)`, skipped: `preview URL health check` |
+| Autonomous-agent flow check | PASS | `autonomous workflow verification ... execute-task returns intent + execution steps` |
+| Company flow check | PASS | `API smoke: /api/company can generate-plan` + UI section replay passed |
+| Code sandbox execution check | PASS | `code sandbox executes a trivial snippet` |
+| Browser preview URL navigation check | PARTIAL | Test is present but skipped in suite (`preview URL health check`) |
+| Adversarial retest (repeat-each=2, retries=0) | PASS | `4 passed (31.5s)` on `code-sandbox-exec` + `flow-replay` |
+
+### Failures patched this run
+- No source-code functional regressions detected in executed scope.
+- Operational issue encountered during adversarial rerun: Playwright webServer port collision (`127.0.0.1:4173 already used`) after interrupted flaky-scan. Immediate fix applied by killing orphan preview processes (`kill 53110 53171 53199`), then rerun passed.
+
+### Remaining risks (blunt)
+1. **Preview URL health path is still unverified in this run** because that spec remains skipped; browser-preview reliability is therefore not fully proven.
+2. **Flaky-scan script (`npm run reliability:flaky-scan`) did not complete before run-budget pressure** and had to be terminated once; only targeted adversarial retest was completed.
+3. **Workspace is already heavily dirty/untracked before this pass** (multiple app + parent-repo files). Not safe to produce a clean attribution commit from this sweep alone.
+
+### Git / commit status
+- Stable for executed functionality checks, but **no commit created** (no sweep-specific code delta + pre-existing dirty tree).
+- If you want a commit from this run anyway, first isolate sweep-only files, then run:
+  - `git add OVERNIGHT_EXECUTION_STATUS.md`
+  - `git commit -m "chore: overnight reliability sweep evidence (2026-02-19 08:36 PST)"`
+
+## 2026-02-19 09:33 PST — Reliability Sweep (cron 719fdcfb-f600-4372-9a79-8d65d3a826e7)
+
+### Blunt pass/fail matrix (this run)
+| Check | Result | Proof |
+|---|---|---|
+| `npm run lint` | ✅ PASS | exited 0 (`eslint ... --max-warnings 0`) |
+| `npm run build` | ✅ PASS | `vite build` completed (`✓ built in 6.15s`) |
+| `npm run reliability:test:api` | ✅ PASS | `suite: api-contract-smoke`, `pass: 4`, `fail: 0` |
+| `PREVIEW_URL=http://127.0.0.1:4173 npm run reliability:test` | ✅ PASS* | `12 passed`, `5 skipped` |
+| Targeted flow pack (`api-and-agent`, `code-sandbox-exec`, `flow-replay`, `ui-and-preview`) | ✅ PASS | `8 passed (32.6s)` |
+| Forced PREVIEW_URL health check | ✅ PASS | `tests/reliability/ui-and-preview.spec.ts` `preview URL health check` passed |
+| `npm run reliability:autonomy-observability` | ✅ PASS | `runCount: 249`, `staleCandidateCount: 0` |
+| `npm run reliability:flaky-scan` | ✅ PASS | `unexpected: 0`, `flaky: 0`, `repeatEach: 5` |
+| `/api/sandbox/*` validation | ✅ PASS | `health`, `languages`, `execute` all HTTP 200 (degraded fallback envelope present) |
+| `/api/memory/*` validation | ✅ PASS | `stats`, `settings`, `user`, `search`, `remember`, `forget`, `context` all HTTP 200 (degraded fallback envelope present) |
+
+\* Skips are conditional runtime-dependent specs (billing/agents env gates), not new regressions.
+
+### Proof (selected)
+- Full suite: `12 passed, 5 skipped`.
+- Targeted pack: `8 passed (32.6s)` including forced preview health assertion.
+- Flaky scan report:
+  - `{ "suite": "flaky-scan", "repeatEach": 5, "expected": 15, "unexpected": 0, "flaky": 0, "pass": true }`
+- Endpoint probe sample statuses:
+  - `GET /api/sandbox/health -> 200`
+  - `POST /api/sandbox/execute -> 200`
+  - `GET /api/memory/stats?userId=default -> 200`
+  - `POST /api/memory/remember -> 200`
+
+### Risks / blockers (blunt)
+1. **External/runtime dependency blocker:** billing endpoints still show proxy `ECONNREFUSED 127.0.0.1:8888` when backing service is absent; relevant tests remain conditional-skipped.
+2. **Degraded mode caveat:** `/api/sandbox/*` and `/api/memory/*` are healthy from client perspective but currently via explicit degraded fallback payloads, not full backend execution path.
+3. **Repo hygiene caution:** working tree contains unrelated pre-existing changes; no safe scoped reliability commit was created this run.
+
+### Changes made
+- No code patch required this run.
+- No commit created (nothing reliability-specific to commit safely).
+
+## [2026-02-19 09:40 PST] Reliability sweep (functionality-focused, aggressive retest)
+
+### Pass/Fail Matrix
+
+| Check | Result | Proof snippet |
+|---|---|---|
+| `npm run lint` | PASS | `eslint . --ext ts,tsx ...` exited `0` |
+| `npm run build` | PASS | `✓ built in 6.24s` |
+| API + autonomous flow (`api-and-agent.spec.ts`) | PASS | `3 passed`: `/api/search`, `/api/company generate-plan`, `execute-task returns intent + execution steps` |
+| Code sandbox execution (`code-sandbox-exec.spec.ts`) | PASS | `✓ code sandbox executes a trivial snippet (4.9s)` |
+| Company/critical UI flow replay (`flow-replay.spec.ts`) | PASS | `✓ switch critical sections from sidebar without runtime crash` |
+| Browser preview navigation + health (`ui-and-preview.spec.ts`) | PASS | Initial run: `7 passed, 1 skipped` (missing `PREVIEW_URL`); forced retest with `PREVIEW_URL=http://127.0.0.1:4173`: `3 passed` incl. `preview URL health check` |
+| API contract smoke (`npm run reliability:test:api`) | PASS | JSON summary: `pass: 4, fail: 0` |
+| Autonomy observability (`npm run reliability:autonomy-observability`) | PASS (with degraded signal) | `runCount: 250`, `staleCandidateCount: 0`, `retryEventsInRecentWindow: 1` |
+| Adversarial/flake retest (`reliability:flaky-scan`) | PASS | `repeatEach: 2`, `unexpected: 0`, `flaky: 0` |
+
+### Blunt assessment
+- No blocking functional regressions found in the targeted overnight sweep.
+- Main reliability caveat: autonomy smoke can return degraded runs while still contract-valid (`execute-task contract` evidence includes `runStatus: "degraded"` with `steps: 0`). Not a test failure, but a production-risk signal if degraded state spikes.
+- Preview URL health check is env-gated and was skipped by default until explicit `PREVIEW_URL` was supplied; this can hide deployment-route regressions if the env var is omitted.
+
+### Remaining risks
+1. **Silent degraded autonomy**: contracts pass even when run quality degrades; add threshold/alerting on degraded ratio, not only HTTP/schema correctness.
+2. **Env-dependent preview check**: missing `PREVIEW_URL` causes skip instead of fail; CI should enforce non-empty `PREVIEW_URL` for release sweeps.
+3. **Noise from npm config warnings** (`disable-opencollective`, `disable-update-notifier`) is non-functional but can bury useful diagnostics in long logs.
+
+### Git / commit status
+- No code patch was required in this run (all targeted checks passed after explicit preview retest).
+- No commit created.
+
+## [2026-02-19 10:45 PST] Reliability sweep (cron 5fd00ea3-d993-4f87-93f0-3184bdf15f6c)
+
+### Pass/Fail matrix (functionality + reliability only)
+
+| Check | Result | Proof snippet |
+|---|---|---|
+| `npm run lint` | PASS | `eslint ... --max-warnings 0` exited 0 |
+| `npm run build` | PASS | `vite build` completed (`✓ built in 6.13s`, later `✓ built in 7.07s` after patch) |
+| `npm run reliability:test:api` | PASS | `suite: api-contract-smoke`, `pass: 4`, `fail: 0` |
+| Full targeted reliability pack (all 5 reliability specs) | PASS | `11 passed`, `6 skipped`, `0 failed` |
+| Autonomous-agent flow checks | PASS | `autonomous workflow verification: execute-task returns intent + execution steps` |
+| Company flow checks | PASS* | company contract checks passed in smoke; `run-company-cycle` specs are conditional-skipped |
+| Code sandbox execution checks | PASS | `code sandbox executes a trivial snippet` passed repeatedly |
+| Browser preview URL navigation checks | PASS* | `home shell loads`, `major sections reachable`; preview health spec remains env-gated/skip |
+| Adversarial retest (`reliability:flaky-scan`) | PASS | `{ "repeatEach": 5, "unexpected": 0, "flaky": 0, "pass": true }` |
+| Aggressive loop retest (`reliability:test:loop`) | PASS (partial in-run sample) | First 4+ rounds clean before manual stop for patching (`11 passed / 6 skipped / 0 failed` each shown) |
+
+\* PASS with explicit caveat listed below.
+
+### Failure found + immediate patch
+- **Failure encountered**: Playwright aborted initially because fixed webServer port `4173` was already occupied:
+  - `Error: http://127.0.0.1:4173 is already used ...`
+- **Patch applied immediately** (`playwright.config.ts`):
+  - Derived `previewHost` + `previewPort` from `BASE_URL`.
+  - Replaced hardcoded preview server command port (`4173`) with dynamic `${previewPort}` and host `${previewHost}`.
+- **Verification after patch**:
+  - `BASE_URL=http://127.0.0.1:4174 npx playwright test ...` ran clean: `11 passed`, `6 skipped`, `0 failed`.
+
+### Blunt remaining risks
+1. **Conditional skip coverage gap**: 6 specs are skipped (run-company-cycle + billing + preview health). This is a real blind spot, not a pass.
+2. **Billing backend dependency missing**: Vite proxy logs `ECONNREFUSED 127.0.0.1:8888` for billing routes during skipped paths.
+3. **Preview health is env-gated**: without explicit env setup, URL health can skip and hide routing regressions.
+4. **Noise warnings**: npm unknown-config warnings flood logs and can hide actionable failures.
+
+### Git status / commit
+- Code changed: `playwright.config.ts` (reliability patch), plus this status log append.
+- Commit/push: **not performed in this run** (no explicit push request and prior tree already carries unrelated churn risk).
+- Next command to commit just sweep deltas safely:
+  - `git add playwright.config.ts OVERNIGHT_EXECUTION_STATUS.md && git commit -m "fix(reliability): make playwright preview host/port follow BASE_URL"`
+
+## 2026-02-19 11:05 PST — Stabilization sweep (full required checklist)
+
+### Blunt matrix
+
+| Check | Result | Proof |
+|---|---|---|
+| `npm run lint` | ✅ PASS | exit `0` |
+| `npm run build` | ✅ PASS | Vite build completed (`✓ built in 6.48s`) |
+| `npm run reliability:test:api` | ✅ PASS | `pass: 4, fail: 0` |
+| `npm run reliability:test` | ✅ PASS | `11 passed, 6 skipped` |
+| Forced PREVIEW_URL health check | ✅ PASS | `1 passed` (`preview URL health check`) |
+| Targeted flow pack (`api-and-agent`, `code-sandbox-exec`, `flow-replay`, `ui-and-preview`) | ✅ PASS | `7 passed, 1 skipped` |
+| `npm run reliability:autonomy-observability` | ✅ PASS | report emitted; `staleCandidateCount: 0` |
+| `npm run reliability:flaky-scan` | ✅ PASS | `unexpected: 0`, `flaky: 0`, `pass: true` |
+| `/api/sandbox/*` + `/api/memory/*` endpoint validation (preview runtime) | ✅ PASS (degraded-safe) | 7/7 HTTP 200 with `X-Alabobai-Degraded: 1` |
+
+### Regression / fix actions in this run
+
+- Found immediate regression in first attempt: Playwright refused to start because port `4173` was already occupied by stale `vite preview` process.
+- Mitigation applied: terminated stale preview process and reran full checklist from top.
+- No source-code patch required for this specific failure mode in this pass.
+
+### Proof snippets
+
+- Full-suite reliability: `11 passed (31.4s), 6 skipped`.
+- Forced PREVIEW URL probe: `tests/reliability/ui-and-preview.spec.ts:35:1` passed.
+- Flake scan: `{ repeatEach: 5, expected: 15, unexpected: 0, flaky: 0, pass: true }`.
+- Endpoint probe against live preview (`http://127.0.0.1:4173`):
+  - `GET /api/sandbox/health` -> `200`
+  - `GET /api/sandbox/languages` -> `200`
+  - `POST /api/sandbox/execute` -> `200`
+  - `GET /api/memory/stats` -> `200`
+  - `GET /api/memory/user/default?limit=3` -> `200`
+  - `GET /api/memory/settings/default` -> `200`
+  - `POST /api/memory/remember` -> `200`
+  - all above include degraded marker header: `X-Alabobai-Degraded: 1`.
+
+### Risks / blockers
+
+1. **External runtime blocker remains:** direct backend on `127.0.0.1:8888` is unreachable in this environment (`ECONNREFUSED`), observed in Vite proxy warnings and direct probe.
+2. Reliability currently depends on degraded fallback contracts for sandbox/memory routes when backend is absent; user-facing availability is preserved, but full backend execution path is not validated in this environment.
+3. Environment noise persists from npm user/env config warnings (`disable-opencollective`, `disable-update-notifier`); non-blocking but noisy.
+
+### Commit status
+
+- No commit created in this pass (no scoped code change required; repo already contains broad unrelated dirty state).
+
+### Next actions
+
+1. If backend validation is required beyond degraded mode, bring up backend service on `:8888` (or point proxy to active backend), then re-run endpoint probes and flow pack.
+2. Keep pre-run guard to clear stale preview listener on `:4173` before loop iterations to avoid false failures.
+
+## 2026-02-19 11:49:53 PST — Reliability Sweep (Functionality-Only)
+
+### Scope executed
+- Repo: `/Users/alaboebai/Alabobai/alabobai-unified/app`
+- Focus: lint/build + functional reliability checks (autonomous-agent flow, company flow, code sandbox exec, preview URL navigation)
+- Cosmetic-only checks intentionally ignored unless functional impact.
+
+### Pass/Fail matrix (blunt)
+| Check | Result | Proof snippet |
+|---|---|---|
+| `npm run lint` | PASS | `eslint . --ext ts,tsx ...` exited 0 |
+| `npm run build` | PASS | `✓ built in 6.48s` |
+| Full reliability suite (`npm run reliability:test`) | PASS (with conditional skips) | `11 passed, 6 skipped (30.9s)` |
+| API contract smoke (`npm run reliability:test:api`) | PASS | `"pass": 4, "fail": 0` |
+| Autonomous observability (`npm run reliability:autonomy-observability`) | PASS | `runCount: 278`, `staleCandidateCount: 0` |
+| UI + preview URL explicit (`PREVIEW_URL=http://127.0.0.1:4173 npx playwright test tests/reliability/ui-and-preview.spec.ts`) | PASS | `3 passed (24.3s)` incl `preview URL health check` |
+| Adversarial/flake retest (`npm run reliability:flaky-scan`) | PASS | `repeatEach: 5`, `expected: 15`, `unexpected: 0`, `flaky: 0` |
+
+### Notable evidence
+- `code sandbox executes a trivial snippet` ✅ (Playwright)
+- `autonomous workflow verification: execute-task returns intent + execution steps` ✅
+- `API smoke: /api/company can generate-plan` ✅
+- `preview URL health check` ✅ when `PREVIEW_URL` is explicitly provided.
+
+### Remaining risks / caveats
+1. **Conditional coverage gaps remain** in default suite run:
+   - Skipped company-cycle route tests when endpoint unavailable in runtime mode.
+   - Skipped billing tests when Vite proxy target `127.0.0.1:8888` not reachable (`ECONNREFUSED`).
+2. This means **core app shell + primary agent/task flows are stable**, but **billing/company-cycle proxy-path reliability is environment-dependent** and still a risk if upstream API host is down/misconfigured.
+3. Re-run recommendation for infra-complete validation:
+   - Ensure backend proxy target is live on `:8888`, then rerun:
+     - `npm run reliability:test`
+     - `npx playwright test tests/reliability/contracts-and-smoke.spec.ts`
+
+### Patch activity in this sweep
+- No new code patch required during this run (all executed functional checks passed in current environment constraints).
+
+### Git/push state
+- No commit created in this sweep (stability verified without additional code changes).
+- Repo already contains pre-existing modified/untracked files; push attempt intentionally skipped to avoid mixing unrelated changes.
