@@ -5,6 +5,7 @@ import { spawn } from 'node:child_process'
 
 const repeatEach = Number(process.env.FLAKE_REPEAT_EACH || 5)
 const maxFailures = Number(process.env.FLAKE_MAX_FAILURES || 0)
+const timeoutMs = Number(process.env.FLAKE_TIMEOUT_MS || 180000)
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms))
@@ -30,11 +31,25 @@ function run() {
 
     let out = ''
     let err = ''
+    let finished = false
+
+    const timeout = setTimeout(() => {
+      if (finished) return
+      err += `\n[flaky-scan] timed out after ${timeoutMs}ms`
+      child.kill('SIGTERM')
+      setTimeout(() => {
+        if (!finished) child.kill('SIGKILL')
+      }, 5000)
+    }, timeoutMs)
 
     child.stdout.on('data', (d) => { out += d.toString() })
     child.stderr.on('data', (d) => { err += d.toString() })
 
-    child.on('close', (code) => resolve({ code: code ?? 1, out, err }))
+    child.on('close', (code) => {
+      finished = true
+      clearTimeout(timeout)
+      resolve({ code: code ?? 1, out, err })
+    })
   })
 }
 
