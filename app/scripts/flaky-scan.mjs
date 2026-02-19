@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* eslint-env node */
-/* global process, console, setTimeout */
+/* global process, console, setTimeout, clearTimeout */
 import { spawn } from 'node:child_process'
 
 const repeatEach = Number(process.env.FLAKE_REPEAT_EACH || 5)

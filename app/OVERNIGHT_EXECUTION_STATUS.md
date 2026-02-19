@@ -1270,3 +1270,45 @@ Core product flows are currently stable in the tested app runtime (lint/build/12
 ### Commit scope
 - Scoped reliability fix prepared: `app/scripts/flaky-scan.mjs` (+ this status append).
 - No unrelated files staged in this report section.
+
+## 2026-02-19 01:08 PST — Overnight reliability sweep (functionality-only)
+
+### Executive outcome
+- **PASS with one immediate patch.**
+- Only functional/reliability scope touched. Cosmetic-only issues were ignored.
+- Patched lint-breaking reliability script bug (`clearTimeout` global missing), then re-ran full target sweep.
+
+### Patch applied immediately
+- File: `scripts/flaky-scan.mjs`
+- Change: global pragma updated
+  - from: `/* global process, console, setTimeout */`
+  - to: `/* global process, console, setTimeout, clearTimeout */`
+- Reason: ESLint `no-undef` blocked reliability loop execution.
+
+### Pass/Fail matrix (this run)
+
+| Time (PST) | Check | Result | Proof snippet |
+|---|---|---:|---|
+| 01:05 | `npm run lint` (pre-patch) | ❌ | `scripts/flaky-scan.mjs 50:7 error 'clearTimeout' is not defined` |
+| 01:06 | `npm run lint` (post-patch) | ✅ | exited clean (no eslint errors) |
+| 01:06 | `npm run build` | ✅ | `✓ built in 5.88s` |
+| 01:07 | Playwright targeted flow sweep (`api-and-agent`, `code-sandbox-exec`, `flow-replay`, `ui-and-preview`) | ✅ | `7 passed, 1 skipped` |
+| 01:07 | Autonomous-agent API flow checks | ✅ | `execute-task returns intent + execution steps` |
+| 01:07 | Company flow check (`/api/company`) | ✅ | `company contract ... status: 200, hasPlan: true` |
+| 01:07 | Code sandbox execution checks | ✅ | `tests/reliability/code-sandbox-exec.spec.ts` passed in targeted run |
+| 01:07 | Browser preview URL navigation check (forced) | ✅ | `preview URL health check (41ms)` with `PREVIEW_URL=http://127.0.0.1:4173` |
+| 01:07 | API contract smoke (`npm run reliability:test:api`) | ✅ | `pass: 4, fail: 0` |
+| 01:08 | Adversarial retest (`FLAKE_REPEAT_EACH=2 npm run reliability:flaky-scan`) | ✅ | `{ unexpected: 0, flaky: 0, pass: true }` |
+| 01:08 | Edge/observability retest (`npm run reliability:autonomy-observability`) | ✅ | `staleCandidateCount: 0`, `retryEventsInRecentWindow: 1` |
+
+### Blunt risk callouts (remaining)
+1. **Preview health check is env-gated by default** (`PREVIEW_URL` absent => skip). This can hide navigation regressions unless explicitly set in automation.
+2. **Runtime state is degraded-heavy** in observability snapshot (`blocked: 153` of `runCount: 171`). Not a test failure, but reliability debt if this trend persists in production workload.
+3. **Vite proxy ECONNREFUSED noise** still appears during UI runs for optional backend endpoints; current tests tolerate it, but this can mask real backend connectivity faults.
+
+### Git / delivery status
+- Local patch + status log update complete.
+- Repo is already dirty with unrelated modifications outside this sweep. No broad commit was made to avoid mixing contexts.
+- If you want this sweep isolated in git now, run:
+  - `git -C /Users/alaboebai/Alabobai/alabobai-unified/app add scripts/flaky-scan.mjs OVERNIGHT_EXECUTION_STATUS.md`
+  - `git -C /Users/alaboebai/Alabobai/alabobai-unified/app commit -m "fix(reliability): unblock flaky-scan lint + log overnight sweep evidence"`
