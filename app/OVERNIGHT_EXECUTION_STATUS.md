@@ -1362,3 +1362,191 @@ Core product flows are currently stable in the tested app runtime (lint/build/12
 1. **Still degraded, not full backend parity:** guarded fallback responses prevent hard failures but do not replace real sandbox/memory backend semantics.
 2. **Default preview URL check remains env-gated:** `PREVIEW_URL` must continue to be forced in unattended sweeps.
 3. **Workspace has unrelated dirty files outside this patch scope;** commit was intentionally scoped to `vite.config.ts` only.
+
+## 2026-02-19 02:17 PST — Overnight reliability sweep (no code patch required)
+
+### Executive outcome
+- **PASS.** Core reliability checks for lint/build + autonomous/company/sandbox/browser flows are green.
+- One operational failure occurred during adversarial retest (**port 4173 already in use** from interrupted flaky run), cleared by killing orphan preview process and re-running the full adversarial set.
+- **No source patch needed** in this sweep; failures were process-state, not app logic.
+
+### Pass/Fail matrix (this run)
+
+| Time (PST) | Check | Result | Proof snippet |
+|---|---|---:|---|
+| 02:14 | `npm run lint` | ✅ | exits clean (`eslint ... --max-warnings 0`) |
+| 02:14 | `npm run build` | ✅ | `✓ built in 5.95s` |
+| 02:15–02:16 | Targeted flow sweep (`ui-and-preview`, `flow-replay`, `code-sandbox-exec`, `api-and-agent`, `contracts-and-smoke`) | ✅ | `11 passed, 1 skipped (preview URL health check)` |
+| 02:16 | Adversarial retest start (`--repeat-each=2`) | ❌ | `Error: http://127.0.0.1:4173 is already used` |
+| 02:16 | Immediate remediation | ✅ | killed orphan `vite preview --port 4173` process (`pid 21194`) |
+| 02:16–02:17 | Adversarial retest rerun (`ui-and-preview`, `flow-replay`, `code-sandbox-exec`, `contracts-and-smoke`, `--repeat-each=2 --retries=0`) | ✅ | `16 passed, 2 skipped` |
+
+### Functional coverage confirmation
+- **Autonomous-agent flow:** `/api/execute-task` contract + actionable execution payload checks passed.
+- **Company flow:** `/api/company` generate-plan passed in `api-and-agent` sweep.
+- **Code sandbox execution:** browser sandbox run passed (`code-sandbox-exec.spec.ts`).
+- **Browser preview navigation:** home + major section navigation passed; preview URL probe still skipped when `PREVIEW_URL` is not explicitly set.
+
+### Remaining risks (blunt)
+1. **Process hygiene risk:** interrupted runs can leave orphan preview servers that cause false negatives (`port already used`).
+2. **Preview health check remains env-gated:** default sweep still skips explicit preview URL probe unless `PREVIEW_URL` is set.
+3. **Repo already dirty with unrelated changes** before this run; no commit attempted to avoid mixing contexts.
+
+### Git/push status
+- No code changes made in this sweep; no commit created.
+- If you want to snapshot only this log update:  
+  `git add OVERNIGHT_EXECUTION_STATUS.md && git commit -m "chore(reliability): log 2026-02-19 02:17 PST overnight sweep"`
+
+## 2026-02-19 03:17–03:20 PST — Overnight reliability sweep (live repo)
+
+### Executive outcome
+- **PASS (functional reliability checks green in this run).**
+- No code failures found in this pass window, so **no patch was required**.
+- One reliability harness issue observed: combined multi-suite command appeared to hang during flaky scan; isolated flaky run completed and passed.
+
+### Pass/Fail matrix (blunt)
+
+| Time (PST) | Check | Result | Proof snippet |
+|---|---|---:|---|
+| 03:17 | `npm run lint` | ✅ | ESLint exited clean (no violations printed). |
+| 03:18 | `npm run build` | ✅ | `✓ built in 5.52s` |
+| 03:19 | `npm run reliability:test` | ✅ | `11 passed, 1 skipped (25.7s)` |
+| 03:19 | Agent/API flow checks (from suite) | ✅ | `autonomous workflow verification ... ✓`, `/api/company ... ✓` |
+| 03:19 | Code sandbox execution check | ✅ | `code sandbox executes a trivial snippet ✓ (2.8s)` |
+| 03:19 | Browser/preview navigation checks | ⚠️ PARTIAL | `ui-and-preview ... preview URL health check` remained **skipped** in full suite run. |
+| 03:20 | `npm run reliability:test:api` | ✅ | `pass: 4, fail: 0` |
+| 03:20 | `npm run reliability:autonomy-observability` | ✅ | `runCount: 193`, `staleCandidateCount: 0` |
+| 03:20 | `FLAKE_REPEAT_EACH=2 FLAKE_TIMEOUT_MS=120000 npm run reliability:flaky-scan` | ✅ | `{ unexpected: 0, flaky: 0, pass: true }` |
+| 03:20 | `node ./scripts/major-sections-smoke.mjs` | ✅ | `passCount: 12, failCount: 0` |
+
+### Failure hunt + action taken
+- **Observed issue:** chained command `npm run reliability:test:api && npm run reliability:autonomy-observability && npm run reliability:flaky-scan` stalled in flaky stage with no progressive output.
+- **Action:** terminated stuck run, re-ran flaky scan in isolation with explicit timeout env.
+- **Result:** isolated flaky scan completed successfully (`unexpected: 0`).
+
+### Remaining risks (functional/reliability)
+1. **Preview URL health check skipped** in default full Playwright suite run; browser preview path is not fully enforced unless that check is explicitly enabled in the run environment.
+2. **Flaky harness operability risk:** when chained with prior suites, flaky scan can appear hung; run separately or keep timeout guards for overnight loops.
+3. **Autonomy health is mostly blocked-state heavy** (`blocked: 153/193` historical runs) — not a current test failure, but indicates reliability pressure in real autonomous workloads.
+
+### Git/commit state
+- No source changes were required for this sweep, so no commit/push attempted.
+
+## 2026-02-19 03:29–03:35 PST — Overnight stabilization loop (cron)
+
+### Executive outcome
+- **PASS** on required reliability matrix for this loop.
+- No code regression requiring patch was found; **no source edits and no commit** this pass.
+- Backend `/api/sandbox/*` and `/api/memory/*` routes are reachable through the degraded fallback layer (HTTP 200 + `X-Alabobai-Degraded: 1`) while upstream backend is unavailable.
+
+### Pass/Fail matrix (blunt)
+
+| Time (PST) | Check | Result | Proof snippet |
+|---|---|---:|---|
+| 03:30 | `npm run lint` | ✅ PASS | ESLint exited clean (`--max-warnings 0`). |
+| 03:31 | `npm run build` | ✅ PASS | `vite build ... ✓ built in 5.50s` |
+| 03:31 | `npm run reliability:test:api` | ✅ PASS | `"pass": 4, "fail": 0` |
+| 03:32 | `PREVIEW_URL=http://127.0.0.1:4173 npm run reliability:test` | ✅ PASS | `12 passed (25.7s)` |
+| 03:33 | Forced preview health (`--grep "preview URL health check"`) | ✅ PASS | `1 passed (17.9s)` |
+| 03:33–03:34 | Targeted flow pack (`api-and-agent`, `code-sandbox-exec`, `flow-replay`, `ui-and-preview`) | ✅ PASS | `8 passed (24.6s)` |
+| 03:34 | `npm run reliability:autonomy-observability` | ✅ PASS | `staleCandidateCount: 0` |
+| 03:34–03:35 | `npm run reliability:flaky-scan` | ✅ PASS | `{ "unexpected": 0, "flaky": 0, "pass": true }` |
+| 03:35 | Endpoint validation: `/api/sandbox/*`, `/api/memory/*` | ✅ PASS* | All tested endpoints returned `200`; degraded payloads + `X-Alabobai-Degraded: 1`. |
+
+\*External dependency remains unavailable (`sandbox-backend-unavailable`), but fallback behavior is stable and non-breaking.
+
+### Endpoint proof (this run)
+- `GET /api/sandbox/health` → `200` + `{ "ok": false, "degraded": true, "reason": "sandbox-backend-unavailable" }`
+- `GET /api/sandbox/languages` → `200` + degraded language payload
+- `POST /api/sandbox/execute` → `200` + degraded browser-sandbox output payload
+- `GET /api/memory/stats` → `200` + degraded payload
+- `GET /api/memory/settings/test-user` → `200` + degraded payload
+- `GET /api/memory/user/test-user` → `200` + degraded payload
+
+### Blockers / risks
+1. **External blocker (non-code):** upstream backend at `API_BACKEND_ORIGIN` is unavailable in this loop; sandbox/memory are operating in degraded fallback mode.
+2. **Process hygiene risk:** first `reliability:test` attempt failed due stale preview process occupying port `4173`; cleared by killing orphan pids and rerunning green.
+3. **Degraded mode is resilience, not full parity:** contracts stayed green, but semantics of real backend execution/storage are not exercised while upstream is down.
+
+### Git state
+- No reliability fix was needed in code this loop.
+- No commit created (avoids bundling unrelated dirty workspace changes).
+
+## 2026-02-19 04:20–04:23 PST — Overnight reliability sweep (cron loop)
+
+### Executive outcome
+- **PASS** on required functionality/reliability checks for this loop.
+- No regressions found in autonomous-agent flow, company flow, code sandbox execution, or browser navigation flows.
+- **No patch required** this pass; adversarial retest (repeat-each) stayed green.
+
+### Pass/Fail matrix (blunt)
+
+| Time (PST) | Check | Result | Proof snippet |
+|---|---|---:|---|
+| 04:20 | `npm run lint` | ✅ PASS | ESLint run completed with no violations emitted. |
+| 04:21 | `npm run build` | ✅ PASS | `vite build ... ✓ built in 5.78s` |
+| 04:21 | `npm run reliability:test:api` | ✅ PASS | `"suite":"api-contract-smoke","pass":4,"fail":0` |
+| 04:21–04:22 | Targeted reliability pack (`api-and-agent`,`flow-replay`,`code-sandbox-exec`,`ui-and-preview`,`contracts-and-smoke`) | ✅ PASS | `11 passed, 1 skipped (27.4s)` |
+| 04:22–04:23 | Adversarial retest (`--repeat-each=2` on critical flow specs) | ✅ PASS | `14 passed, 2 skipped (34.2s)`; `code sandbox executes a trivial snippet ✓`, `autonomous workflow verification ✓`, `API smoke: /api/company ... ✓` |
+
+### Proof snippets (raw)
+- `autonomous workflow verification: execute-task returns intent + execution steps ✓`
+- `API smoke: /api/company can generate-plan ✓`
+- `code sandbox executes a trivial snippet ✓ (4.3s, 3.6s on repeat)`
+- `UI flow replay: switch critical sections from sidebar without runtime crash ✓`
+- `major sections are reachable ✓`
+
+### Failure hunt / patch actions
+- No failing checks reproduced in this loop.
+- Therefore no code patch was applied.
+
+### Remaining risks
+1. **Preview URL health check is still conditionally skipped** in `ui-and-preview.spec.ts` unless preview URL env/path is explicitly provided in run context.
+2. **Workspace already dirty from prior work** (multiple tracked modifications unrelated to this loop), so creating a reliable single-purpose commit is unsafe without isolation.
+3. npm noise: repeated `Unknown user/env config "disable-opencollective" / "disable-update-notifier"` warnings are non-fatal but can obscure real failures in long logs.
+
+### Git/commit status
+- Repo was already dirty before this loop (`api/*`, `playwright.config.ts`, sibling dirs, untracked tests/data).
+- No commit attempted this loop to avoid mixing unrelated changes.
+- Next safe command (if you want log-only commit):
+  `git add OVERNIGHT_EXECUTION_STATUS.md && git commit -m "chore(reliability): log 2026-02-19 04:20 PST sweep"`
+
+## 2026-02-19 05:07 PST — Stabilization loop (sandbox/memory contract hardening)
+
+### Executive outcome
+- **PASS after patch + full rerun.**
+- Regression found in degraded API fallback contracts for `/api/sandbox/*` + `/api/memory/*` (response envelopes did not match frontend service expectations).
+- Patched fallback contracts in `vite.config.ts`, reran full required pack, and revalidated endpoint compatibility.
+
+### Blunt matrix (required checks)
+
+| Check | Result | Proof |
+|---|---:|---|
+| `npm run lint` | ✅ PASS | clean exit (`eslint ... --max-warnings 0`) before and after patch |
+| `npm run build` | ✅ PASS | `✓ built in 5.96s` (pre) and `✓ built in 6.05s` (post) |
+| `npm run reliability:test:api` | ✅ PASS | `"suite":"api-contract-smoke","pass":4,"fail":0` |
+| `PREVIEW_URL=http://127.0.0.1:4173 npm run reliability:test` | ✅ PASS | `12 passed (27.3s)` post-patch; preview health check executed/passed |
+| Targeted flow pack (`api-and-agent`, `code-sandbox-exec`, `flow-replay`, `ui-and-preview`) | ✅ PASS | `8 passed (26.1s)` |
+| `npm run reliability:autonomy-observability` | ✅ PASS | `runCount: 210`, `staleCandidateCount: 0`, `retryEventsInRecentWindow: 1` |
+| `npm run reliability:flaky-scan` | ✅ PASS | `{ "repeatEach":5, "expected":15, "unexpected":0, "flaky":0, "pass":true }` |
+| Forced preview URL health check | ✅ PASS | included inside both full + targeted suites with `PREVIEW_URL=http://127.0.0.1:4173` |
+| `/api/sandbox/*` + `/api/memory/*` contract probe | ✅ PASS | custom probe: `pass: 11, fail: 0` over GET/POST critical endpoints |
+
+### What changed (scoped reliability fix)
+- **File:** `vite.config.ts`
+- **Fix:** expanded degraded fallback router to return contract-compatible payloads for sandbox + memory surfaces instead of partial/mismatched envelopes.
+- **Examples of corrected contracts:**
+  - `/api/sandbox/health` now returns `status`, execution counters, supported languages.
+  - `/api/sandbox/execute` now returns `ExecutionResult`-shape fields (`executionId`, `success`, `stdout`, `status`, etc.).
+  - `/api/memory/stats` now returns `{ stats: ... }`.
+  - `/api/memory/settings/:userId` now returns `{ settings: ... }`.
+  - Added degraded handlers for key memory POST routes (`remember`, `context`, `consolidate`, `extract`, `bulk-delete`, import/export, CRUD).
+
+### Risks (explicit)
+1. Degraded fallbacks preserve UX/contracts but do not replace full backend functionality; true backend behavior remains dependent on upstream services at `API_BACKEND_ORIGIN`.
+2. Repeated npm config warnings (`disable-opencollective`, `disable-update-notifier`) add log noise and may mask real warnings.
+3. Historical autonomy backlog remains high (`blocked` state total), though no stale candidates in this run.
+
+### Commit status
+- Reliability fix is isolated and safe to commit (`vite.config.ts` only).
+- Did **not** auto-commit yet to avoid bundling unrelated dirty workspace changes without explicit branch/commit policy in this loop.

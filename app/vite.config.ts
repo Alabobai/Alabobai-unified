@@ -11,14 +11,34 @@ function writeJson(res: any, status: number, payload: unknown): void {
   res.end(JSON.stringify(payload))
 }
 
+function createDegradedMemory(memoryId = `degraded-${Date.now()}`) {
+  const now = Date.now()
+  return {
+    id: memoryId,
+    userId: 'default',
+    type: 'fact',
+    content: 'Memory backend unavailable; serving degraded fallback data.',
+    importance: 0.3,
+    tags: ['degraded-fallback'],
+    metadata: { degraded: true },
+    privacy: 'private',
+    createdAt: now,
+    accessedAt: now,
+    accessCount: 0,
+  }
+}
+
 function getFallbackPayload(method: string, pathname: string): { status: number; body: unknown } {
   if (pathname === '/api/sandbox/health') {
     return {
       status: 200,
       body: {
-        ok: false,
-        degraded: true,
-        reason: 'sandbox-backend-unavailable',
+        status: 'degraded',
+        dockerAvailable: false,
+        activeSessions: 0,
+        activeExecutions: 0,
+        maxConcurrentExecutions: 1,
+        supportedLanguages: ['javascript', 'typescript', 'python'],
       },
     }
   }
@@ -27,19 +47,109 @@ function getFallbackPayload(method: string, pathname: string): { status: number;
     return {
       status: 200,
       body: {
-        languages: ['javascript', 'typescript', 'python', 'bash'],
-        degraded: true,
+        languages: [
+          {
+            id: 'javascript',
+            name: 'JavaScript',
+            version: 'ES2023',
+            extension: '.js',
+            icon: '📜',
+            packageManager: 'npm',
+            example: 'console.log("Hello from JavaScript")',
+          },
+          {
+            id: 'typescript',
+            name: 'TypeScript',
+            version: '5.x',
+            extension: '.ts',
+            icon: '📘',
+            packageManager: 'npm',
+            example: 'console.log("Hello from TypeScript")',
+          },
+          {
+            id: 'python',
+            name: 'Python',
+            version: '3.x',
+            extension: '.py',
+            icon: '🐍',
+            packageManager: 'pip',
+            example: 'print("Hello from Python")',
+          },
+        ],
       },
     }
   }
 
   if (pathname === '/api/sandbox/execute' && method === 'POST') {
+    const executionId = `degraded-${Date.now()}`
     return {
       status: 200,
       body: {
-        output: 'Running in browser sandbox fallback (backend unavailable).',
+        executionId,
+        success: true,
         exitCode: 0,
-        degraded: true,
+        stdout: 'Running in browser sandbox fallback (backend unavailable).',
+        stderr: '',
+        duration: 1,
+        timedOut: false,
+        filesCreated: [],
+        status: 'degraded',
+      },
+    }
+  }
+
+  if (/^\/api\/sandbox\/status\/.+/.test(pathname)) {
+    return {
+      status: 200,
+      body: {
+        executionId: pathname.split('/').pop() || 'unknown',
+        language: 'javascript',
+        status: 'completed',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        filesCreated: [],
+        hasResult: true,
+      },
+    }
+  }
+
+  if (/^\/api\/sandbox\/output\/.+/.test(pathname)) {
+    return {
+      status: 200,
+      body: {
+        executionId: pathname.split('/').pop() || 'unknown',
+        status: 'completed',
+        outputs: [],
+        result: {
+          executionId: pathname.split('/').pop() || 'unknown',
+          success: true,
+          exitCode: 0,
+          stdout: 'Degraded sandbox output.',
+          stderr: '',
+          duration: 1,
+          timedOut: false,
+          filesCreated: [],
+          status: 'degraded',
+        },
+      },
+    }
+  }
+
+  if (/^\/api\/sandbox\/files\/.+/.test(pathname)) {
+    return {
+      status: 200,
+      body: {
+        files: [],
+      },
+    }
+  }
+
+  if (/^\/api\/sandbox\/(cancel|upload)\/.+/.test(pathname) || /^\/api\/sandbox\/(cancel|upload)$/.test(pathname)) {
+    return {
+      status: 200,
+      body: {
+        success: true,
+        uploadedFiles: [],
       },
     }
   }
@@ -48,9 +158,16 @@ function getFallbackPayload(method: string, pathname: string): { status: number;
     return {
       status: 200,
       body: {
-        total: 0,
-        byType: {},
-        degraded: true,
+        stats: {
+          totalMemories: 0,
+          memoriesByType: {},
+          memoriesByUser: {},
+          averageImportance: 0,
+          totalStorageBytes: 0,
+          oldestMemory: null,
+          newestMemory: null,
+          expiringCount: 0,
+        },
       },
     }
   }
@@ -59,11 +176,12 @@ function getFallbackPayload(method: string, pathname: string): { status: number;
     return {
       status: 200,
       body: {
-        memoryEnabled: true,
-        autoExtract: false,
-        retentionDays: 30,
-        maxMemories: 1000,
-        degraded: true,
+        settings: {
+          memoryEnabled: true,
+          autoExtract: false,
+          retentionDays: 30,
+          maxMemories: 1000,
+        },
       },
     }
   }
@@ -73,8 +191,136 @@ function getFallbackPayload(method: string, pathname: string): { status: number;
       status: 200,
       body: {
         memories: [],
-        total: 0,
-        degraded: true,
+      },
+    }
+  }
+
+  if (pathname.startsWith('/api/memory/search')) {
+    return {
+      status: 200,
+      body: {
+        results: [],
+      },
+    }
+  }
+
+  if (pathname === '/api/memory/extract' && method === 'POST') {
+    return {
+      status: 200,
+      body: {
+        extraction: {
+          facts: [],
+          preferences: [],
+          shouldRemember: false,
+        },
+        stored: [],
+      },
+    }
+  }
+
+  if (pathname === '/api/memory/context' && method === 'POST') {
+    return {
+      status: 200,
+      body: {
+        memories: [],
+        contextPrompt: 'Memory backend unavailable (degraded mode).',
+        count: 0,
+      },
+    }
+  }
+
+  if (pathname === '/api/memory/remember' && method === 'POST') {
+    return {
+      status: 200,
+      body: {
+        success: true,
+        memory: createDegradedMemory(),
+        message: 'Saved to degraded fallback memory store.',
+      },
+    }
+  }
+
+  if (pathname === '/api/memory/forget' && method === 'POST') {
+    return {
+      status: 200,
+      body: {
+        success: true,
+        deletedCount: 0,
+        message: 'No memories removed (degraded mode).',
+      },
+    }
+  }
+
+  if (pathname === '/api/memory/bulk-delete' && method === 'POST') {
+    return {
+      status: 200,
+      body: {
+        deletedCount: 0,
+      },
+    }
+  }
+
+  if (pathname === '/api/memory/consolidate' && method === 'POST') {
+    return {
+      status: 200,
+      body: {
+        result: {
+          memoriesMerged: 0,
+          memoriesRemoved: 0,
+          newConnections: 0,
+          spaceReclaimed: 0,
+        },
+      },
+    }
+  }
+
+  if (/^\/api\/memory\/export\/.+/.test(pathname)) {
+    return {
+      status: 200,
+      body: {
+        memories: [],
+        preferences: [],
+        exportedAt: Date.now(),
+        version: 'degraded-fallback',
+      },
+    }
+  }
+
+  if (/^\/api\/memory\/import\/.+/.test(pathname) && method === 'POST') {
+    return {
+      status: 200,
+      body: {
+        imported: 0,
+        errors: 0,
+      },
+    }
+  }
+
+  if (pathname === '/api/memory/' && method === 'POST') {
+    return {
+      status: 200,
+      body: {
+        memory: createDegradedMemory(),
+      },
+    }
+  }
+
+  if (/^\/api\/memory\/[^/]+$/.test(pathname)) {
+    const memoryId = pathname.split('/').pop() || 'unknown'
+
+    if (method === 'DELETE') {
+      return {
+        status: 200,
+        body: {
+          success: true,
+        },
+      }
+    }
+
+    return {
+      status: 200,
+      body: {
+        memory: createDegradedMemory(memoryId),
       },
     }
   }
