@@ -21,12 +21,18 @@ test('home shell loads without fatal runtime errors', async ({ page }) => {
 test('major sections are reachable', async ({ page }) => {
   await page.goto('/')
 
-  const sections = ['Autonomous Agents', 'Command Center', 'Code Sandbox', 'Memory Dashboard']
+  const sections = [
+    { name: 'Autonomous Agents', path: '/autonomous-agents' },
+    { name: 'Command Center', path: '/command-center' },
+    { name: 'Code Sandbox', path: '/code-sandbox' },
+    { name: 'Memory Dashboard', path: '/memory-dashboard' },
+  ]
 
-  for (const name of sections) {
-    const btn = page.getByRole('button', { name })
+  for (const section of sections) {
+    const btn = page.getByRole('button', { name: section.name })
     await expect(btn).toBeVisible({ timeout: 15_000 })
-    await btn.click()
+    await btn.click({ noWaitAfter: true })
+    await expect(page).toHaveURL(new RegExp(`${section.path}$`), { timeout: 15_000 })
     await expect(page.locator('body')).toBeVisible()
     await expect(page.getByText(/encountered an error/i)).toHaveCount(0)
   }
