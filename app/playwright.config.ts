@@ -1,6 +1,9 @@
 import { defineConfig, devices } from '@playwright/test'
 
 const baseURL = process.env.BASE_URL || 'http://127.0.0.1:4173'
+const parsedBaseURL = new URL(baseURL)
+const previewHost = parsedBaseURL.hostname
+const previewPort = Number(parsedBaseURL.port || (parsedBaseURL.protocol === 'https:' ? 443 : 80))
 
 export default defineConfig({
   testDir: './tests/reliability',
@@ -22,9 +25,11 @@ export default defineConfig({
   webServer: process.env.SKIP_WEBSERVER
     ? undefined
     : {
-        command: 'npm run build && npm run preview -- --host 127.0.0.1 --port 4173 --strictPort',
+        command: `npm run build && npm run preview -- --host ${previewHost} --port ${previewPort} --strictPort`,
         url: baseURL,
-        reuseExistingServer: !process.env.CI,
+        // Reliability sweeps may run in loops where preview is already up.
+        // Reuse existing server to avoid hard failure on occupied port in reruns.
+        reuseExistingServer: true,
         timeout: 120_000,
       },
   projects: [
