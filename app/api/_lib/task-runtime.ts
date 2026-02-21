@@ -225,29 +225,29 @@ async function dispatchInProcess(step: PlanStep, origin: string): Promise<Respon
 
     switch (step.route) {
       case '/api/chat':
-        return (await import('../chat')).default(request)
+        return (await import('../chat.ts')).default(request)
       case '/api/company':
-        return (await import('../company')).default(request)
+        return (await import('../company.ts')).default(request)
       case '/api/search':
-        return (await import('../search')).default(request)
+        return (await import('../search.ts')).default(request)
       case '/api/proxy':
-        return (await import('../proxy')).default(request)
+        return (await import('../proxy.ts')).default(request)
       case '/api/generate-image':
-        return (await import('../generate-image')).default(request)
+        return (await import('../generate-image.ts')).default(request)
       case '/api/generate-video':
-        return (await import('../generate-video')).default(request)
+        return (await import('../generate-video.ts')).default(request)
       case '/api/fetch-page':
-        return (await import('../fetch-page')).default(request)
+        return (await import('../fetch-page.ts')).default(request)
       case '/api/local-ai/chat':
-        return (await import('../local-ai/chat')).default(request)
+        return (await import('../local-ai/chat.ts')).default(request)
       case '/api/local-ai/models':
-        return (await import('../local-ai/models')).default(request)
+        return (await import('../local-ai/models.ts')).default(request)
       case '/api/local-ai/knowledge/stats':
-        return (await import('../local-ai/knowledge/stats')).default(request)
+        return (await import('../local-ai/knowledge/stats.ts')).default(request)
       case '/api/local-ai/knowledge/ingest':
-        return (await import('../local-ai/knowledge/ingest')).default(request)
+        return (await import('../local-ai/knowledge/ingest.ts')).default(request)
       case '/api/local-ai/knowledge/search':
-        return (await import('../local-ai/knowledge/search')).default(request)
+        return (await import('../local-ai/knowledge/search.ts')).default(request)
       default:
         return null
     }
@@ -341,7 +341,7 @@ export async function createTaskRun(input: ExecuteTaskInput, origin: string): Pr
   await hydrate()
   originForRunner = origin
 
-  const task = input.task?.trim() || ''
+  const task = typeof input.task === 'string' ? input.task.trim() : ''
   const taskForMatching = normalizeTaskForMatching(task)
   const intent = inferIntent(taskForMatching)
   const matchedCapabilities = retrieveCapabilities({ task: taskForMatching, context: input.context, limit: 5 })
