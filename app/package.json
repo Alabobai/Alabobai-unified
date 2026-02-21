@@ -15,7 +15,9 @@
     "reliability:test:loop": "node ./scripts/retest-loop.mjs",
     "reliability:flaky-scan": "node ./scripts/flaky-scan.mjs",
     "reliability:synthetic": "node ./scripts/synthetic-monitor.mjs",
-    "reliability:autonomy-observability": "node ./scripts/autonomy-observability.mjs"
+    "reliability:autonomy-observability": "node ./scripts/autonomy-observability.mjs",
+    "reliability:backend-hard-check": "node ./scripts/backend-hard-check.mjs",
+    "reliability:test:strict": "npm run reliability:backend-hard-check && STRICT_NON_DEGRADED=1 npm run reliability:test:api && STRICT_NON_DEGRADED=1 PREVIEW_URL=${PREVIEW_URL:-http://127.0.0.1:4173} npm run reliability:test"
   },
   "dependencies": {
     "@mlc-ai/web-llm": "^0.2.0",

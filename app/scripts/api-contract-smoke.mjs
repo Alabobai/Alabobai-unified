@@ -19,6 +19,7 @@ async function post(handler, path, body) {
   return { status: res.status, json }
 }
 
+const strictNonDegraded = ['1', 'true', 'yes', 'on'].includes(String(process.env.STRICT_NON_DEGRADED || '').toLowerCase())
 const checks = []
 
 const s = await post(searchHandler, '/api/search', { query: 'site reliability engineering', limit: 3 })
@@ -41,10 +42,20 @@ checks.push({
 })
 
 const e = await post(executeTaskHandler, '/api/execute-task', { task: 'Create AI company plan', dryRun: false })
+const executeTaskStatus = String(e.json?.status || '')
 checks.push({
-  name: 'execute-task contract',
-  ok: e.status === 200 && typeof e.json?.status === 'string' && Array.isArray(e.json?.execution?.steps),
-  evidence: { status: e.status, runStatus: e.json?.status, steps: e.json?.execution?.steps?.length ?? 0 },
+  name: strictNonDegraded ? 'execute-task contract (strict non-degraded)' : 'execute-task contract',
+  ok:
+    e.status === 200 &&
+    typeof e.json?.status === 'string' &&
+    Array.isArray(e.json?.execution?.steps) &&
+    (!strictNonDegraded || executeTaskStatus !== 'degraded'),
+  evidence: {
+    status: e.status,
+    runStatus: e.json?.status,
+    steps: e.json?.execution?.steps?.length ?? 0,
+    strictNonDegraded,
+  },
 })
 
 const created = await post(executeTaskHandler, '/api/execute-task', { task: 'Create AI company plan', async: true })

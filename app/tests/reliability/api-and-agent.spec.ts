@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test'
 
+const strictNonDegraded = ['1', 'true', 'yes', 'on'].includes(String(process.env.STRICT_NON_DEGRADED || '').toLowerCase())
+
 test('API smoke: /api/search returns non-empty results for broad query', async ({ request, baseURL }) => {
   const res = await request.post(`${baseURL}/api/search`, {
     data: { query: 'global AI market trends', limit: 5 },
@@ -42,5 +44,9 @@ test('autonomous workflow verification: execute-task returns intent + execution 
   expect(body?.intent?.label).toBeTruthy()
   expect(Array.isArray(body?.execution?.steps)).toBeTruthy()
   expect((body?.execution?.steps ?? []).length).toBeGreaterThan(0)
-  expect(['ok', 'partial', 'blocked', 'degraded']).toContain(String(body?.status))
+  const runStatus = String(body?.status)
+  expect(['ok', 'partial', 'blocked', 'degraded']).toContain(runStatus)
+  if (strictNonDegraded) {
+    expect(runStatus).not.toBe('degraded')
+  }
 })
