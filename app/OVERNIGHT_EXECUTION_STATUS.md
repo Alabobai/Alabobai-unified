@@ -4169,3 +4169,41 @@ API_BACKEND_ORIGIN=https://<live-backend> STRICT_NON_DEGRADED=1 npm run reliabil
 - Sweep is stable.
 - Changes made: this status log update only.
 - No push attempted in this cron turn.
+
+## 2026-02-21 01:21 PST — Overnight reliability sweep (live repo)
+
+### Executive outcome
+- **PASS on implemented reliability scope.**
+- No functional failures reproduced in this loop; **no code patch required**.
+- Main hard blocker remains environment-level: backend hard-check target (`API_BACKEND_ORIGIN`) unreachable here, so strict backend reachability cannot be proven from this host config.
+
+### Pass/Fail matrix (blunt)
+
+| Check | Result | Proof snippet |
+|---|---:|---|
+| `npm run lint` | ✅ PASS | `EXIT:0` |
+| `npm run build` | ✅ PASS | `✓ built in 9.53s` |
+| `npm run reliability:test:api` | ✅ PASS | `"suite":"api-contract-smoke","pass":4,"fail":0` |
+| Playwright targeted flows (`api-and-agent`, `flow-replay`, `code-sandbox-exec`, `ui-and-preview`) | ✅ PASS | `7 passed, 1 skipped` |
+| Preview URL navigation health check (forced) | ✅ PASS | `preview URL health check ... 1 passed` |
+| Adversarial/strict retest (`PREVIEW_URL=http://127.0.0.1:4173 npm run reliability:test:strict`) | ✅ PASS* | `12 passed, 5 skipped` + strict non-degraded execute-task true |
+| Backend hard reachability inside strict run | ⚠️ SKIPPED BY DESIGN | `skipReason: backend origin not configured/reachable ... set API_BACKEND_ORIGIN` |
+
+\*Strict run passed for available scope; skipped checks are environment-gated billing/company-cycle paths and unreachable backend-origin hard check.
+
+### Focused evidence (raw)
+- `api-contract-smoke`: search/company/execute-task/task-runs checks all green.
+- `autonomous workflow verification: execute-task returns intent + execution steps` ✅
+- `code sandbox executes a trivial snippet` ✅
+- `UI flow replay: switch critical sections from sidebar without runtime crash` ✅
+- `major sections are reachable` ✅
+- `preview URL health check` ✅ when PREVIEW_URL provided.
+
+### Remaining risks (real, not cosmetic)
+1. **Backend origin hard-check not enforceable in this environment** (`/api/sandbox/health`, `/api/memory/stats` fetch failed against default `http://127.0.0.1:8888`). Reliability of real upstream integration is still unproven in this run.
+2. **5 strict-suite tests skipped** (company-cycle + billing contracts) due env gating; these pathways are not validated tonight.
+3. Repeated npm config warnings (`disable-opencollective`, `disable-update-notifier`) are noise-only right now, but they can hide real warnings in long logs.
+
+### Next hardening command (if env is available)
+- `API_BACKEND_ORIGIN=<reachable_backend_origin> PREVIEW_URL=<preview_url> npm run reliability:test:strict`
+
