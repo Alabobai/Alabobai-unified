@@ -4598,3 +4598,351 @@ API_BACKEND_ORIGIN=https://<live-backend> STRICT_NON_DEGRADED=1 npm run reliabil
 - `API_BACKEND_ORIGIN=<reachable-backend> npm run reliability:backend-hard-check`
 - `STRICT_NON_DEGRADED=1 PREVIEW_URL=http://127.0.0.1:4173 npm run reliability:test`
 - Enable fixtures/secrets for skipped billing/company-cycle tests, then re-run `npm run reliability:test:strict`
+
+## 2026-02-21 08:12 PST — Full stabilization sweep (required pack + backend endpoint validation)
+
+### Executive outcome
+- **PASS on all non-blocked reliability/functionality gates.**
+- **External blocker remains for direct backend origin validation** (`http://127.0.0.1:8888` unreachable in this run environment).
+- No regressions detected in required flow pack; no reliability code patch was needed this pass.
+
+### Blunt matrix (required checks)
+
+| Check | Result | Proof |
+|---|---:|---|
+| `npm run lint` | ✅ PASS | clean exit (`eslint ... --max-warnings 0`) |
+| `npm run build` | ✅ PASS | `vite build` completed (`✓ built in 9.71s`) |
+| `npm run reliability:test:api` | ✅ PASS | `api-contract-smoke`: `pass: 4`, `fail: 0` |
+| `PREVIEW_URL=http://127.0.0.1:4173 npm run reliability:test` | ✅ PASS | `12 passed`, `5 skipped` |
+| Forced PREVIEW URL health check | ✅ PASS | `ui-and-preview.spec.ts` health test: `1 passed` |
+| Targeted flow pack (`api-and-agent`, `code-sandbox-exec`, `flow-replay`, `ui-and-preview`) | ✅ PASS | `8 passed` |
+| `npm run reliability:autonomy-observability` | ✅ PASS | `runCount: 400`, `staleCandidateCount: 0` |
+| `npm run reliability:flaky-scan` | ✅ PASS | `expected: 20`, `unexpected: 0`, `flaky: 0`, `pass: true` |
+| `npm run reliability:backend-hard-check` (`/api/sandbox/health`, `/api/memory/stats`) | ⚠️ BLOCKED (external) | `failed: 2`, `skipped: true`, `skipReason: backend origin not configured/reachable` |
+| Direct backend probes (`/api/sandbox/*`, `/api/memory/*`) at `127.0.0.1:8888` | ⚠️ BLOCKED (external) | `fetch failed` for `/api/sandbox/health`, `/api/sandbox/execute`, `/api/memory/stats`, `/api/memory/search` |
+| Preview-surface endpoint validation (`/api/sandbox/*`, `/api/memory/*`) via forced preview | ✅ PASS (degraded fallback path) | all returned `HTTP 200` (`/api/sandbox/health`, `/api/sandbox/languages`, `/api/memory/stats`, `/api/memory/search`) |
+
+### Proof/artifacts
+- Run directory: `.overnight-runs/20260221-080011`
+- Key logs:
+  - `.overnight-runs/20260221-080011/reliability_test_full.log`
+  - `.overnight-runs/20260221-080011/targeted_flow_pack.log`
+  - `.overnight-runs/20260221-080011/flaky_scan.log`
+  - `.overnight-runs/20260221-080011/backend_hard_check.log`
+  - `.overnight-runs/20260221-080011/backend_endpoints_direct.log`
+
+### Changes made
+- **No code changes this run** (stabilization gates green on non-blocked scope).
+- **No commit created** (avoided bundling with pre-existing unrelated dirty files).
+
+### Risks / next actions
+1. **Hard blocker**: non-degraded backend at `API_BACKEND_ORIGIN` is unreachable in this environment; direct `/api/sandbox/*` + `/api/memory/*` runtime cannot be certified until backend is up.
+2. To clear blocker next run: start/provide backend origin (`API_BACKEND_ORIGIN`) and rerun `reliability:backend-hard-check` + direct endpoint probes.
+3. Existing default suite still includes intentional skips in contracts pack; keep PREVIEW_URL-forced check in loop to avoid false green.
+
+## [2026-02-21 08:52 PST] Cron sweep: functionality/reliability pass (no patch required)
+
+### Scope executed this turn
+- Lint/build gate
+- API contract/smoke checks
+- Autonomous-agent flow checks
+- Company flow checks (where runnable in this env)
+- Code sandbox execution checks
+- Browser preview navigation checks
+- Adversarial/strict retest pass
+
+### Pass/Fail matrix
+| Check | Result | Proof snippet |
+|---|---|---|
+| `npm run lint` | PASS | `eslint . --max-warnings 0` exited 0 |
+| `npm run build` | PASS | `✓ built in 8.53s` |
+| `npm run reliability:test:api` | PASS | `"pass": 4, "fail": 0` |
+| `PREVIEW_URL=http://127.0.0.1:4173 npm run reliability:test` | PASS | `12 passed, 5 skipped` |
+| Autonomous agent flow (`api-and-agent.spec.ts`) | PASS | `execute-task returns intent + execution steps` |
+| Code sandbox exec (`code-sandbox-exec.spec.ts`) | PASS | `code sandbox executes a trivial snippet` |
+| Browser preview navigation (`ui-and-preview.spec.ts`) | PASS | `major sections are reachable` + `preview URL health check` |
+| Company flow checks (`run-company-cycle` contracts) | SKIPPED (guarded) | 3 contract tests skipped by suite gating |
+| Adversarial retest (`reliability:test:strict`) | PASS | strict execute-task check passed + playwright `12 passed, 5 skipped` |
+| Backend hard-check in strict run | SOFT-SKIP | `skipReason: backend origin not configured/reachable; set API_BACKEND_ORIGIN` |
+
+### Blunt assessment
+- Core reliability lane is green for current local test envelope.
+- No functional regressions detected in autonomous flow, sandbox execution, or preview routing.
+- No immediate patch required this cycle.
+
+### Remaining risks
+1. `run-company-cycle` and billing webhook/entitlement paths remain unverified in this environment (suite-skipped), so production-only failures are still possible there.
+2. Backend hard-check is not enforcing sandbox/metrics endpoints without `API_BACKEND_ORIGIN`; hidden backend drift can slip through.
+3. Current suite validates happy-path and basic guardrails; deeper adversarial payload and concurrency pressure are still out-of-band unless flaky/loop stress is added.
+
+### Git/commit state
+- No code changes made; nothing to commit.
+
+## [RUN] 2026-02-21 09:33 PST — Stabilization sweep (cron 719fdcfb-f600-4372-9a79-8d65d3a826e7)
+
+### Blunt matrix
+| Check | Result | Proof |
+|---|---|---|
+| `npm run lint` | PASS | eslint exited 0 |
+| `npm run build` | PASS | vite build complete (`✓ built in 8.92s`) |
+| `npm run reliability:test:api` | PASS | `pass: 4, fail: 0` |
+| `npm run reliability:test` (forced `PREVIEW_URL`) | PASS | `12 passed, 5 skipped` |
+| Targeted flow pack (`api-and-agent`, `code-sandbox-exec`, `flow-replay`, `ui-and-preview`) | PASS | `8 passed` |
+| `npm run reliability:autonomy-observability` | PASS | `runCount: 400`, `staleCandidateCount: 0` |
+| `npm run reliability:flaky-scan` | PASS | `expected: 20`, `unexpected: 0`, `flaky: 0` |
+| Backend hard check (`/api/sandbox/health`, `/api/memory/stats`) | BLOCKED (external) | `upstreamOrigin=http://127.0.0.1:8888`, both fetch failed, script marked `skipped: true` because backend origin not configured/reachable |
+
+### Endpoint validation focus
+- `/api/sandbox/*` and `/api/memory/*` upstream validation executed via `reliability:backend-hard-check`.
+- Current run confirms no local router regression in frontend test path, but dedicated backend service was unreachable in this environment.
+- This is treated as **environment dependency blocker** (missing/unreachable backend origin), not a code crash inside this run.
+
+### Changes made this run
+- No reliability code patches were required for this pass.
+- No commit created (workspace contains substantial unrelated dirty/untracked changes; unsafe to bundle).
+
+### Risks / blockers
+1. **External backend dependency unresolved:** runtime backend at `127.0.0.1:8888` not reachable; cannot fully assert live `/api/sandbox/*` and `/api/memory/*` service behavior beyond graceful skip path.
+2. Skipped tests in broader reliability suite remain conditional on optional runtime routes (`/api/agents/run-company-cycle`, billing routes); still non-blocking for this pass.
+
+### Next actions
+- Re-run this exact matrix once `API_BACKEND_ORIGIN` points to a live backend (or local backend process is started) to convert backend check from BLOCKED→PASS.
+- If backend becomes reachable and fails, patch router/runtime startup mismatch immediately and repeat loop.
+
+## [2026-02-21 09:54 PST] Cron sweep: reliability loop executed (no new patch needed)
+
+### Loop execution summary
+1) Ran lint/build + targeted smoke checks.
+2) Ran autonomous-agent flow, company-flow coverage (where enabled), code sandbox execution, and preview navigation checks.
+3) No functional failures in runnable scope, so no patch applied.
+4) Re-ran strict suite for adversarial retest.
+5) Logged evidence + residual risk.
+
+### Pass/Fail matrix
+| Check | Result | Proof snippet |
+|---|---|---|
+| `npm run lint` | PASS | eslint completed with exit 0 |
+| `npm run build` | PASS | `✓ built in 9.24s` |
+| `npm run reliability:test:api` | PASS | `"pass": 4, "fail": 0` |
+| Flow pack (`api-and-agent`, `flow-replay`, `code-sandbox-exec`, `ui-and-preview`) | PASS | `7 passed, 1 skipped` (skip = preview URL env gate) |
+| Forced preview health (`PREVIEW_URL=http://127.0.0.1:4173 ... --grep "preview URL health check"`) | PASS | `1 passed (806ms)` |
+| Strict adversarial retest (`PREVIEW_URL=http://127.0.0.1:4173 npm run reliability:test:strict`) | PASS | `12 passed, 5 skipped`; strict execute-task contract `strictNonDegraded: true` |
+| Backend hard check (`/api/sandbox/health`, `/api/memory/stats`) | BLOCKED (env) | `skipped: true`, `skipReason: backend origin not configured/reachable`, upstream `http://127.0.0.1:8888` fetch failed |
+
+### Blunt assessment
+- Functional reliability in the currently executable local envelope is green.
+- Autonomous workflow, company UI navigation path, code sandbox execution, and browser preview route checks all passed.
+- No immediate reliability patch was required this turn.
+
+### Remaining risks
+1. Backend-origin dependency remains unresolved (`API_BACKEND_ORIGIN`/`127.0.0.1:8888` unreachable), so direct live validation for `/api/sandbox/*` and `/api/memory/*` is still unproven.
+2. 5 strict-suite tests are intentionally skipped by feature/env gates (run-company-cycle + billing contracts), leaving production-only risk on those paths.
+3. Workspace has broad pre-existing dirty/untracked changes; commit is unsafe without isolating scope.
+
+### Git / commit status
+- No code changes introduced by this run.
+- No commit created.
+- Push not attempted (nothing safely isolated to commit from this run). If needed next: `git add OVERNIGHT_EXECUTION_STATUS.md && git commit -m "chore: log overnight reliability sweep evidence"`.
+
+## 2026-02-21 10:57 PST — Overnight reliability sweep (live repo, functionality-only)
+
+### Executive outcome
+- **PASS with caveats.** Core reliability/function checks passed repeatedly.
+- **No new code patch applied in this run** (no reproducible functional failure in exercised scope).
+- **Known hard-check caveat remains:** backend upstream hard-check was skipped due missing/unreachable configured backend origin in this environment.
+
+### Pass/Fail matrix (blunt)
+
+| Check | Result | Proof snippet |
+|---|---:|---|
+| `npm run lint` | ✅ PASS | `eslint . --ext ts,tsx ...` exited clean (no errors emitted) |
+| `npm run build` | ✅ PASS | `✓ built in 9.05s` |
+| `npm run reliability:test:api` | ✅ PASS | `"pass": 4, "fail": 0` |
+| Targeted flow pack (`api-and-agent`, `contracts-and-smoke`, `code-sandbox-exec`, `ui-and-preview`, `flow-replay`) | ✅ PASS (with intentional skips) | `11 passed, 6 skipped` |
+| `npm run reliability:autonomy-observability` | ✅ PASS | `"runCount": 400`, `"staleCandidateCount": 0` |
+| `npm run reliability:backend-hard-check` | ⚠️ CAVEAT / SKIPPED | `"skipped": true`, `"skipReason": "backend origin not configured/reachable..."` |
+| `PREVIEW_URL=http://127.0.0.1:4173 npm run reliability:test:strict` | ✅ PASS (gated suite) | `12 passed, 5 skipped` + strict non-degraded execute-task check passed |
+| Adversarial retest `npm run reliability:flaky-scan` | ✅ PASS | `"repeatEach": 5`, `"unexpected": 0`, `"flaky": 0`, `"pass": true` |
+| Edge-case synthetic probe `npm run reliability:synthetic` | ✅ PASS | `"failed": 0`, `"p95LatencyMs": 1678` |
+
+### Evidence excerpts
+- Strict suite included autonomous-agent flow pass:
+  - `autonomous workflow verification: execute-task returns intent + execution steps` ✅
+- Code sandbox execution check:
+  - `code sandbox executes a trivial snippet` ✅
+- Browser preview URL navigation check:
+  - `preview URL health check` ✅ (in strict run where PREVIEW_URL was explicitly set)
+- Company flow contract in API smoke:
+  - `company contract` ✅ (`"hasPlan": true`)
+
+### Patches made this run
+- **None.** No failing functionality reproduced in this sweep scope.
+
+### Remaining risks / blockers
+1. **Backend hard-check is not truly enforced in this environment** unless `API_BACKEND_ORIGIN` is set to a reachable backend.
+2. **5 reliability tests are skipped by design/environment gating** (company-cycle + billing contracts), so that surface is not fully verified in this host run.
+3. Repo is already broadly dirty from prior work; sweep stability does **not** imply all pending diffs are release-safe.
+
+### Git/commit status
+- Commit **not created** in this run (no new fix to commit, and working tree already contains unrelated/pre-existing changes).
+- If you want an explicit sweep commit anyway after review, next command would be:
+  - `git add OVERNIGHT_EXECUTION_STATUS.md && git commit -m "chore: overnight reliability sweep evidence (2026-02-21 10:57 PST)"`
+
+
+## 2026-02-21 11:03 PST — Cron stabilization pass (full required matrix, no new app regressions)
+
+### Executive outcome
+- **PASS with one explicit external/env blocker.**
+- All required reliability/functionality checks executed and green in this run after correcting a runner invocation issue (not app code).
+- Backend hard-check to upstream origin is **env-blocked** (default `API_BACKEND_ORIGIN` unreachable), but direct endpoint validation against preview showed `/api/sandbox/health` and `/api/memory/stats` returning **200**.
+
+### Blunt matrix (required checks)
+
+| Required check | Result | Proof |
+|---|---:|---|
+| `npm run lint` | ✅ PASS | clean exit (`eslint ... --max-warnings 0`) |
+| `npm run build` | ✅ PASS | `vite build ... ✓ built in ~9s` |
+| `npm run reliability:test:api` | ✅ PASS | `api-contract-smoke` passed (`pass:4 fail:0`) |
+| `PREVIEW_URL=http://127.0.0.1:4173 npm run reliability:test` | ✅ PASS | Playwright reliability suite: `12 passed, 5 skipped` |
+| Forced preview health check (`--grep "preview URL health check"`) | ✅ PASS | `1 passed (850ms)` |
+| Targeted flow pack (`api-and-agent`, `code-sandbox-exec`, `flow-replay`, `ui-and-preview`) | ✅ PASS | `8 passed (8.0s)` |
+| `npm run reliability:autonomy-observability` | ✅ PASS | `runCount: 400`, `staleCandidateCount: 0`, `retryEventsInRecentWindow: 0` |
+| `npm run reliability:flaky-scan` | ✅ PASS | `{ repeatEach: 5, unexpected: 0, flaky: 0, pass: true }` |
+| `/api/sandbox/*` + `/api/memory/*` endpoint validation | ✅ PASS (direct) / ⚠️ SKIP (upstream hard-check) | direct `curl` via preview returned `200` for `/api/sandbox/health` and `/api/memory/stats`; `backend-hard-check` skipped due unreachable default upstream `127.0.0.1:8888` |
+
+### What changed this run
+- **No app source patch required.**
+- Fixed only the execution harness for this run (command invocation syntax in the temporary runner) and reran required checks correctly.
+
+### External blocker(s)
+1. **Backend hard-check origin unavailable by default** (`API_BACKEND_ORIGIN=http://127.0.0.1:8888` not reachable in this environment).
+   - Marked as external/env dependency blocker for strict upstream enforcement.
+   - Non-blocked reliability maximized with direct preview endpoint checks and full reliability suite.
+
+### Risks (straight)
+1. `reliability:backend-hard-check` can report skipped/soft-green when upstream origin is not configured/reachable; strict backend enforcement depends on environment wiring.
+2. Working tree remains broadly dirty with unrelated pre-existing changes; safe scoped commit was not attempted.
+3. Repeated npm user-config warnings add noise in long logs.
+
+### Commit decision
+- **No commit created** (no scoped app reliability fix necessary in this pass; repository contains unrelated dirty files).
+
+## 2026-02-21 11:59 PT — Reliability Sweep (Cron 5fd00ea3-d993-4f87-93f0-3184bdf15f6c)
+
+### Pass/Fail Matrix (functionality/reliability only)
+
+| Check | Result | Proof snippet |
+|---|---|---|
+| `npm run lint` | PASS | ESLint exited clean (no warnings/errors). |
+| `npm run build` | PASS | `✓ built in 8.85s` (Vite prod build complete). |
+| API smoke/contracts (`npm run reliability:test:api`) | PASS | JSON: `"suite":"api-contract-smoke","pass":4,"fail":0` |
+| Autonomous-agent flow checks (Playwright) | PASS | `autonomous workflow verification ... execute-task returns intent + execution steps` passed. |
+| Company flow checks (Playwright contract suite) | PARTIAL / GATED | 5 tests skipped (run-company-cycle + billing flows) due env/dependency gating in current harness; no hard failures. |
+| Code sandbox execution | PASS | `code sandbox executes a trivial snippet` passed (4.4s). |
+| Browser preview URL navigation | PASS | `preview URL health check` passed; major sections reachable. |
+| UI flow replay | PASS | `switch critical sections from sidebar without runtime crash` passed. |
+| Autonomy observability stress check | PASS | `runCount: 400`, `stateCounts: { succeeded: 399, blocked: 1 }`, `staleCandidateCount: 0`. |
+| Backend hard check | SOFT-SKIP (non-blocking in this env) | Script reported `skipped: true` with `skipReason: backend origin not configured/reachable; set API_BACKEND_ORIGIN to enforce check`. |
+| Adversarial/flake retest (`npm run reliability:flaky-scan`) | PASS | JSON: `"repeatEach":5,"unexpected":0,"flaky":0,"pass":true` |
+
+### Blunt status
+- No regressions detected in exercised reliability paths.
+- No code patch was required in this sweep (nothing failed in executable paths).
+- Suite is stable under repeat-each UI/preview replay and core API smoke.
+
+### Remaining risks (real, not cosmetic)
+1. **Coverage gap (gated tests):** company-cycle async/billing contract checks were skipped in Playwright run; reliability for those endpoints still depends on environment wiring and credentials.
+2. **Backend hard-check not enforced:** upstream health endpoints were unreachable at default `http://127.0.0.1:8888`; check was explicitly skipped, so this does **not** prove backend origin health.
+3. **Single-worker run profile:** current run used one worker; parallel/concurrency race regressions are not ruled out.
+
+### Suggested next command to close the biggest gap
+```bash
+API_BACKEND_ORIGIN=<reachable-backend-origin> npm run reliability:test:strict
+```
+
+### Git/commit
+- No source changes made, so no commit/push attempted.
+
+## 2026-02-21 12:32 PST — Cron stabilization pass (required reliability matrix + backend endpoint validation)
+
+### Executive outcome
+- **PASS with explicit external/env caveats.**
+- All required checks executed and passed in this run.
+- `/api/sandbox/health` and `/api/memory/stats` both returned **HTTP 200** through forced preview URL; both reported **degraded mode** (non-fatal) due local runtime dependencies.
+
+### Blunt pass/fail matrix
+
+| Required check | Result | Proof |
+|---|---:|---|
+| `npm run lint` | ✅ PASS | ESLint exited clean (no errors/warnings). |
+| `npm run build` | ✅ PASS | Vite build completed successfully (`✓ built in 11.75s`). |
+| `npm run reliability:test:api` | ✅ PASS | `api-contract-smoke`: `"pass": 4, "fail": 0`. |
+| `PREVIEW_URL=http://127.0.0.1:4173 npm run reliability:test` | ✅ PASS | Playwright reliability suite: `12 passed, 5 skipped`. |
+| Forced PREVIEW_URL health check | ✅ PASS | `preview URL health check` test: `1 passed`. |
+| Targeted flow pack (`api-and-agent`, `code-sandbox-exec`, `flow-replay`, `ui-and-preview`) | ✅ PASS | `8 passed (9.6s)`. |
+| `npm run reliability:autonomy-observability` | ✅ PASS | `runCount: 400`, `staleCandidateCount: 0`, `retryEventsInRecentWindow: 0`. |
+| `npm run reliability:flaky-scan` | ✅ PASS | JSON result: `unexpected: 0`, `flaky: 0`, `pass: true` (`repeatEach: 5`). |
+| Backend endpoint hard-check (`npm run reliability:backend-hard-check`) | ⚠️ SKIPPED (env-gated) | `upstreamOrigin: http://127.0.0.1:8888`, `failed: 2`, `skipped: true` (origin not configured/reachable). |
+| Direct backend endpoint probes via preview (`/api/sandbox/health`, `/api/memory/stats`) | ✅ PASS (HTTP) / ⚠️ DEGRADED (runtime) | Both returned `HTTP/1.1 200 OK` with header `X-Alabobai-Degraded: 1`; sandbox payload reports `dockerAvailable:false`. |
+
+### Proof excerpts
+- `api-contract-smoke` execute-task check returned `status: 200`, `runStatus: "ok"`, `steps: 1`.
+- Targeted sandbox test passed: `code sandbox executes a trivial snippet`.
+- UI replay + preview checks passed with forced `PREVIEW_URL=http://127.0.0.1:4173`.
+- Direct endpoint responses:
+  - `/api/sandbox/health` → `{"status":"degraded","dockerAvailable":false,...}`
+  - `/api/memory/stats` → `{"stats":{...}}` (200 with degraded header)
+
+### Changes made this run
+- **No source-code patch needed** (no new functional regression reproduced in required scope).
+- Appended run evidence to `OVERNIGHT_EXECUTION_STATUS.md`.
+
+### External blockers / residual risks
+1. **Upstream backend hard-check remains env-blocked** unless `API_BACKEND_ORIGIN` points to reachable backend.
+2. **Sandbox endpoint is healthy but degraded** (`dockerAvailable:false`), so container-backed execution depth may be limited on this host.
+3. **Five reliability tests still skipped by design/environment gating** (company-cycle + billing contracts), so full surface is not fully asserted in this environment.
+
+### Next actions
+1. Run strict upstream validation with explicit backend origin:
+   - `API_BACKEND_ORIGIN=<reachable-origin> npm run reliability:test:strict`
+2. If full sandbox capability is required, restore Docker runtime availability and rerun targeted + flaky scans.
+3. Keep nightly loop unchanged unless new regressions appear; no safe scoped code commit produced by this pass.
+
+## 2026-02-21 13:02 PST — Cron sweep: reliability/functionality hard pass with one environment caveat
+
+### Executive outcome
+- **PASS on functional reliability scope in this environment.**
+- No blocking regressions found in autonomous-agent flow, company flow, code sandbox execution, UI section replay, or preview URL navigation.
+- **No source patch needed this turn** (all required functional checks passed).
+
+### Pass/Fail matrix (blunt)
+
+| Check | Result | Proof snippet |
+|---|---:|---|
+| `npm run lint` | ✅ PASS | exited clean (`eslint ... --max-warnings 0`) |
+| `npm run build` | ✅ PASS | `vite build ... ✓ built in 8.94s` |
+| `npm run reliability:test:api` | ✅ PASS | `"pass": 4, "fail": 0` |
+| `npm run reliability:test` | ✅ PASS | `11 passed, 6 skipped` (skips are env-gated contract checks) |
+| Autonomous-agent flow check | ✅ PASS | `autonomous workflow verification ... returns intent + execution steps` |
+| Company flow check | ✅ PASS | `/api/company can generate-plan` passed |
+| Code sandbox exec check | ✅ PASS | `code sandbox executes a trivial snippet` passed (multiple runs) |
+| Browser preview URL navigation | ✅ PASS | `preview URL health check` passed in adversarial retest |
+| Adversarial retest (`repeat-each=2`) | ✅ PASS | `16 passed (18.0s), 0 failed` |
+| `npm run reliability:autonomy-observability` | ✅ PASS | `runCount: 400`, `staleCandidateCount: 0`, `retryEventsInRecentWindow: 0` |
+| `npm run reliability:backend-hard-check` | ⚠️ ENV-SKIP | `skipped: true` + `API_BACKEND_ORIGIN` not reachable in this runner |
+| Direct degraded-endpoint probe | ✅ PASS (degraded mode) | `/api/sandbox/health` and `/api/memory/stats` both `HTTP/1.1 200 OK`, `X-Alabobai-Degraded: 1` |
+
+### Evidence excerpts
+- Playwright full reliability suite: `11 passed (9.7s), 6 skipped, 0 failed`.
+- Adversarial replay (targeted critical paths x2): `16 passed (18.0s), 0 failed`.
+- API smoke JSON: `"suite":"api-contract-smoke","pass":4,"fail":0`.
+- Backend hard check skip reason: `backend origin not configured/reachable ... set API_BACKEND_ORIGIN to enforce check`.
+
+### Remaining risks (real, not cosmetic)
+1. **Backend-hard-check blind spot in this environment**: upstream origin `http://127.0.0.1:8888` unavailable, so strict upstream health was not enforced here.
+2. **Intentional skipped contract tests** (company-cycle + billing) reduce overnight coverage breadth unless env keys/services are wired.
+3. **Degraded headers present** (`X-Alabobai-Degraded: 1`) on sandbox/memory endpoints indicate fallback mode; functional now, but performance/capability ceilings remain.
+
+### Git / delivery status
+- Code changes this turn: **report update only** (`OVERNIGHT_EXECUTION_STATUS.md`).
+- Commit/push step intentionally deferred to avoid polluting repo with automation-only log churn unless requested by maintainer policy.
