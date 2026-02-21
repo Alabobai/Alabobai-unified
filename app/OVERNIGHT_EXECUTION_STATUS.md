@@ -717,6 +717,55 @@
 
 ### Patch/commit status
 - Patches this run: **none needed**.
+
+## 2026-02-21 00:34 PST — Overnight stabilization loop (full required gate run + flaky harness fix)
+
+### Executive outcome
+- **PASS with one external backend blocker clearly isolated.**
+- All required product reliability/functionality gates completed green after one harness fix.
+- Found and fixed a real reliability-runner regression: `npm run reliability:flaky-scan` hanging without terminal summary.
+
+### Blunt pass/fail matrix (required scope)
+
+| Required check | Result | Proof |
+|---|---:|---|
+| `npm run lint` | ✅ PASS | clean eslint exit (`EXIT:0`) |
+| `npm run build` | ✅ PASS | `✓ built in 9.18s` |
+| `npm run reliability:test:api` | ✅ PASS | `pass: 4, fail: 0` (`execute-task runStatus: "ok", steps: 1`) |
+| `npm run reliability:test` | ✅ PASS | `11 passed, 6 skipped (10.8s)` |
+| Forced `PREVIEW_URL` health check | ✅ PASS | `preview URL health check ... 1 passed` |
+| Targeted flow pack (`api-and-agent`, `code-sandbox-exec`, `flow-replay`, `ui-and-preview`) | ✅ PASS | `8 passed (10.0s)` |
+| `npm run reliability:autonomy-observability` | ✅ PASS | `runCount: 400`, `staleCandidateCount: 0` |
+| `npm run reliability:flaky-scan` (pre-fix) | ❌ FAIL/HANG | command stalled with no JSON summary output |
+| `npm run reliability:flaky-scan` (post-fix) | ✅ PASS | `{ repeatEach: 5, expected: 20, unexpected: 0, flaky: 0, pass: true }` |
+| Backend endpoint validation (`/api/sandbox/*`, `/api/memory/*`) direct upstream | ⚠️ EXTERNAL BLOCKER | `backend-hard-check`: upstream `http://127.0.0.1:8888` unreachable (`fetch failed`), marked `skipped: true` by script |
+| Backend endpoint validation via preview runtime path | ✅ DEGRADED-FALLBACK OK | `/api/sandbox/health` + `/api/sandbox/languages` + `/api/memory/stats` + `/api/memory/search` all `HTTP 200` with degraded/fallback payloads |
+
+### Failure found + immediate patch
+- **Failure:** flaky-scan reliability gate could hang and never emit final JSON, breaking overnight loop confidence.
+- **Root cause:** flaky scan depended on Playwright/webServer lifecycle in a way that could stall the run in this host context.
+- **Patch file:** `scripts/flaky-scan.mjs`
+- **Patch details:**
+  1. Added managed preview lifecycle (spawn `vite preview`, readiness polling).
+  2. Forced Playwright run under `SKIP_WEBSERVER=1` with explicit `BASE_URL`/`PREVIEW_URL`.
+  3. Added hard command timeout + kill path and fatal error reporting.
+  4. Preserved robust JSON extraction and summary emission.
+- **Verification:** reran `npm run reliability:flaky-scan` and received clean pass JSON with zero unexpected/flaky failures.
+
+### Backend endpoint validation notes (requested `/api/sandbox/*` + `/api/memory/*`)
+- **Direct backend (`127.0.0.1:8888`) is unavailable in this environment right now** for both `/api/sandbox/health` and `/api/memory/stats`.
+- This appears to be an **environment/service-availability blocker** (backend process/origin not running or not reachable), not a frontend router crash.
+- Frontend preview path degrades correctly and returns stable envelopes for both sandbox and memory routes.
+
+### Remaining risks (blunt)
+1. Upstream backend origin for sandbox/memory (`API_BACKEND_ORIGIN`, default `127.0.0.1:8888`) is currently unreachable, so true non-degraded backend execution path remains blocked by environment/runtime availability.
+2. NPM unknown-user-config warnings (`disable-opencollective`, `disable-update-notifier`) continue to add noisy logs.
+3. Repo remains broadly dirty with unrelated pre-existing changes; only scoped reliability files should be staged for any commit.
+
+### Commit scope recommendation
+- Safe scoped commit for this loop (no unrelated bundle):
+  - `app/scripts/flaky-scan.mjs`
+  - `app/OVERNIGHT_EXECUTION_STATUS.md`
 - Commit: **not created** (no code fix; dirty tree includes unrelated tracked/untracked changes).
 - If you still want a log-only checkpoint commit:
   1. `git add OVERNIGHT_EXECUTION_STATUS.md`
