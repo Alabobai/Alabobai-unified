@@ -9,16 +9,16 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "reliability:test": "npx playwright test",
+    "reliability:test": "BASE_URL=${BASE_URL:-http://127.0.0.1:4199} npx playwright test",
     "reliability:test:api": "node ./scripts/api-contract-smoke.mjs",
-    "reliability:test:ui": "npx playwright test tests/reliability/ui-and-preview.spec.ts tests/reliability/flow-replay.spec.ts",
+    "reliability:test:ui": "BASE_URL=${BASE_URL:-${PREVIEW_URL:-http://127.0.0.1:4199}} npx playwright test tests/reliability/ui-and-preview.spec.ts tests/reliability/flow-replay.spec.ts",
     "reliability:test:loop": "node ./scripts/retest-loop.mjs",
     "reliability:flaky-scan": "node ./scripts/flaky-scan.mjs",
     "reliability:synthetic": "node ./scripts/synthetic-monitor.mjs",
     "reliability:autonomy-observability": "node ./scripts/autonomy-observability.mjs",
     "reliability:backend-hard-check": "node ./scripts/backend-hard-check.mjs",
     "reliability:test:strict": "npm run reliability:backend-hard-check && STRICT_NON_DEGRADED=1 npm run reliability:test:api && STRICT_NON_DEGRADED=1 BASE_URL=${BASE_URL:-http://127.0.0.1:4174} PREVIEW_URL=${PREVIEW_URL:-${BASE_URL:-http://127.0.0.1:4174}} npm run reliability:test",
-    "reliability:test:promises-now": "npm run reliability:test:api && PREVIEW_URL=${PREVIEW_URL:-http://127.0.0.1:4173} npm run reliability:test:ui && PREVIEW_URL=${PREVIEW_URL:-http://127.0.0.1:4173} npx playwright test tests/reliability/api-and-agent.spec.ts tests/reliability/code-sandbox-exec.spec.ts tests/reliability/flow-replay.spec.ts tests/reliability/ui-and-preview.spec.ts && npm run reliability:autonomy-observability && npm run reliability:flaky-scan"
+    "reliability:test:promises-now": "npm run reliability:test:api && BASE_URL=${BASE_URL:-http://127.0.0.1:4199} PREVIEW_URL=${PREVIEW_URL:-${BASE_URL:-http://127.0.0.1:4199}} npm run reliability:test:ui && BASE_URL=${BASE_URL:-http://127.0.0.1:4199} PREVIEW_URL=${PREVIEW_URL:-${BASE_URL:-http://127.0.0.1:4199}} npx playwright test tests/reliability/api-and-agent.spec.ts tests/reliability/code-sandbox-exec.spec.ts tests/reliability/flow-replay.spec.ts tests/reliability/ui-and-preview.spec.ts && npm run reliability:autonomy-observability && npm run reliability:flaky-scan"
   },
   "dependencies": {
     "@mlc-ai/web-llm": "^0.2.0",
